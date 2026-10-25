@@ -1,0 +1,41 @@
+name: Aggiorna dati Discord
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Scarica dati da Discord
+        env:
+          STASKYS_BOT_TOKEN: ${{ secrets.STASKYS_BOT_TOKEN }}
+        run: python scripts/sync.py
+
+      - name: Salva le modifiche (solo se ci sono)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898699+github-actions[bot]@users.noreply.github.com"
+          git add -A -- '*.json' data.js
+          if git diff --cached --quiet; then
+            echo "Nessuna modifica."
+          else
+            git commit -m "Aggiorna dati Discord"
+            git pull --rebase
+            git push
+          fi
