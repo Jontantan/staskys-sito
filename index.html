@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Staskys · Chatting • Eventi • Anime</title>
+<meta name="description" content="Staskys è una community italiana su Discord: chat, vocali, eventi, giveaway, anime e un server Minecraft Fazioni.">
+<meta property="og:title" content="Staskys · Chatting • Eventi • Anime"><meta property="og:description" content="Staskys è una community italiana su Discord: chat, vocali, eventi, giveaway, anime e un server Minecraft Fazioni."><meta property="og:image" content="assets/banner.png">
+<link rel="icon" href="assets/icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script>try{if(localStorage.theme==="dark"||(!localStorage.theme&&matchMedia("(prefers-color-scheme: dark)").matches))document.documentElement.dataset.theme="dark"}catch(e){}</script>
+</head>
+<body data-page="index">
+<main>
+
+<section class="hero">
+  <img class="logo" src="assets/icon.gif" alt="Logo Staskys" onerror="this.src='assets/icon.png'">
+  <p class="eyebrow">Community Discord italiana · dal 2022</p>
+  <h1>Staskys</h1>
+  <p class="sub">Chatting · Eventi · Anime</p>
+  <p class="lead">Una community pronta ad accoglierti e a socializzare con te. Un posto leggero dove chiacchierare, giocare e condividere interessi.</p>
+  <div class="cta"><a class="btn magnetic" data-invite>Entra nel server</a><a class="btn ghost magnetic" href="server.html">Scopri il server</a></div>
+  <dl class="stats" hidden>
+    <div><dt>Membri</dt><dd data-live="members">0</dd></div>
+    <div><dt><i class="dot"></i>Online ora</dt><dd data-live="online">0</dd></div>
+    <div data-hide-empty hidden><dt>In vocale</dt><dd data-live="voice">0</dd></div>
+  </dl>
+</section>
+<section class="wrap split">
+  <div><span class="label reveal">Chi siamo</span><h2 class="reveal">Un posto di svago e divertimento.</h2></div>
+  <div class="prose reveal">
+    <p>Staskys è nato il <b>26 novembre 2022</b>, quasi per caso, ed è diventato qualcosa di molto più di un semplice server: una grande famiglia.</p>
+    <p>Chat sempre attiva, vocali, eventi e giveaway, uno staff disponibile e un'atmosfera no-toxic.</p>
+    <ul class="facts"><li><span>2022</span>Fondazione</li><li><span>2025</span>2.000 membri e tag ufficiale STASKYS</li><li><span>2026</span>Primo torneo vinto e server Minecraft</li></ul>
+  </div>
+</section>
+<section class="wrap">
+  <span class="label reveal">Esplora</span><h2 class="reveal">Tutto quello che c'è su Staskys.</h2>
+  <div class="list">
+    <a class="tile reveal" href="server.html"><span class="arrow">→</span><h3>Il server</h3><p>Canali, vocali, bot e stanze private.</p></a>
+    <a class="tile reveal" href="minecraft.html"><span class="arrow">→</span><h3>StaskysMC</h3><p>Il nostro server Minecraft Fazioni, con stato live.</p></a>
+    <a class="tile reveal" href="eventi.html"><span class="arrow">→</span><h3>Eventi</h3><p>Prossimi eventi con countdown e i nostri format.</p></a>
+    <a class="tile reveal" href="livelli.html"><span class="arrow">→</span><h3>Livelli</h3><p>Come si sale di livello e il calcolatore XP.</p></a>
+    <a class="tile reveal" href="ruoli.html"><span class="arrow">→</span><h3>Ruoli</h3><p>Colori, notifiche, giochi e come ottenerli.</p></a>
+    <a class="tile reveal" href="guide.html"><span class="arrow">→</span><h3>Guide</h3><p>Mudae, Pokétwo, AniGame, RinBot e gli altri bot.</p></a>
+  </div>
+</section>
+<section class="wrap" id="motw" hidden><span class="label reveal">Questa settimana</span><div class="card motw reveal" id="motw-card"></div></section>
+<section class="wrap">
+  <span class="label reveal">News</span><h2 class="reveal">Annunci dal server.</h2>
+  <div class="news" id="newsgrid"><p class="muted">Caricamento…</p></div>
+  <button class="btn ghost more" id="more" hidden>Mostra altri</button>
+</section>
+<section class="wrap">
+  <span class="label reveal">FAQ</span><h2 class="reveal">Domande frequenti.</h2>
+  <div class="faq reveal">
+    <details><summary>Come entro nel server?</summary><p>Clicca su “Entra nel server”, verificati nel canale verifica e rispondi alle domande iniziali per ricevere i tuoi ruoli.</p></details>
+    <details><summary>Come scelgo ruoli e colori?</summary><p>Da Canali &amp; Ruoli puoi scegliere colore del nome, giochi e notifiche. Trovi l'elenco completo nella pagina <a href="ruoli.html">Ruoli</a>.</p></details>
+    <details><summary>Come salgo di livello?</summary><p>Scrivendo in chat e stando in vocale. Ai livelli 5, 10, 15, 20 e così via ricevi un nuovo ruolo: vedi la pagina <a href="livelli.html">Livelli</a>.</p></details>
+    <details><summary>Posso giocare a Minecraft da telefono?</summary><p>Non ancora: il server supporta solo Minecraft Java Edition su PC.</p></details>
+    <details><summary>Come posso supportare Staskys?</summary><p>Boostando il server, facendo /bump, mettendo il tag STASKYS o seguendoci sui social. Tutto nella pagina <a href="supporta.html">Supporta</a>.</p></details>
+  </div>
+</section>
+</main>
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

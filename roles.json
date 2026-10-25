@@ -1,0 +1,510 @@
+{
+ "updated": "2026-10-24T23:31:02.521578+00:00",
+ "groups": {
+  "staff": [
+   {
+    "name": "Founder",
+    "color": null,
+    "members": 2,
+    "how": "Candidature staff o promozione interna."
+   },
+   {
+    "name": "Co-owner",
+    "color": null,
+    "members": 2,
+    "how": "Candidature staff o promozione interna."
+   },
+   {
+    "name": "Manager",
+    "color": null,
+    "members": 1,
+    "how": "Candidature staff o promozione interna."
+   },
+   {
+    "name": "Trusted",
+    "color": null,
+    "members": null,
+    "how": "Candidature staff o promozione interna."
+   },
+   {
+    "name": "Admin",
+    "color": null,
+    "members": 2,
+    "how": "Candidature staff o promozione interna."
+   },
+   {
+    "name": "Supervisor",
+    "color": null,
+    "members": 2,
+    "how": "Candidature staff o promozione interna."
+   },
+   {
+    "name": "Mod",
+    "color": null,
+    "members": 1,
+    "how": "Candidature staff o promozione interna."
+   },
+   {
+    "name": "Helper",
+    "color": null,
+    "members": 2,
+    "how": "Candidature staff o promozione interna."
+   },
+   {
+    "name": "Trial Staff",
+    "color": null,
+    "members": null,
+    "how": "Candidature staff o promozione interna."
+   },
+   {
+    "name": "Developer",
+    "color": null,
+    "members": null,
+    "how": "Candidature staff o promozione interna."
+   },
+   {
+    "name": "Partner Manager",
+    "color": null,
+    "members": 4,
+    "how": "Candidature staff o promozione interna."
+   },
+   {
+    "name": "Giveaway Manager",
+    "color": null,
+    "members": 2,
+    "how": "Candidature staff o promozione interna."
+   },
+   {
+    "name": "Events Manager",
+    "color": null,
+    "members": 5,
+    "how": "Candidature staff o promozione interna."
+   },
+   {
+    "name": "Social Manager",
+    "color": null,
+    "members": 3,
+    "how": "Candidature staff o promozione interna."
+   }
+  ],
+  "livelli": [],
+  "supporter": [
+   {
+    "name": "Member of the Week",
+    "color": null,
+    "members": null,
+    "how": "Riconoscimento settimanale assegnato dallo staff."
+   },
+   {
+    "name": "Double Booster",
+    "color": "#850154",
+    "members": 6,
+    "how": "Boosta il server due volte."
+   },
+   {
+    "name": "Server Booster",
+    "color": "#850154",
+    "members": 6,
+    "how": "Boosta il server una volta."
+   },
+   {
+    "name": "Member",
+    "color": null,
+    "members": 1949,
+    "how": "Si ottiene completando la verifica."
+   }
+  ],
+  "colori": [
+   {
+    "name": "Rosa",
+    "color": "#ca618b",
+    "members": 224,
+    "how": "Scegli da Canali & Ruoli."
+   },
+   {
+    "name": "Rosa chiaro",
+    "color": "#ff90bb",
+    "members": 86,
+    "how": "Scegli da Canali & Ruoli."
+   },
+   {
+    "name": "Rosa scuro",
+    "color": "#ac1754",
+    "members": 46,
+    "how": "Scegli da Canali & Ruoli."
+   },
+   {
+    "name": "Viola",
+    "color": "#aa60c8",
+    "members": 271,
+    "how": "Scegli da Canali & Ruoli."
+   },
+   {
+    "name": "Lila",
+    "color": "#d69ade",
+    "members": 34,
+    "how": "Scegli da Canali & Ruoli."
+   },
+   {
+    "name": "Viola scuro",
+    "color": "#69247c",
+    "members": 88,
+    "how": "Scegli da Canali & Ruoli."
+   },
+   {
+    "name": "Giallo",
+    "color": "#fcf259",
+    "members": 49,
+    "how": "Scegli da Canali & Ruoli."
+   },
+   {
+    "name": "Giallo chiaro",
+    "color": "#fffece",
+    "members": 2,
+    "how": "Scegli da Canali & Ruoli."
+   },
+   {
+    "name": "Giallino",
+    "color": "#fffa8d",
+    "members": 6,
+    "how": "Scegli da Canali & Ruoli."
+   },
+   {
+    "name": "Arancione",
+    "color": "#e85c0d",
+    "members": 64,
+    "how": "Scegli da Canali & Ruoli."
+   },
+   {
+    "name": "Arancione chiaro",
+    "color": "#ff744a",
+    "members": 3,
+    "how": "Scegli da Canali & Ruoli."
+   },
+   {
+    "name": "Rosso",
+    "color": "#c5172e",
+    "members": 320,
+    "how": "Scegli da Canali & Ruoli."
+   },
+   {
+    "name": "Rosso chiaro",
+    "color": "#ebbaba",
+    "members": 4,
+    "how": "Scegli da Canali & Ruoli."
+   },
+   {
+    "name": "Rosso scuro",
+    "color": "#7d0a0a",
+    "members": 78,
+    "how": "Scegli da Canali & Ruoli."
+   },
+   {
+    "name": "Verde",
+    "color": "#6ec207",
+    "members": 94,
+    "how": "Scegli da Canali & Ruoli."
+   },
+   {
+    "name": "Verde chiaro",
+    "color": "#c0eba6",
+    "members": 9,
+    "how": "Scegli da Canali & Ruoli."
+   },
+   {
+    "name": "Verde scuro",
+    "color": "#185519",
+    "members": 10,
+    "how": "Scegli da Canali & Ruoli."
+   },
+   {
+    "name": "Blu",
+    "color": "#3674b5",
+    "members": 191,
+    "how": "Scegli da Canali & Ruoli."
+   },
+   {
+    "name": "Azzurro",
+    "color": "#a1e3f9",
+    "members": 63,
+    "how": "Scegli da Canali & Ruoli."
+   },
+   {
+    "name": "Blu scuro",
+    "color": "#001a6e",
+    "members": 85,
+    "how": "Scegli da Canali & Ruoli."
+   },
+   {
+    "name": "Marrone scuro",
+    "color": "#4e1f00",
+    "members": 6,
+    "how": "Scegli da Canali & Ruoli."
+   },
+   {
+    "name": "Marrone",
+    "color": "#a76545",
+    "members": 19,
+    "how": "Scegli da Canali & Ruoli."
+   },
+   {
+    "name": "Beige",
+    "color": "#e8c999",
+    "members": 15,
+    "how": "Scegli da Canali & Ruoli."
+   },
+   {
+    "name": "Nero",
+    "color": "#070707",
+    "members": 386,
+    "how": "Scegli da Canali & Ruoli."
+   },
+   {
+    "name": "Bianco",
+    "color": "#ffffff",
+    "members": 164,
+    "how": "Scegli da Canali & Ruoli."
+   },
+   {
+    "name": "Grigio",
+    "color": "#515151",
+    "members": 30,
+    "how": "Scegli da Canali & Ruoli."
+   }
+  ],
+  "giochi": [
+   {
+    "name": "Minecraft",
+    "color": null,
+    "members": 135,
+    "how": "Scegli da Canali & Ruoli."
+   },
+   {
+    "name": "Valorant",
+    "color": null,
+    "members": 52,
+    "how": "Scegli da Canali & Ruoli."
+   },
+   {
+    "name": "Rainbow Six",
+    "color": null,
+    "members": 40,
+    "how": "Scegli da Canali & Ruoli."
+   },
+   {
+    "name": "Overwatch",
+    "color": null,
+    "members": 30,
+    "how": "Scegli da Canali & Ruoli."
+   },
+   {
+    "name": "Brawl Stars",
+    "color": null,
+    "members": 92,
+    "how": "Scegli da Canali & Ruoli."
+   },
+   {
+    "name": "Roblox",
+    "color": null,
+    "members": 138,
+    "how": "Scegli da Canali & Ruoli."
+   },
+   {
+    "name": "Fortnite",
+    "color": null,
+    "members": 65,
+    "how": "Scegli da Canali & Ruoli."
+   }
+  ],
+  "ping": [
+   {
+    "name": "Polls",
+    "color": null,
+    "members": 435,
+    "how": "Scegli da Canali & Ruoli."
+   },
+   {
+    "name": "Annunci",
+    "color": null,
+    "members": 410,
+    "how": "Scegli da Canali & Ruoli."
+   },
+   {
+    "name": "Giveaways",
+    "color": null,
+    "members": 502,
+    "how": "Scegli da Canali & Ruoli."
+   },
+   {
+    "name": "Events",
+    "color": null,
+    "members": 350,
+    "how": "Scegli da Canali & Ruoli."
+   },
+   {
+    "name": "Mini events",
+    "color": "#95a5a6",
+    "members": 85,
+    "how": "Scegli da Canali & Ruoli."
+   },
+   {
+    "name": "Revival Chat",
+    "color": null,
+    "members": 533,
+    "how": "Scegli da Canali & Ruoli."
+   },
+   {
+    "name": "Revival Vocal",
+    "color": null,
+    "members": 449,
+    "how": "Scegli da Canali & Ruoli."
+   },
+   {
+    "name": "Mudae",
+    "color": null,
+    "members": 47,
+    "how": "Scegli da Canali & Ruoli."
+   },
+   {
+    "name": "Confessioni",
+    "color": null,
+    "members": 67,
+    "how": "Scegli da Canali & Ruoli."
+   },
+   {
+    "name": "film",
+    "color": null,
+    "members": 73,
+    "how": "Scegli da Canali & Ruoli."
+   },
+   {
+    "name": "anime・manga",
+    "color": null,
+    "members": 87,
+    "how": "Scegli da Canali & Ruoli."
+   },
+   {
+    "name": "musica",
+    "color": null,
+    "members": 92,
+    "how": "Scegli da Canali & Ruoli."
+   },
+   {
+    "name": "formula1",
+    "color": null,
+    "members": 33,
+    "how": "Scegli da Canali & Ruoli."
+   },
+   {
+    "name": "calcio",
+    "color": null,
+    "members": 26,
+    "how": "Scegli da Canali & Ruoli."
+   }
+  ],
+  "tornei": [
+   {
+    "name": "TORNEO BRAWLHALLA 2K25",
+    "color": "#1f8b4c",
+    "members": 7,
+    "how": "Partecipando ai tornei della community."
+   },
+   {
+    "name": "TORNEO ROCKET LEAGUE 2K26",
+    "color": "#001888",
+    "members": 13,
+    "how": "Partecipando ai tornei della community."
+   },
+   {
+    "name": "MVP | TORNEO CODM 2k26",
+    "color": null,
+    "members": 1,
+    "how": "Partecipando ai tornei della community."
+   },
+   {
+    "name": "VINCITORI TORNEO CODM",
+    "color": null,
+    "members": 3,
+    "how": "Partecipando ai tornei della community."
+   }
+  ]
+ },
+ "levels": [
+  {
+   "level": 5,
+   "name": "Livello 5",
+   "members": 529
+  },
+  {
+   "level": 10,
+   "name": "Livello 10",
+   "members": 272
+  },
+  {
+   "level": 15,
+   "name": "Livello 15",
+   "members": 189
+  },
+  {
+   "level": 20,
+   "name": "Livello 20",
+   "members": 145
+  },
+  {
+   "level": 30,
+   "name": "Livello 30",
+   "members": 83
+  },
+  {
+   "level": 40,
+   "name": "Livello 40",
+   "members": 55
+  },
+  {
+   "level": 50,
+   "name": "Livello 50",
+   "members": 30
+  },
+  {
+   "level": 60,
+   "name": "Livello 60",
+   "members": 25
+  },
+  {
+   "level": 70,
+   "name": "Livello 70",
+   "members": 17
+  },
+  {
+   "level": 80,
+   "name": "Livello 80",
+   "members": 11
+  },
+  {
+   "level": 90,
+   "name": "Livello 90",
+   "members": 8
+  },
+  {
+   "level": 100,
+   "name": "Livello 100",
+   "members": 7
+  },
+  {
+   "level": 150,
+   "name": "Livello 150",
+   "members": 3
+  },
+  {
+   "level": 200,
+   "name": "Livello 200",
+   "members": 2
+  },
+  {
+   "level": 300,
+   "name": "Livello 300",
+   "members": 1
+  }
+ ],
+ "counts": true
+}

@@ -1,0 +1,12 @@
+.env
+*.env
+*.tmp
+__pycache__/
+*.pyc
+data/
+tools/
+d.py
+preview*.png
+*.zip
+.DS_Store
+Thumbs.db

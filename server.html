@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Il server · Staskys</title>
+<meta name="description" content="Canali, vocali, bot e stanze del server Discord Staskys.">
+<meta property="og:title" content="Il server · Staskys"><meta property="og:description" content="Canali, vocali, bot e stanze del server Discord Staskys."><meta property="og:image" content="assets/banner.png">
+<link rel="icon" href="assets/icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script>try{if(localStorage.theme==="dark"||(!localStorage.theme&&matchMedia("(prefers-color-scheme: dark)").matches))document.documentElement.dataset.theme="dark"}catch(e){}</script>
+</head>
+<body data-page="server">
+<main>
+<section class="page-hero"><p class="label">Il server</p><h1>Ogni stanza ha il suo scopo.</h1><p class="lead">Una panoramica dei canali di Staskys. Alcuni si sbloccano scegliendo i ruoli in Canali &amp; Ruoli.</p></section>
+<section class="wrap tight">
+  <dl class="stats" style="margin-top:0;padding-top:0;border:0;justify-content:flex-start" hidden>
+    <div><dt>Membri</dt><dd data-live="members">0</dd></div><div><dt><i class="dot"></i>Online</dt><dd data-live="online">0</dd></div><div data-hide-empty hidden><dt>In vocale ora</dt><dd data-live="voice">0</dd></div>
+  </dl>
+</section>
+<section class="wrap">
+  <span class="label reveal">Canali</span><h2 class="reveal">Cosa trovi.</h2>
+  <div class="list">
+    <article class="reveal"><h3>Chatting</h3><p>Chat principale, media, presentazioni, livelli e sondaggi quasi ogni giorno.</p><div class="chips"><span>chat</span><span>media</span><span>presentazioni</span><span>polls</span></div></article>
+    <article class="reveal"><h3>Vocali</h3><p>Stanze chill sempre aperte, stanze private duo, trio ed extra, musica e una chat per chi non ha il microfono.</p><div class="chips"><span>chill</span><span>duo</span><span>trio</span><span>nomic</span></div></article>
+    <article class="reveal"><h3>Anime</h3><p>News anime e manga e bot a tema: Mudae, RinBot, AniGame, ZeroTwo.</p><div class="chips"><span>anime・manga</span><span>mudae</span><span>rinbot</span></div></article>
+    <article class="reveal"><h3>Minigiochi</h3><p>Counting, Pokétwo, confessioni anonime ed economia del server.</p><div class="chips"><span>counting</span><span>poketwo</span><span>confessioni</span></div></article>
+    <article class="reveal"><h3>News</h3><p>Musica, film, anime, calcio e Formula 1, con ping su richiesta.</p><div class="chips"><span>musica</span><span>film</span><span>calcio</span><span>formula1</span></div></article>
+    <article class="reveal"><h3>Club</h3><p>Vocali privati per te e i tuoi amici: requisiti nel canale info・club del server.</p></article>
+  </div>
+</section>
+<section class="wrap split">
+  <div><span class="label reveal">Primi passi</span><h2 class="reveal">Appena entrato?</h2><p class="muted reveal">Quattro cose da fare subito.</p></div>
+  <ol class="steps reveal">
+    <li><b>Verificati</b> nel canale <a data-ch="verifica">verifica</a> per sbloccare il server.</li>
+    <li><b>Scegli i tuoi ruoli</b> in Canali &amp; Ruoli: colore, giochi e notifiche.</li>
+    <li><b>Presentati</b> nel forum presentazioni e saluta in <a data-ch="chat">chat</a>.</li>
+    <li><b>Serve aiuto?</b> Apri un <a data-ch="tickets">ticket</a>: un utente può avere un solo ticket alla volta.</li>
+  </ol>
+</section>
+</main>
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

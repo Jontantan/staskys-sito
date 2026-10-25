@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Stato dei servizi · Staskys</title>
+<meta name="description" content="Stato in tempo reale del server Discord, di StaskysMC e del sito Staskys.">
+<meta property="og:title" content="Stato dei servizi · Staskys"><meta property="og:description" content="Stato in tempo reale del server Discord, di StaskysMC e del sito Staskys."><meta property="og:image" content="assets/banner.png">
+<link rel="icon" href="assets/icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script>try{if(localStorage.theme==="dark"||(!localStorage.theme&&matchMedia("(prefers-color-scheme: dark)").matches))document.documentElement.dataset.theme="dark"}catch(e){}</script>
+</head>
+<body data-page="stato">
+<main>
+<section class="page-hero"><p class="label">Stato</p><h1>Stato dei servizi.</h1><p class="lead">Controllo in tempo reale, aggiornato ogni minuto.</p></section>
+<section class="wrap tight">
+  <div class="overall reveal" id="overall"><i class="dot warn"></i>Controllo in corso…</div>
+  <div class="reveal">
+    <div class="svc" id="s-discord"><i class="dot warn"></i><div><h3>Server Discord</h3><p>Raggiungibilità e membri online</p></div><div class="val">…</div></div>
+    <div class="svc" id="s-voice"><i class="dot warn"></i><div><h3>Vocali</h3><p>Persone in vocale ora (solo numero totale)</p></div><div class="val">…</div></div>
+    <div class="svc" id="s-mc"><i class="dot warn"></i><div><h3>StaskysMC</h3><p>minecraft.staskys.it · Java Edition</p></div><div class="val">…</div></div>
+    <div class="svc" id="s-web"><i class="dot warn"></i><div><h3>Sito web</h3><p>Questo sito</p></div><div class="val">…</div></div>
+    <div class="svc" id="s-sync"><i class="dot warn"></i><div><h3>Sincronizzazione dati</h3><p>Ultimo aggiornamento di news, staff, ruoli ed eventi</p></div><div class="val">…</div></div>
+  </div>
+  <p class="muted small" style="margin-top:1.5rem">Ultimo controllo: <span id="checked">–</span> · Lo stato Minecraft è fornito da mcsrvstat.us.</p>
+</section>
+</main>
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

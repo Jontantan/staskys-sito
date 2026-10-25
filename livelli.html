@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Livelli · Staskys</title>
+<meta name="description" content="Come funzionano i livelli su Staskys (AmariBot), i ruoli ricompensa e il calcolatore XP.">
+<meta property="og:title" content="Livelli · Staskys"><meta property="og:description" content="Come funzionano i livelli su Staskys (AmariBot), i ruoli ricompensa e il calcolatore XP."><meta property="og:image" content="assets/banner.png">
+<link rel="icon" href="assets/icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script>try{if(localStorage.theme==="dark"||(!localStorage.theme&&matchMedia("(prefers-color-scheme: dark)").matches))document.documentElement.dataset.theme="dark"}catch(e){}</script>
+</head>
+<body data-page="livelli">
+<main>
+<section class="page-hero"><p class="label">Livelli</p><h1>Scrivi, parla, sali.</h1><p class="lead">Su Staskys i livelli sono gestiti da <b>AmariBot</b>. Guadagni XP scrivendo in chat e stando in vocale; a certi livelli ricevi un nuovo ruolo.</p></section>
+<section class="wrap tight split">
+  <div class="reveal"><span class="label">Come funziona</span>
+    <ol class="steps">
+      <li><b>Scrivi in chat</b> e <b>stai in vocale</b>: AmariBot ti assegna XP.</li>
+      <li>Quando sali di livello ricevi un messaggio nel canale <a data-ch="livelli">livelli</a>.</li>
+      <li>Controlla i tuoi XP con <code>:?rank</code> nel canale <a data-ch="cmds">cmds</a>.</li>
+      <li>Ai livelli indicati qui sotto ricevi automaticamente il ruolo ricompensa.</li>
+    </ol>
+  </div>
+  <div class="card reveal" id="calc">
+    <span class="label">Quanto mi manca?</span>
+    <div class="calc">
+      <label>Livello attuale<input id="lv-now" type="number" min="0" max="500" value="5" inputmode="numeric"></label>
+      <label>Livello obiettivo<input id="lv-goal" type="number" min="1" max="500" value="10" inputmode="numeric"></label>
+      <label style="grid-column:1/-1">XP totali attuali (facoltativo, da :?rank)<input id="xp-now" type="number" min="0" value="0" inputmode="numeric"></label>
+    </div>
+    <p class="muted small">Ti mancano circa</p><p class="result"><span id="need">0</span> <span style="font-size:1rem;color:var(--mut)">XP</span></p>
+    <p class="muted small" id="need-note"></p>
+    <p class="src">Calcolo basato sulla <a href="https://litochee.gitbooks.io/amaribot/content/level-table.html" target="_blank" rel="noopener">tabella XP ufficiale di AmariBot</a>. Valore indicativo: quanti XP ottieni per messaggio o in vocale dipende dalle impostazioni del server.</p>
+  </div>
+</section>
+<section class="wrap">
+  <span class="label reveal">Ricompense</span><h2 class="reveal">Ruoli per livello.</h2>
+  <table class="table reveal" id="levels"><thead><tr><th>Livello</th><th>Ricompensa</th><th class="num hide-m">XP totali</th><th class="num cnt">Membri</th><th class="hide-m cnt"></th></tr></thead><tbody></tbody></table>
+  <p class="muted small reveal" style="margin-top:1rem">Il numero di membri per ruolo si aggiorna automaticamente.</p>
+</section>
+</main>
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
