@@ -1,5 +1,5 @@
 {
- "updated": "2026-10-25T20:06:57.229038+00:00",
+ "updated": "2026-10-25T22:30:40.019584+00:00",
  "groups": {
   "staff": [
    {
@@ -110,7 +110,7 @@
    {
     "name": "Member",
     "color": null,
-    "members": 1950,
+    "members": 1951,
     "how": "Si ottiene completando la verifica."
    }
   ],
@@ -196,7 +196,7 @@
    {
     "name": "Rosso scuro",
     "color": "#7d0a0a",
-    "members": 78,
+    "members": 79,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -356,7 +356,7 @@
    {
     "name": "Revival Vocal",
     "color": null,
-    "members": 450,
+    "members": 451,
     "how": "Scegli da Canali & Ruoli."
    },
    {
