@@ -11,7 +11,7 @@ const BAKED=window.STASKYS_DATA||{};
 /* dati: prova il file .json, se non va (es. doppio clic) usa la copia in data.js */
 const load=name=>fetch(name+'.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw 0;return r.json()}).catch(()=>BAKED[name]||null);
 const INVITE_URL='https://discord.gg/'+S.INVITE;
-const PAGES=[['index','Home'],['server','Server'],['minecraft','Minecraft'],['eventi','Eventi'],['livelli','Livelli'],['ruoli','Ruoli'],['guide','Guide'],['staff','Staff'],['stato','Stato'],['supporta','Supporta']];
+const PAGES=[['index','Home'],['server','Server'],['minecraft','Minecraft'],['eventi','Eventi'],['livelli','Livelli'],['ruoli','Ruoli'],['guide','Guide'],['staff','Staff'],['stato','Stato'],['giochi','Giochi'],['supporta','Supporta']];
 const PAGE=document.body.dataset.page||'index';
 
 /* ---------- header / footer condivisi ---------- */
