@@ -1,5 +1,5 @@
 {
- "updated": "2026-10-25T18:18:31.772753+00:00",
+ "updated": "2026-10-25T20:06:57.229038+00:00",
  "groups": {
   "staff": [
    {
@@ -110,7 +110,7 @@
    {
     "name": "Member",
     "color": null,
-    "members": 1951,
+    "members": 1950,
     "how": "Si ottiene completando la verifica."
    }
   ],
@@ -320,7 +320,7 @@
    {
     "name": "Polls",
     "color": null,
-    "members": 437,
+    "members": 436,
     "how": "Scegli da Canali & Ruoli."
    },
    {
