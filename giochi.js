@@ -1,4 +1,4 @@
-/* Staskys — minigiochi (Snake, Tempo di reazione, Clicker veloce) con classifiche Supabase */
+/* Staskys — minigiochi (Snake, Reazione, Clicker + Flappy, Dino, Tetris, Quiz anime in giochi-*.js) con classifiche Supabase */
 (function(){
 const q=(s,r=document)=>r.querySelector(s),qa=(s,r=document)=>[...r.querySelectorAll(s)];
 const E=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -6,9 +6,9 @@ const CFG=window.GIOCHI_CONFIG||{};
 const READY=!!(CFG.SUPABASE_URL&&CFG.SUPABASE_ANON_KEY&&!/INCOLLA_QUI/.test(CFG.SUPABASE_URL+CFG.SUPABASE_ANON_KEY)&&window.supabase);
 const sb=READY?window.supabase.createClient(CFG.SUPABASE_URL,CFG.SUPABASE_ANON_KEY,{auth:{flowType:'pkce',detectSessionInUrl:true,persistSession:true}}):null;
 const GAMES={
- snake:{t:'Snake',d:'Mangia più mele possibile senza sbattere. Frecce/WASD su PC, scorri o usa i tasti su telefono.',unit:'mele',asc:false},
- reaction:{t:'Tempo di reazione',d:'Tocca appena lo schermo diventa scuro. 3 tentativi: conta la media. Meno è meglio.',unit:'ms',asc:true},
- clicker:{t:'Clicker veloce',d:'Quanti clic riesci a fare in 10 secondi? Il tempo parte al primo clic.',unit:'clic',asc:false}
+ snake:{t:'Snake',k:'King Snake',d:'Mangia più mele possibile senza sbattere. Frecce/WASD su PC, scorri o usa i tasti su telefono.',unit:'mele',asc:false},
+ reaction:{t:'Tempo di reazione',k:'King Reazione',d:'Tocca appena lo schermo diventa scuro. 3 tentativi: conta la media. Meno è meglio.',unit:'ms',asc:true},
+ clicker:{t:'Clicker veloce',k:'King Clicker',d:'Quanti clic riesci a fare in 10 secondi? Il tempo parte al primo clic.',unit:'clic',asc:false}
 };
 let inited=false,user=null,cur='snake',stop=()=>{};
 const stage=q('#gstage'),lock=q('#glock'),msg=t=>{const m=q('.gmsg',stage);if(m)m.textContent=t};
@@ -35,11 +35,14 @@ async function board(game){const g=GAMES[game],lb=q('#lb');q('#bdesc').textConte
  if(game!==cur)return;
  if(error){lb.innerHTML='<li class="muted">Classifica non disponibile al momento.</li>';return}
  if(!data.length){lb.innerHTML='<li class="muted">Ancora nessun punteggio. Sii il primo!</li>';return}
- lb.innerHTML=data.map((r,i)=>`<li class="${user&&r.user_id===user.id?'me':''}" style="animation-delay:${i*.04}s">${r.avatar_url?`<img src="${E(r.avatar_url)}" alt="" loading="lazy">`:'<img alt="">'}<span class="n">${E(r.username)}</span><span class="s">${Number(r.score).toLocaleString('it-IT')} <small class="muted">${g.unit}</small></span></li>`).join('')}
+ lb.innerHTML=data.map((r,i)=>`<li class="${user&&r.user_id===user.id?'me':''}" style="animation-delay:${i*.04}s">${g.lbAvatar?g.lbAvatar(r,E):r.avatar_url?`<img src="${E(r.avatar_url)}" alt="" loading="lazy">`:'<img alt="">'}<span class="n">${E(r.username)}${i===0?' <span class="crown" title="'+E(g.k||'Primo in classifica')+'">👑</span>':''}</span><span class="s">${Number(r.score).toLocaleString('it-IT')} <small class="muted">${g.unit}</small></span></li>`).join('')}
 async function save(game,score){
  if(!READY||!user)return;const p=profile(user);msg('Salvataggio…');
  const {error}=await sb.from('scores').insert({game,score:Math.round(score),username:p.name,avatar_url:p.avatar});
+ if(!error&&GAMES[game].onSaved)try{GAMES[game].onSaved(score)}catch(e){}
  if(game!==cur)return;msg(error?'Non sono riuscito a salvare il punteggio.':'Punteggio salvato ✓');if(!error)board(game)}
+/* miglior punteggio dell'utente (dalla classifica Supabase, segue l'account Discord) */
+async function myBest(game){if(!READY||!user)return null;const {data,error}=await sb.from('leaderboard').select('score').eq('game',game).eq('user_id',user.id).limit(1);return error||!data.length?null:data[0].score}
 
 /* ---------- Snake (stile Nokia: suoni sintetizzati + animazioni) ---------- */
 let AC=null;const muted=()=>localStorage.snake_mute==='1';
@@ -48,6 +51,12 @@ function beep(f,d=.08,w=0,v=.06,f2){if(muted()||!AC)return;const t=AC.currentTim
  g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g).connect(AC.destination);o.start(t);o.stop(t+d+.02)}
 const SFX={start:()=>{beep(660,.07);beep(990,.09,.08)},eat:()=>beep(1320,.05,0,.05),tick:()=>beep(180,.012,0,.008),
  over:()=>{[523,415,330,247].forEach((f,i)=>beep(f,.16,i*.15,.06))},best:()=>{[659,784,988,1319].forEach((f,i)=>beep(f,.09,.7+i*.1,.05))}};
+/* suoni generici per i giochi extra: tone(onda,freq,durata,ritardo,volume,freqFinale) e noise(durata,ritardo,volume,filtroHz,filtroHzFinale) */
+function tone(type,f,d=.1,w=0,v=.06,f2){if(muted()||!AC)return;const t=AC.currentTime+w,o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+d);
+ g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g).connect(AC.destination);o.start(t);o.stop(t+d+.02)}
+function noise(d=.1,w=0,v=.05,fq=1200,fq2){if(muted()||!AC)return;const t=AC.currentTime+w,n=Math.ceil(AC.sampleRate*d),b=AC.createBuffer(1,n,AC.sampleRate),a=b.getChannelData(0);for(let i=0;i<n;i++)a[i]=Math.random()*2-1;
+ const s=AC.createBufferSource(),fl=AC.createBiquadFilter(),g=AC.createGain();s.buffer=b;fl.type='bandpass';fl.Q.value=1.2;fl.frequency.setValueAtTime(fq,t);if(fq2)fl.frequency.exponentialRampToValueAtTime(fq2,t+d);
+ g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0001,t+d);s.connect(fl).connect(g).connect(AC.destination);s.start(t)}
 const TICK=false; // passo udibile: metti true per il "tic" ad ogni movimento (molto leggero)
 function snake(){
  stage.innerHTML='<div class="ghud"><span>Mele <b id="sc">0</b></span><span>Record <b id="rec">'+(+localStorage.snake_best||0)+'</b></span><button class="mute" id="mute" aria-label="Audio"></button></div><canvas id="cv" width="400" height="400" aria-label="Snake"></canvas><div class="pad"><button class="u" data-d="0,-1">↑</button><button class="l" data-d="-1,0">←</button><button class="d" data-d="0,1">↓</button><button class="r" data-d="1,0">→</button></div><button class="btn sm" id="go">Gioca</button><p class="gmsg"></p>';
@@ -126,14 +135,23 @@ function clicker(){
   n++;const el=q('#n');el.textContent=n;el.classList.remove('pop');void el.offsetWidth;el.classList.add('pop')});
  return()=>cancelAnimationFrame(raf)}
 
-/* ---------- avvio ---------- */
+/* ---------- giochi extra (giochi-*.js, caricati prima di questo file) ---------- */
 const MAKE={snake,reaction,clicker};
+const RM=()=>matchMedia('(prefers-reduced-motion: reduce)').matches||document.documentElement.classList.contains('still');
+const API={q,qa,E,stage,msg,save,audio,beep,tone,noise,muted,RM,myBest,profile,get AC(){return AC},get user(){return user},get cur(){return cur},
+ muteBtn(el){const set=()=>{el.textContent=muted()?'🔇':'🔊';el.title=muted()?'Audio disattivato':'Audio attivo'};set();
+  el.onclick=()=>{localStorage.snake_mute=muted()?'0':'1';set();if(!muted()){audio();beep(990,.05)}el.blur()};return set},
+ pop(el){el.classList.remove('pop');void el.offsetWidth;el.classList.add('pop')},
+ col:v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim()};
+Object.entries(window.GIOCHI_EXTRA||{}).forEach(([id,g])=>{GAMES[id]=g;MAKE[id]=()=>g.make(API)});
+
+/* ---------- avvio ---------- */
 function open(game){stop();cur=game;qa('.gtab').forEach(b=>b.classList.toggle('active',b.dataset.game===game));
- q('#gtitle').textContent=GAMES[game].t;q('#gdesc').textContent=GAMES[game].d;stop=MAKE[game]();renderLock();board(game);
+ q('#gtitle').textContent=GAMES[game].t;q('#gdesc').textContent=GAMES[game].d;q('#kingnote').textContent=GAMES[game].k?`Il primo in classifica riceve il ruolo ${GAMES[game].k} sul server Discord.`:'';stop=MAKE[game]();renderLock();board(game);
  if(inited)try{history.replaceState(null,'',location.pathname+'#'+game)}catch(e){}}
 qa('.gtab').forEach(b=>b.onclick=()=>open(b.dataset.game));
 const start=GAMES[location.hash.slice(1)]?location.hash.slice(1):'snake';
 if(sb){sb.auth.getSession().then(({data})=>{user=data.session?.user||null;inited=true;renderAuth();open(cur)});
- sb.auth.onAuthStateChange((_e,s)=>{const was=user?.id;user=s?.user||null;if(was!==user?.id){renderAuth();renderLock();board(cur)}})}
+ sb.auth.onAuthStateChange((_e,s)=>{const was=user?.id;user=s?.user||null;if(was!==user?.id){renderAuth();renderLock();board(cur);if(GAMES[cur].onUser)try{GAMES[cur].onUser(user)}catch(e){}}})}
 if(!sb)inited=true;cur=start;renderAuth();open(start);
 })();
