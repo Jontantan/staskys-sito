@@ -7,7 +7,7 @@ const READY=!!(CFG.SUPABASE_URL&&CFG.SUPABASE_ANON_KEY&&!/INCOLLA_QUI/.test(CFG.
 const sb=READY?window.supabase.createClient(CFG.SUPABASE_URL,CFG.SUPABASE_ANON_KEY,{auth:{flowType:'pkce',detectSessionInUrl:true,persistSession:true}}):null;
 const GAMES={
  snake:{t:'Snake',k:'King Snake',d:'Mangia più mele possibile senza sbattere. Frecce/WASD su PC, scorri o usa i tasti su telefono.',unit:'mele',asc:false},
- reaction:{t:'Tempo di reazione',k:'King Reazione',d:'Tocca appena lo schermo diventa scuro. 3 tentativi: conta la media. Meno è meglio.',unit:'ms',asc:true,fmt:v=>v+' ms'},
+ reaction:{t:'Tempo di reazione',k:'King Reazione',d:'Tocca appena lo schermo diventa scuro. 3 tentativi: conta la media. Meno è meglio.',unit:'ms',asc:true,lbDesc:'tempo medio più basso',fmt:v=>v+' ms'},
  clicker:{t:'Clicker veloce',k:'King Clicker',d:'Quanti clic riesci a fare in 10 secondi? Il tempo parte al primo clic.',unit:'clic',asc:false}
 };
 let inited=false,user=null,cur='snake',stop=()=>{};
@@ -29,7 +29,7 @@ function renderLock(){
  bindLogin(lock)}
 
 /* ---------- classifica ---------- */
-async function board(game){const g=GAMES[game],lb=q('#lb');q('#bdesc').textContent=`Top 10 · ${g.lbDesc||(g.asc?'tempo medio più basso':'punteggio migliore')}`;
+async function board(game){const g=GAMES[game],lb=q('#lb');q('#bdesc').textContent=`Top 10 · ${g.lbDesc||(g.asc?'più basso è meglio':'punteggio migliore')}`;
  if(!READY){lb.innerHTML='<li class="muted">Classifiche in arrivo.</li>';return}
  let qy=sb.from(g.since?'scores':'leaderboard').select('user_id,username,avatar_url,score').eq('game',game);if(g.since)qy=qy.gte('created_at',g.since());
  const {data,error}=await qy.order('score',{ascending:!!g.asc}).order('created_at',{ascending:true}).limit(10);

@@ -7,8 +7,9 @@ function make(A){
  <canvas id="cv" width="${W}" height="${H}" class="tall2" aria-label="Breakout"></canvas>
  <button class="btn sm" id="go">Gioca</button><p class="gmsg">Muovi la racchetta col mouse o il dito. Prendi i bonus +3 e x3!</p>`;
  A.muteBtn(q('#mute'));const cv=q('#cv'),c=cv.getContext('2d'),still=A.RM();
- let br,balls,pw,parts,px=W/2,pwid=78,lives,score,level,st='idle',raf=0,last=0,acc=0,stuck=true,sndT=0,shake=0,left,keyL=0,keyR=0,combo=0,comboT=0;
- const hue=(r,cc)=>`hsl(${(r*18+cc*3+level*47)%360} 75% ${62+((r+cc)%2)*6}%)`;
+ let dry=0,br,balls,pw,parts,px=W/2,pwid=78,lives,score,level,st='idle',raf=0,last=0,acc=0,stuck=true,sndT=0,shake=0,left,keyL=0,keyR=0,combo=0,comboT=0;
+ const hue=()=>`hsl(${(level*67+195)%360} 72% 62%)`; // un solo colore per livello, cambia ogni round
+ const ST=window.__breakoutStats={drop:0,caught:0,pw:()=>pw,balls:()=>balls,cv:()=>cv};
  function build(){br=[];left=0;const pat=(level-1)%4;
   for(let r=0;r<ROWS;r++){br[r]=[];for(let cc=0;cc<COLS;cc++){let on=true;
    if(pat===1)on=(r+cc)%3!==0;else if(pat===2)on=Math.abs(cc-9.5)<r*.75+2;else if(pat===3)on=!((r%4===3)||(cc%5===2&&r>3));
@@ -21,7 +22,7 @@ function make(A){
  function hit(r,cc){br[r][cc]=0;left--;score++;combo++;comboT=performance.now();
   snd(330*Math.pow(2,((ROWS-r)+Math.min(combo,24))/24));
   if(!still&&parts.length<700){const x=cc*BW+BW/2,y=TOP+r*BH+BH/2,col=hue(r,cc);for(let i=0;i<6;i++){const a=Math.random()*7,v=1+Math.random()*3;parts.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-1,l:30+Math.random()*20,c:col,s:2+Math.random()*2.5,a:Math.random()*7})}}
-  if(Math.random()<.045&&pw.length<6)pw.push({x:cc*BW+BW/2,y:TOP+r*BH,t:Math.random()<.55?'+3':'x3'})}
+  dry++;if((Math.random()<.12||dry>=10)&&pw.length<8){dry=0;pw.push({x:cc*BW+BW/2,y:TOP+r*BH,t:Math.random()<.55?'+3':'x3',ph:Math.random()*6});ST.drop++;A.tone('sine',1200,.05,0,.015)}}
  function spawn(n,from){for(let i=0;i<n&&balls.length<CAP;i++){const a=-Math.PI/2+(Math.random()-.5)*1.2;balls.push({x:from.x,y:from.y,vx:Math.cos(a)*SPD,vy:Math.sin(a)*SPD})}}
  function triple(){const add=[];for(const b of balls){if(balls.length+add.length>=CAP)break;for(const d of [-.35,.35]){if(balls.length+add.length>=CAP)break;const cs=Math.cos(d),sn=Math.sin(d);add.push({x:b.x,y:b.y,vx:b.vx*cs-b.vy*sn,vy:b.vx*sn+b.vy*cs})}}balls.push(...add)}
  function stepBall(b,f){b.x+=b.vx*f;b.y+=b.vy*f;
@@ -41,7 +42,7 @@ function make(A){
    balls=balls.filter(b=>b.y<H+10)}
   pw.forEach(p=>p.y+=2.2);
   pw=pw.filter(p=>{if(p.y>H-46&&p.y<H-26&&Math.abs(p.x-px)<pwid/2+10){
-    if(p.t==='+3')spawn(3,{x:px,y:H-40});else triple();A.tone('triangle',784,.1,0,.04);A.tone('triangle',1175,.14,.08,.04);shake=6;return false}return p.y<H});
+    ST.caught++;if(p.t==='+3')spawn(3,{x:px,y:H-40});else triple();msg(p.t==='+3'?'+3 palline!':'Palline triplicate! ×3');A.tone('triangle',784,.1,0,.04);A.tone('triangle',1175,.14,.08,.04);shake=6;return false}return p.y<H});
   if(performance.now()-comboT>700)combo=0;
   if(!balls.length){lives--;A.tone('sine',300,.3,0,.05,150);shake=10;if(lives<=0)return over();newBall();msg('Pallina persa! Vite: '+'●'.repeat(lives))}
   if(left<=0){level++;score+=50;A.tone('triangle',523,.12,0,.05);A.tone('triangle',659,.12,.1,.05);A.tone('triangle',784,.2,.2,.05);build();pw=[];newBall();msg('Livello '+level+'! +50');
@@ -54,7 +55,7 @@ function make(A){
   if(shake>0&&!still){c.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);shake*=.85;if(shake<.4)shake=0}
   for(let r=0;r<ROWS;r++)for(let cc=0;cc<COLS;cc++)if(br[r][cc]){c.fillStyle=hue(r,cc);c.fillRect(cc*BW+1,TOP+r*BH+1,BW-2,BH-2)}
   parts=parts.filter(p=>(p.l-=1)>0);parts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.12;p.a+=.2;c.globalAlpha=Math.min(1,p.l/25);c.fillStyle=p.c;c.save();c.translate(p.x,p.y);c.rotate(p.a);c.fillRect(-p.s/2,-p.s/2,p.s,p.s);c.restore()});c.globalAlpha=1;
-  pw.forEach(p=>{c.fillStyle=p.t==='x3'?'#a35cff':'#3ecf5a';c.beginPath();c.roundRect(p.x-15,p.y-9,30,18,9);c.fill();c.fillStyle='#fff';c.font='700 11px Inter,sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText(p.t,p.x,p.y+1)});
+  pw.forEach(p=>{const k=still?1:1+.08*Math.sin(now/120+p.ph);c.shadowColor=p.t==='x3'?'#a35cff':'#3ecf5a';c.shadowBlur=14;c.fillStyle=c.shadowColor;c.beginPath();c.roundRect(p.x-18*k,p.y-11*k,36*k,22*k,11*k);c.fill();c.shadowBlur=0;c.fillStyle='#fff';c.font='800 13px Inter,sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText(p.t,p.x,p.y+1)});
   c.fillStyle=fg;c.beginPath();c.roundRect(px-pwid/2,H-36,pwid,8,4);c.fill();
   c.fillStyle=fg;c.beginPath();for(const b of balls){c.moveTo(b.x+R,b.y);c.arc(b.x,b.y,R,0,7)}c.fill();
   c.fillStyle=mu;c.font='500 12px Inter,sans-serif';c.textAlign='left';c.textBaseline='alphabetic';c.fillText('●'.repeat(Math.max(0,lives)),8,20);
