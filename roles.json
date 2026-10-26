@@ -1,5 +1,5 @@
 {
- "updated": "2026-10-26T11:10:08.714587+00:00",
+ "updated": "2026-10-26T17:20:05.666243+00:00",
  "groups": {
   "staff": [
    {
@@ -29,7 +29,7 @@
    {
     "name": "Admin",
     "color": null,
-    "members": 2,
+    "members": 3,
     "how": "Candidature staff o promozione interna."
    },
    {
@@ -41,7 +41,7 @@
    {
     "name": "Mod",
     "color": null,
-    "members": 1,
+    "members": null,
     "how": "Candidature staff o promozione interna."
    },
    {
