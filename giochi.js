@@ -41,31 +41,58 @@ async function save(game,score){
  const {error}=await sb.from('scores').insert({game,score:Math.round(score),username:p.name,avatar_url:p.avatar});
  if(game!==cur)return;msg(error?'Non sono riuscito a salvare il punteggio.':'Punteggio salvato ✓');if(!error)board(game)}
 
-/* ---------- Snake ---------- */
+/* ---------- Snake (stile Nokia: suoni sintetizzati + animazioni) ---------- */
+let AC=null;const muted=()=>localStorage.snake_mute==='1';
+function audio(){if(!AC){const A=window.AudioContext||window.webkitAudioContext;if(!A)return null;try{AC=new A()}catch(e){return null}}if(AC.state==='suspended')AC.resume();return AC}
+function beep(f,d=.08,w=0,v=.06,f2){if(muted()||!AC)return;const t=AC.currentTime+w,o=AC.createOscillator(),g=AC.createGain();o.type='square';o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+d);
+ g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g).connect(AC.destination);o.start(t);o.stop(t+d+.02)}
+const SFX={start:()=>{beep(660,.07);beep(990,.09,.08)},eat:()=>beep(1320,.05,0,.05),tick:()=>beep(180,.012,0,.008),
+ over:()=>{[523,415,330,247].forEach((f,i)=>beep(f,.16,i*.15,.06))},best:()=>{[659,784,988,1319].forEach((f,i)=>beep(f,.09,.7+i*.1,.05))}};
+const TICK=false; // passo udibile: metti true per il "tic" ad ogni movimento (molto leggero)
 function snake(){
- stage.innerHTML='<div class="ghud"><span>Mele <b id="sc">0</b></span><span>Record <b id="rec">'+(+localStorage.snake_best||0)+'</b></span></div><canvas id="cv" width="400" height="400" aria-label="Snake"></canvas><div class="pad"><button class="u" data-d="0,-1">↑</button><button class="l" data-d="-1,0">←</button><button class="d" data-d="0,1">↓</button><button class="r" data-d="1,0">→</button></div><button class="btn sm" id="go">Gioca</button><p class="gmsg"></p>';
- const cv=q('#cv'),c=cv.getContext('2d'),N=20,S=20;let sn,dir,nd,ap,score,timer=null,run=false;
+ stage.innerHTML='<div class="ghud"><span>Mele <b id="sc">0</b></span><span>Record <b id="rec">'+(+localStorage.snake_best||0)+'</b></span><button class="mute" id="mute" aria-label="Audio"></button></div><canvas id="cv" width="400" height="400" aria-label="Snake"></canvas><div class="pad"><button class="u" data-d="0,-1">↑</button><button class="l" data-d="-1,0">←</button><button class="d" data-d="0,1">↓</button><button class="r" data-d="1,0">→</button></div><button class="btn sm" id="go">Gioca</button><p class="gmsg"></p>';
+ const cv=q('#cv'),c=cv.getContext('2d'),N=20,S=20,RMo=matchMedia('(prefers-reduced-motion: reduce)').matches||document.documentElement.classList.contains('still');
+ let sn,old,dir,nd,ap,score,timer=null,run=false,last=0,iv=130,raf=0,parts=[],flashT=-1e9,dead=0,eatT=-1e9;
+ const mb=q('#mute'),setM=()=>{mb.textContent=muted()?'🔇':'🔊';mb.title=muted()?'Audio disattivato':'Audio attivo'};setM();
+ mb.onclick=()=>{localStorage.snake_mute=muted()?'0':'1';setM();if(!muted()){audio();beep(990,.05)}};
  const col=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
  function place(){do{ap={x:Math.random()*N|0,y:Math.random()*N|0}}while(sn.some(p=>p.x===ap.x&&p.y===ap.y))}
- function draw(){c.clearRect(0,0,400,400);c.fillStyle=col('--mut');c.beginPath();c.arc(ap.x*S+S/2,ap.y*S+S/2,S/2.6,0,7);c.fill();
-  c.fillStyle=col('--fg');sn.forEach((p,i)=>{const k=i?2:1;c.globalAlpha=i?Math.max(.45,1-i/40):1;c.beginPath();c.roundRect(p.x*S+k,p.y*S+k,S-2*k,S-2*k,5);c.fill()});c.globalAlpha=1}
- function reset(){sn=[{x:9,y:10},{x:8,y:10},{x:7,y:10}];dir={x:1,y:0};nd=dir;score=0;q('#sc').textContent=0;place();draw()}
+ function draw(now){const fg=col('--fg'),mu=col('--mut'),ln=col('--line'),bg=col('--soft');c.clearRect(0,0,400,400);
+  c.fillStyle=ln;for(let x=0;x<N;x++)for(let y=0;y<N;y++)c.fillRect(x*S+S/2-1,y*S+S/2-1,2,2); // griglia LCD
+  const pulse=RMo?1:1+.15*Math.sin(now/140),blink=!RMo&&run&&Math.floor(now/400)%6===0;
+  if(!blink){c.fillStyle=mu;c.beginPath();c.arc(ap.x*S+S/2,ap.y*S+S/2,S/2.8*pulse,0,7);c.fill()}
+  const k=run&&!RMo?Math.max(0,Math.min(1,(now-last)/iv)):1,hide=dead&&Math.floor((now-dead)/150)%2===1;
+  if(!hide)sn.forEach((p,i)=>{const f=i<old.length?old[i]:p,x=(f.x+(p.x-f.x)*k)*S,y=(f.y+(p.y-f.y)*k)*S,pad=i?2:1;
+   const wave=(now-flashT)/28-i;c.fillStyle=wave>0&&wave<2.5?mu:fg;c.globalAlpha=i?Math.max(.5,1-i/40):1;
+   c.beginPath();c.roundRect(x+pad,y+pad,S-2*pad,S-2*pad,i?5:7);c.fill();c.globalAlpha=1;
+   if(!i){const d=run||!dead?nd:dir,cx=x+S/2+d.x*4,cy=y+S/2+d.y*4,ox=d.y*4,oy=d.x*4;c.fillStyle=bg;
+    [[1],[-1]].forEach(([s])=>{c.beginPath();c.arc(cx+ox*s,cy+oy*s,dead?1.2:2,0,7);c.fill()})}});
+  parts=parts.filter(p=>(p.l-=1)>0);parts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vx*=.92;p.vy*=.92;c.globalAlpha=p.l/24;c.fillStyle=fg;c.fillRect(p.x-1.5,p.y-1.5,3,3)});c.globalAlpha=1;
+  const er=(now-eatT)/300;if(!RMo&&er<1){c.strokeStyle=mu;c.globalAlpha=1-er;c.lineWidth=2;c.beginPath();c.arc(old[0]?sn[0].x*S+S/2:0,sn[0].y*S+S/2,S/2+er*16,0,7);c.stroke();c.globalAlpha=1}}
+ function loop(now){draw(now);raf=requestAnimationFrame(loop)}
+ function reset(){sn=[{x:9,y:10},{x:8,y:10},{x:7,y:10}];old=sn.map(p=>({...p}));dir={x:1,y:0};nd=dir;score=0;dead=0;parts=[];q('#sc').textContent=0;place()}
  function step(){dir=nd;const h={x:sn[0].x+dir.x,y:sn[0].y+dir.y};
   if(h.x<0||h.y<0||h.x>=N||h.y>=N||sn.some(p=>p.x===h.x&&p.y===h.y))return end();
-  sn.unshift(h);if(h.x===ap.x&&h.y===ap.y){score++;const s=q('#sc');s.textContent=score;s.classList.remove('pop');void s.offsetWidth;s.classList.add('pop');if(sn.length>=N*N)return end();place()}else sn.pop();draw();
-  timer=setTimeout(step,Math.max(70,130-score*2))}
- function end(){run=false;clearTimeout(timer);q('#go').hidden=false;q('#go').textContent='Rigioca';
-  if(score>(+localStorage.snake_best||0)){localStorage.snake_best=score;q('#rec').textContent=score}
-  msg(`Fine! Hai mangiato ${score} mele.`);if(score>0)save('snake',score)}
+  old=sn.map(p=>({...p}));sn.unshift(h);last=performance.now();
+  if(h.x===ap.x&&h.y===ap.y){score++;SFX.eat();flashT=last;eatT=last;
+   if(!RMo)for(let i=0;i<10;i++){const a=Math.random()*7,v=1.5+Math.random()*2.5;parts.push({x:ap.x*S+S/2,y:ap.y*S+S/2,vx:Math.cos(a)*v,vy:Math.sin(a)*v,l:24})}
+   const s=q('#sc');s.textContent=score;s.classList.remove('pop');void s.offsetWidth;s.classList.add('pop');if(sn.length>=N*N)return end();place()}else{sn.pop();if(TICK)SFX.tick()}
+  iv=Math.max(70,130-score*2);timer=setTimeout(step,iv)}
+ function end(){run=false;clearTimeout(timer);old=sn.map(p=>({...p}));SFX.over();
+  if(!RMo){dead=performance.now();cv.classList.remove('shake');void cv.offsetWidth;cv.classList.add('shake')}
+  setTimeout(()=>{dead=0},RMo?0:900);
+  const g=q('#go');g.textContent='Rigioca';setTimeout(()=>{g.hidden=false},RMo?0:700);
+  if(score>(+localStorage.snake_best||0)){localStorage.snake_best=score;const r=q('#rec');r.textContent=score;SFX.best();r.classList.remove('pop');void r.offsetWidth;r.classList.add('pop');msg(`Nuovo record! ${score} mele.`)}
+  else msg(`Fine! Hai mangiato ${score} mele.`);if(score>0)save('snake',score)}
  function turn(x,y){if(!run)return;if(x===-dir.x&&y===-dir.y)return;nd={x,y}}
- q('#go').onclick=()=>{if(!user)return;reset();run=true;q('#go').hidden=true;msg('');timer=setTimeout(step,300)};
+ q('#go').onclick=()=>{if(!user)return;audio();reset();run=true;last=performance.now()+170;iv=130;q('#go').hidden=true;msg('');SFX.start();timer=setTimeout(step,300)};
  qa('.pad button').forEach(b=>b.addEventListener('pointerdown',e=>{e.preventDefault();const [x,y]=b.dataset.d.split(',').map(Number);turn(x,y)}));
  const K={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0],w:[0,-1],s:[0,1],a:[-1,0],d:[1,0]};
  const key=e=>{const k=K[e.key.length===1?e.key.toLowerCase():e.key];if(k&&run){e.preventDefault();turn(...k)}};addEventListener('keydown',key);
  let t0=null;cv.addEventListener('touchstart',e=>{t0=e.touches[0]},{passive:true});
  cv.addEventListener('touchmove',e=>{if(run)e.preventDefault()},{passive:false});
  cv.addEventListener('touchend',e=>{if(!t0)return;const t=e.changedTouches[0],dx=t.clientX-t0.clientX,dy=t.clientY-t0.clientY;t0=null;if(Math.max(Math.abs(dx),Math.abs(dy))<20)return;Math.abs(dx)>Math.abs(dy)?turn(Math.sign(dx),0):turn(0,Math.sign(dy))});
- reset();return()=>{clearTimeout(timer);run=false;removeEventListener('keydown',key)}}
+ reset();raf=requestAnimationFrame(loop);return()=>{clearTimeout(timer);cancelAnimationFrame(raf);run=false;removeEventListener('keydown',key)}}
 
 /* ---------- Tempo di reazione ---------- */
 function reaction(){
