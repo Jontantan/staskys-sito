@@ -7,7 +7,7 @@ const READY=!!(CFG.SUPABASE_URL&&CFG.SUPABASE_ANON_KEY&&!/INCOLLA_QUI/.test(CFG.
 const sb=READY?window.supabase.createClient(CFG.SUPABASE_URL,CFG.SUPABASE_ANON_KEY,{auth:{flowType:'pkce',detectSessionInUrl:true,persistSession:true}}):null;
 const GAMES={
  snake:{t:'Snake',k:'King Snake',d:'Mangia più mele possibile senza sbattere. Frecce/WASD su PC, scorri o usa i tasti su telefono.',unit:'mele',asc:false},
- reaction:{t:'Tempo di reazione',k:'King Reazione',d:'Tocca appena lo schermo diventa scuro. 3 tentativi: conta la media. Meno è meglio.',unit:'ms',asc:true},
+ reaction:{t:'Tempo di reazione',k:'King Reazione',d:'Tocca appena lo schermo diventa scuro. 3 tentativi: conta la media. Meno è meglio.',unit:'ms',asc:true,fmt:v=>v+' ms'},
  clicker:{t:'Clicker veloce',k:'King Clicker',d:'Quanti clic riesci a fare in 10 secondi? Il tempo parte al primo clic.',unit:'clic',asc:false}
 };
 let inited=false,user=null,cur='snake',stop=()=>{};
@@ -29,18 +29,51 @@ function renderLock(){
  bindLogin(lock)}
 
 /* ---------- classifica ---------- */
-async function board(game){const g=GAMES[game],lb=q('#lb');q('#bdesc').textContent=`Top 10 · ${g.asc?'tempo medio più basso':'punteggio migliore'}`;
+async function board(game){const g=GAMES[game],lb=q('#lb');q('#bdesc').textContent=`Top 10 · ${g.lbDesc||(g.asc?'tempo medio più basso':'punteggio migliore')}`;
  if(!READY){lb.innerHTML='<li class="muted">Classifiche in arrivo.</li>';return}
- const {data,error}=await sb.from('leaderboard').select('user_id,username,avatar_url,score').eq('game',game).order('score',{ascending:g.asc}).order('created_at',{ascending:true}).limit(10);
+ let qy=sb.from(g.since?'scores':'leaderboard').select('user_id,username,avatar_url,score').eq('game',game);if(g.since)qy=qy.gte('created_at',g.since());
+ const {data,error}=await qy.order('score',{ascending:!!g.asc}).order('created_at',{ascending:true}).limit(10);
  if(game!==cur)return;
  if(error){lb.innerHTML='<li class="muted">Classifica non disponibile al momento.</li>';return}
  if(!data.length){lb.innerHTML='<li class="muted">Ancora nessun punteggio. Sii il primo!</li>';return}
- lb.innerHTML=data.map((r,i)=>`<li class="${user&&r.user_id===user.id?'me':''}" style="animation-delay:${i*.04}s">${g.lbAvatar?g.lbAvatar(r,E):r.avatar_url?`<img src="${E(r.avatar_url)}" alt="" loading="lazy">`:'<img alt="">'}<span class="n">${E(r.username)}${i===0?' <span class="crown" title="'+E(g.k||'Primo in classifica')+'">👑</span>':''}</span><span class="s">${Number(r.score).toLocaleString('it-IT')} <small class="muted">${g.unit}</small></span></li>`).join('')}
+ lb.innerHTML=data.map((r,i)=>`<li class="${user&&r.user_id===user.id?'me':''}" style="animation-delay:${i*.04}s">${g.lbAvatar?g.lbAvatar(r,E):r.avatar_url?`<img src="${E(r.avatar_url)}" alt="" loading="lazy">`:'<img alt="">'}<span class="n">${E(r.username)}${i===0?' <span class="crown" title="'+E(g.k||'Primo in classifica')+'">👑</span>':''}</span><span class="s">${g.lbScore?g.lbScore(r.score):Number(r.score).toLocaleString('it-IT')} <small class="muted">${g.unit}</small></span></li>`).join('')}
 async function save(game,score){
- if(!READY||!user)return;const p=profile(user);msg('Salvataggio…');
- const {error}=await sb.from('scores').insert({game,score:Math.round(score),username:p.name,avatar_url:p.avatar});
- if(!error&&GAMES[game].onSaved)try{GAMES[game].onSaved(score)}catch(e){}
- if(game!==cur)return;msg(error?'Non sono riuscito a salvare il punteggio.':'Punteggio salvato ✓');if(!error)board(game)}
+ if(!READY||!user)return;const p=profile(user),g=GAMES[game];score=Math.round(score);
+ const prev=BEST[game],rec=!g.noRecord&&(prev==null||(g.asc?score<prev:score>prev));
+ if(rec){BEST[game]=score;const r=q('#rec');if(r&&!g.ownRec&&game===cur){r.textContent=g.fmt?g.fmt(score):score.toLocaleString('it-IT');API.pop(r)}if(prev!=null||score>0)celebrate(game,score,prev==null)}
+ const keep=q('.gmsg',stage)?.textContent||'';msg(keep?keep+' · Salvataggio…':'Salvataggio…');
+ const {error}=await sb.from('scores').insert({game,score,username:p.name,avatar_url:p.avatar});
+ if(!error&&g.onSaved)try{g.onSaved(score)}catch(e){}
+ if(!error)loadStreak();
+ if(game!==cur)return;msg((keep?keep+' · ':'')+(error?(/Wordle|veloce/.test(error.message||'')?error.message:'Non sono riuscito a salvare il punteggio.'):'Salvato ✓'));if(!error)board(game)}
+/* ---------- record personale + festa "NUOVO RECORD!" ---------- */
+const BEST={};
+async function loadBest(game){if(!READY||!user)return;const b=await myBest(game);const g=GAMES[game];
+ const key=game+'_best',loc=localStorage[key]!=null&&localStorage[key]!==''?+localStorage[key]:null;
+ let v=b;if(v==null)v=null;BEST[game]=v;
+ if(game!==cur||g.ownRec)return;const r=q('#rec');if(!r)return;const show=v!=null?v:loc;if(show!=null){r.textContent=g.fmt?g.fmt(show):Number(show).toLocaleString('it-IT')}}
+function celebrate(game,score,first){const g=GAMES[game],card=q('.gcard');if(!card||game!==cur)return;
+ q('.grecord',card)?.remove();const el=document.createElement('div');el.className='grecord';
+ el.innerHTML=`<b>${first?'PRIMO RECORD!':'NUOVO RECORD!'}</b><span>${E(g.fmt?g.fmt(score):score.toLocaleString('it-IT'))} ${g.fmt?'':E(g.unit)}</span>`;
+ card.appendChild(el);setTimeout(()=>el.remove(),2600);
+ [523,659,784,1047,1319].forEach((f,i)=>tone('triangle',f,.14,i*.08,.05));tone('sine',1568,.4,.42,.04);
+ if(API.RM())return;const cv=document.createElement('canvas'),r=card.getBoundingClientRect();cv.className='gconfetti';cv.width=r.width;cv.height=r.height;card.appendChild(cv);
+ const c=cv.getContext('2d'),P=[],cols=['#ff4545','#ffd23f','#3ecf5a','#6cc8ff','#a35cff','#ff9a2e',API.col('--fg')];
+ for(let i=0;i<120;i++)P.push({x:r.width/2,y:r.height*.35,vx:(Math.random()-.5)*14,vy:-Math.random()*12-3,s:3+Math.random()*5,a:Math.random()*7,va:(Math.random()-.5)*.4,c:cols[i%cols.length]});
+ let n=0;(function f(){c.clearRect(0,0,cv.width,cv.height);P.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.35;p.vx*=.985;p.a+=p.va;c.save();c.translate(p.x,p.y);c.rotate(p.a);c.fillStyle=p.c;c.fillRect(-p.s/2,-p.s/4,p.s,p.s/2);c.restore()});
+  if(++n<110)requestAnimationFrame(f);else cv.remove()})()}
+/* tasto R = Rigioca (quando il pulsante è visibile e non stai scrivendo) */
+addEventListener('keydown',e=>{if((e.key!=='r'&&e.key!=='R')||e.ctrlKey||e.metaKey||e.altKey||/INPUT|TEXTAREA/.test(e.target.tagName))return;
+ const b=q('#go',stage);if(b&&!b.hidden&&b.offsetParent&&!GAMES[cur].noR){e.preventDefault();b.click()}});
+/* ---------- streak giornaliera ---------- */
+async function loadStreak(){const box=q('#streak');if(!box)return;
+ if(!READY){box.innerHTML='<h3>Streak 🔥</h3><p class="muted small">In arrivo.</p>';return}
+ const {data,error}=await sb.from('streaks').select('user_id,username,avatar_url,streak').order('streak',{ascending:false}).order('last_day',{ascending:false}).limit(5);
+ let mine=null;if(user){const m=await sb.from('streaks').select('streak').eq('user_id',user.id).limit(1);if(!m.error)mine=m.data[0]?.streak||0}
+ if(error){box.innerHTML='<h3>Streak 🔥</h3><p class="muted small">Streak non disponibili al momento.</p>';return}
+ box.innerHTML=`<div class="ghead"><h3>Streak 🔥</h3><p class="muted small">Giorni di fila con almeno una partita</p></div>
+ <ol class="lb sk">${data.length?data.map((r,i)=>`<li class="${user&&r.user_id===user.id?'me':''}" style="animation-delay:${i*.04}s">${r.avatar_url?`<img src="${E(r.avatar_url)}" alt="" loading="lazy">`:'<img alt="">'}<span class="n">${E(r.username)}</span><span class="s">🔥 ${r.streak} <small class="muted">${r.streak===1?'giorno':'giorni'}</small></span></li>`).join(''):'<li class="muted">Nessuna streak attiva. Inizia oggi!</li>'}</ol>
+ ${user?`<p class="skme">La tua streak: <b>🔥 ${mine||0}</b> ${mine?'':'<span class="muted small">— gioca una partita oggi per iniziarla</span>'}</p>`:''}`}
 /* miglior punteggio dell'utente (dalla classifica Supabase, segue l'account Discord) */
 async function myBest(game){if(!READY||!user)return null;const {data,error}=await sb.from('leaderboard').select('score').eq('game',game).eq('user_id',user.id).limit(1);return error||!data.length?null:data[0].score}
 
@@ -108,7 +141,7 @@ function reaction(){
  stage.innerHTML='<div class="ghud"><span>Tentativo <b id="tr">0</b>/3</span><span>Record <b id="rec">'+(localStorage.reaction_best?localStorage.reaction_best+' ms':'–')+'</b></span></div><div class="rzone" id="z" tabindex="0"><span class="big">Inizia</span><span>Tocca per cominciare</span></div><p class="gmsg"></p>';
  const z=q('#z');let st='idle',times=[],t0=0,to=null;
  const show=(cls,a,b)=>{z.className='rzone '+cls;z.innerHTML=`<span class="big">${a}</span><span>${b}</span>`};
- function arm(){st='wait';show('wait','Aspetta…','Tocca quando diventa scuro');to=setTimeout(()=>{st='go';t0=performance.now();show('go','ORA!','')},1200+Math.random()*2500)}
+ function arm(){audio();st='wait';show('wait','Aspetta…','Tocca quando diventa scuro');to=setTimeout(()=>{st='go';t0=performance.now();show('go','ORA!','');tone('square',1320,.06,0,.04)},1200+Math.random()*2500)}
  function hit(e){e.preventDefault();if(!user)return;
   if(st==='idle'||st==='done'){times=[];q('#tr').textContent=0;msg('');arm()}
   else if(st==='wait'){clearTimeout(to);st='early';show('','Troppo presto!','Tocca per riprovare questo tentativo')}
@@ -132,13 +165,13 @@ function clicker(){
   if(n<=200&&n>0)save('clicker',n);else if(n>200)msg('Più di 200 clic? Sospetto: punteggio non salvato.')}
  z.addEventListener('pointerdown',e=>{e.preventDefault();if(!user)return;
   if(st!=='run'){if(performance.now()<cool)return;n=0;st='run';end=performance.now()+10000;z.classList.add('on');q('#h').textContent='Vai, vai, vai!';msg('');raf=requestAnimationFrame(tick)}
-  n++;const el=q('#n');el.textContent=n;el.classList.remove('pop');void el.offsetWidth;el.classList.add('pop')});
+  n++;audio();tone('triangle',300+Math.min(n,120)*9,.04,0,.025);const el=q('#n');el.textContent=n;el.classList.remove('pop');void el.offsetWidth;el.classList.add('pop')});
  return()=>cancelAnimationFrame(raf)}
 
 /* ---------- giochi extra (giochi-*.js, caricati prima di questo file) ---------- */
 const MAKE={snake,reaction,clicker};
 const RM=()=>matchMedia('(prefers-reduced-motion: reduce)').matches||document.documentElement.classList.contains('still');
-const API={q,qa,E,stage,msg,save,audio,beep,tone,noise,muted,RM,myBest,profile,get AC(){return AC},get user(){return user},get cur(){return cur},
+const API={q,qa,E,stage,msg,save,audio,beep,tone,noise,muted,RM,myBest,profile,get AC(){return AC},celebrate,best:g=>BEST[g],sb,get user(){return user},get cur(){return cur},
  muteBtn(el){const set=()=>{el.textContent=muted()?'🔇':'🔊';el.title=muted()?'Audio disattivato':'Audio attivo'};set();
   el.onclick=()=>{localStorage.snake_mute=muted()?'0':'1';set();if(!muted()){audio();beep(990,.05)}el.blur()};return set},
  pop(el){el.classList.remove('pop');void el.offsetWidth;el.classList.add('pop')},
@@ -147,11 +180,11 @@ Object.entries(window.GIOCHI_EXTRA||{}).forEach(([id,g])=>{GAMES[id]=g;MAKE[id]=
 
 /* ---------- avvio ---------- */
 function open(game){stop();cur=game;qa('.gtab').forEach(b=>b.classList.toggle('active',b.dataset.game===game));
- q('#gtitle').textContent=GAMES[game].t;q('#gdesc').textContent=GAMES[game].d;q('#kingnote').textContent=GAMES[game].k?`Il primo in classifica riceve il ruolo ${GAMES[game].k} sul server Discord.`:'';stop=MAKE[game]();renderLock();board(game);
+ q('#gtitle').textContent=GAMES[game].t;q('#gdesc').textContent=GAMES[game].d;q('#kingnote').textContent=GAMES[game].k?`Il primo in classifica riceve il ruolo ${GAMES[game].k} sul server Discord.`:'';stop=MAKE[game]();renderLock();board(game);loadBest(game);
  if(inited)try{history.replaceState(null,'',location.pathname+'#'+game)}catch(e){}}
 qa('.gtab').forEach(b=>b.onclick=()=>open(b.dataset.game));
 const start=GAMES[location.hash.slice(1)]?location.hash.slice(1):'snake';
-if(sb){sb.auth.getSession().then(({data})=>{user=data.session?.user||null;inited=true;renderAuth();open(cur)});
- sb.auth.onAuthStateChange((_e,s)=>{const was=user?.id;user=s?.user||null;if(was!==user?.id){renderAuth();renderLock();board(cur);if(GAMES[cur].onUser)try{GAMES[cur].onUser(user)}catch(e){}}})}
-if(!sb)inited=true;cur=start;renderAuth();open(start);
+if(sb){sb.auth.getSession().then(({data})=>{user=data.session?.user||null;inited=true;renderAuth();open(cur);loadStreak()});
+ sb.auth.onAuthStateChange((_e,s)=>{const was=user?.id;user=s?.user||null;if(was!==user?.id){renderAuth();renderLock();board(cur);loadStreak();for(const k in BEST)delete BEST[k];loadBest(cur);if(GAMES[cur].onUser)try{GAMES[cur].onUser(user)}catch(e){}}})}
+if(!sb)inited=true;cur=start;renderAuth();open(start);loadStreak();
 })();

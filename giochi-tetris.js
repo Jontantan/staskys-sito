@@ -20,14 +20,14 @@ function make(A){
  mus.onclick=()=>{localStorage.tetris_music=musOn()?'0':'1';setMus();mus.blur()};
  const SFX={move:()=>A.beep(220,.02,0,.02),rot:()=>A.beep(660,.035,0,.03,880),drop:()=>A.beep(140,.08,0,.06,70),lock:()=>A.beep(110,.04,0,.03),
   clear:n=>{[523,659,784,1047].slice(0,n).forEach((f,i)=>A.beep(f,.07,i*.05,.045));if(n===4)A.beep(1568,.2,.22,.05)},level:()=>[784,988,1175].forEach((f,i)=>A.beep(f,.08,i*.08,.04)),over:()=>[440,349,294,220].forEach((f,i)=>A.beep(f,.18,i*.16,.06))};
- let B,cur,nxt,hold,canHold,bag=[],score,lines,level,st='idle',dropT=0,raf=0,last=0,flash=[],flashT=0,lockT=0;
+ let B,cur,nxt,hold,canHold,bag=[],score,lines,level,st='idle',dropT=0,raf=0,last=0,flash=[],flashT=0,lockT=0,combo=-1,lvT=-1e9,popT=-1e9,popTxt='';
  const mk=t=>({t,b:SH[t].map(p=>[...p]),x:3,y:t==='I'?-1:0});
  const draw7=()=>{if(!bag.length){bag='IOTSZJL'.split('');for(let i=6;i>0;i--){const j=Math.random()*(i+1)|0;[bag[i],bag[j]]=[bag[j],bag[i]]}}return mk(bag.pop())};
  const fits=(p,dx=0,dy=0,b=p.b)=>b.every(([x,y])=>{x+=p.x+dx;y+=p.y+dy;return x>=0&&x<10&&y<20&&(y<0||!B[y][x])});
  function rotate(dir){if(cur.t==='O')return;const n=cur.t==='I'?3:2;const nb=cur.b.map(([x,y])=>dir>0?[n-y,x]:[y,n-x]);
   for(const [kx,ky] of [[0,0],[-1,0],[1,0],[-2,0],[2,0],[0,-1]])if(fits(cur,kx,ky,nb)){cur.b=nb;cur.x+=kx;cur.y+=ky;SFX.rot();lockT=0;return}}
- const speed=()=>Math.max(70,800*Math.pow(.85,level-1));
- function reset(){B=Array.from({length:20},()=>Array(10).fill(0));bag=[];cur=draw7();nxt=draw7();hold=null;canHold=true;score=0;lines=0;level=1;flash=[];hud()}
+ const speed=()=>Math.max(33,800*Math.pow(.8,level-1)); // livello ogni 10 righe: la gravità accelera del 20% a livello
+ function reset(){B=Array.from({length:20},()=>Array(10).fill(0));bag=[];cur=draw7();nxt=draw7();hold=null;canHold=true;score=0;lines=0;level=1;flash=[];combo=-1;lvT=popT=-1e9;hud()}
  function hud(){q('#sc').textContent=score;q('#ln').textContent=lines;q('#lv').textContent=level;side()}
  function mini(cvs,p){const x=cvs.getContext('2d');x.clearRect(0,0,80,60);if(!p)return;const s=15,xs=p.b.map(b=>b[0]),ys=p.b.map(b=>b[1]),w=Math.max(...xs)-Math.min(...xs)+1,h=Math.max(...ys)-Math.min(...ys)+1;
   p.b.forEach(([bx,by])=>cell(x,(bx-Math.min(...xs))*s+(80-w*s)/2,(by-Math.min(...ys))*s+(60-h*s)/2,s,COL[p.t]))}
@@ -37,8 +37,10 @@ function make(A){
  function spawn(){cur=nxt;nxt=draw7();canHold=true;side();if(!fits(cur))over()}
  function lock(){let top=false;cur.b.forEach(([x,y])=>{y+=cur.y;x+=cur.x;if(y<0)top=true;else B[y][x]=cur.t});if(top)return over();SFX.lock();
   const full=[];B.forEach((r,i)=>{if(r.every(Boolean))full.push(i)});
-  if(full.length){score+=[0,100,300,500,800][full.length]*level;lines+=full.length;SFX.clear(full.length);flash=full;flashT=performance.now();
-   full.forEach(i=>{B.splice(i,1);B.unshift(Array(10).fill(0))});const nl=1+Math.floor(lines/10);if(nl>level){level=nl;SFX.level();A.pop(q('#lv'))}A.pop(q('#sc'))}
+  if(full.length){combo++;score+=[0,100,300,500,800][full.length]*level+(combo>0?50*combo*level:0);lines+=full.length;SFX.clear(full.length);
+   if(combo>0){A.tone('triangle',523*Math.pow(2,Math.min(combo,12)/12),.12,.25,.04);popTxt='Combo x'+(combo+1);popT=performance.now()}
+   if(full.length===4){popTxt='TETRIS!';popT=performance.now();if(!still){cv.classList.remove('shake');void cv.offsetWidth;cv.classList.add('shake')}}flash=full;flashT=performance.now();
+   full.forEach(i=>{B.splice(i,1);B.unshift(Array(10).fill(0))});const nl=1+Math.floor(lines/10);if(nl>level){level=nl;SFX.level();A.pop(q('#lv'));lvT=performance.now()}A.pop(q('#sc'))}else combo=-1;
   hud();spawn()}
  function move(dx){if(st!=='run')return;if(fits(cur,dx,0)){cur.x+=dx;SFX.move();lockT=0}}
  function soft(){if(st!=='run')return;if(fits(cur,0,1)){cur.y++;score+=1;dropT=0;hud()}else lock()}
@@ -65,6 +67,8 @@ function make(A){
   const fl=(now-flashT)/250;if(fl<1&&!still){c.globalAlpha=(1-fl)*.35;c.fillStyle=fg;c.fillRect(0,0,240,480);c.globalAlpha=1}
   if(st==='run'){let g=0;while(fits(cur,0,g+1))g++;cur.b.forEach(([x,y])=>{if(y+cur.y+g>=0)cell(c,(x+cur.x)*S,(y+cur.y+g)*S,S,COL[cur.t],1)});
    cur.b.forEach(([x,y])=>{if(y+cur.y>=0)cell(c,(x+cur.x)*S,(y+cur.y)*S,S,COL[cur.t])})}
+  const lt=(now-lvT)/1400;if(lt<1){c.globalAlpha=1-lt;c.fillStyle=fg;c.font='700 26px Inter,sans-serif';c.textAlign='center';c.fillText('LIVELLO '+level,120,200-lt*30);c.globalAlpha=1}
+  const pt=(now-popT)/1000;if(pt<1){c.globalAlpha=1-pt;c.fillStyle=fg;c.font='700 18px Inter,sans-serif';c.textAlign='center';c.fillText(popTxt,120,260-pt*24);c.globalAlpha=1}
   if(st==='idle'){c.fillStyle=fg;c.font='600 14px Inter,sans-serif';c.textAlign='center';c.fillText('Premi Gioca',120,240)}}
  function loop(now){const dt=Math.min(100,now-(last||now));last=now;
   if(st==='run'){dropT+=dt;if(dropT>=speed()){dropT=0;if(fits(cur,0,1))cur.y++;else{lockT+=speed();if(lockT>=Math.min(500,speed())){lockT=0;lock()}}}}

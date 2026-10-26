@@ -101,7 +101,7 @@ function make(A){
  GAME.onUser=()=>{const p=A.user?A.profile(A.user):null;if(p&&p.avatar)img.src=p.avatar;best=0;bestKnown=false;loadBest()};
  return()=>{cancelAnimationFrame(raf);removeEventListener('keydown',key);st='idle'}}
 
-const GAME={t:'Flappy',d:'Vola tra i tubi con il tuo avatar Discord. Spazio/↑/clic su PC, tocca su telefono. Più tubi superi, più ali sblocchi.',unit:'tubi',asc:false,make,
+const GAME={t:'Flappy',d:'Vola tra i tubi con il tuo avatar Discord. Spazio/↑/clic su PC, tocca su telefono. Più tubi superi, più ali sblocchi.',unit:'tubi',asc:false,ownRec:true,make,
  lbAvatar(r,E){const w=tierOf(Number(r.score)||0);return `<span class="wav w-${w.fx||'solid'}" style="--wc:${w.c}" title="Ali ${E(w.n)}">${r.avatar_url?`<img src="${E(r.avatar_url)}" alt="" loading="lazy">`:'<img alt="">'}</span>`}};
 (window.GIOCHI_EXTRA=window.GIOCHI_EXTRA||{}).flappy=GAME;
 })();

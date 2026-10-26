@@ -8,8 +8,8 @@ function make(A){
  <button class="btn sm" id="go">Gioca</button><p class="gmsg"></p>`;
  const cv=q('#cv'),c=cv.getContext('2d'),W=600,H=220,GY=180,still=A.RM();A.muteBtn(q('#mute'));
  const SFX={jump:()=>A.beep(520,.07,0,.05,980),point:()=>{A.beep(988,.06,0,.04);A.beep(1319,.12,.06,.04)},over:()=>{A.beep(392,.12,0,.06);A.beep(196,.25,.1,.06)}};
- let st='idle',dy,vy,duck=false,obs,speed,dist,score,raf=0,acc=0,last=0,next,deadT=0,clouds=[],ground=0,milestone=0;
- function reset(){dy=0;vy=0;duck=false;obs=[];speed=6;dist=0;score=0;next=60;milestone=100;q('#sc').textContent=0;clouds=[{x:120,y:40},{x:380,y:60},{x:540,y:30}]}
+ let near=0,st='idle',dy,vy,duck=false,obs,speed,dist,score,raf=0,acc=0,last=0,next,deadT=0,clouds=[],ground=0,milestone=0;
+ function reset(){dy=0;vy=0;duck=false;obs=[];speed=6;dist=0;near=0;score=0;next=60;milestone=100;q('#sc').textContent=0;clouds=[{x:120,y:40},{x:380,y:60},{x:540,y:30}]}
  function start(){A.audio();reset();st='run';q('#go').hidden=true;msg('')}
  function jump(){if(!A.user)return;if(st==='dead'){if(performance.now()-deadT>500)start();return}if(st==='idle'){start()}if(dy===0){vy=12.5;SFX.jump()}}
  function die(){st='dead';deadT=performance.now();SFX.over();if(!still){cv.classList.remove('shake');void cv.offsetWidth;cv.classList.add('shake')}
@@ -18,16 +18,16 @@ function make(A){
   if(score>0)A.save('dino',score)}
  function box(){return duck&&dy===0?{x:40,y:GY-26,w:52,h:26}:{x:44,y:GY-48-dy,w:38,h:48}}
  function tick(){if(st!=='run')return;
-  dist+=speed;score=Math.floor(dist/10);speed=Math.min(15,6+dist/2500);
+  dist+=speed;score=Math.floor(dist/10);speed=Math.min(26,6+Math.min(9,dist/2500)+Math.max(0,dist-22500)/9000); // cresce sempre, più piano dopo 15
   if(dy>0||vy>0){dy+=vy;vy-=duck?1.6:.75;if(dy<=0){dy=0;vy=0}}
   ground=(ground+speed)%40;clouds.forEach(k=>{k.x-=speed*.2;if(k.x<-60){k.x=W+Math.random()*100;k.y=20+Math.random()*50}});
-  if(--next<=0){const bird=score>250&&Math.random()<.3;
+  if(--next<=0){const bird=score>350&&Math.random()<Math.min(.45,.2+score/8000);
    if(bird)obs.push({x:W,y:GY-[24,52,76][Math.random()*3|0],w:40,h:24,b:1});
-   else{const n=1+(Math.random()*(score>400?3:2)|0),h=30+Math.random()*22;obs.push({x:W,y:GY-h,w:16*n+6*(n-1),h,n})}
-   next=Math.max(38,(60+Math.random()*60)*6/speed)|0}
+   else{const n=1+(Math.random()*(score>1200?4:score>400?3:2)|0),h=30+Math.random()*22;obs.push({x:W,y:GY-h,w:16*n+6*(n-1),h,n})}
+   const dens=Math.max(.55,1-score/4000);next=Math.max(26,(55+Math.random()*60)*dens*6/speed)|0}
   obs.forEach(o=>o.x-=o.b?speed*1.1:speed);obs=obs.filter(o=>o.x>-80);
   const b=box();for(const o of obs){if(b.x+6<o.x+o.w&&b.x+b.w-6>o.x&&b.y+6<o.y+o.h&&b.y+b.h>o.y+4){die();break}}
-  const s=q('#sc');s.textContent=score;if(score>=milestone){milestone+=100;SFX.point();if(!still)A.pop(s)}}
+  const s=q('#sc');s.textContent=score;if(score>=milestone){milestone+=100;A.tone('square',988*Math.pow(2,Math.min(24,milestone/100-2)/24),.06,0,.04);A.tone('square',1319*Math.pow(2,Math.min(24,milestone/100-2)/24),.12,.06,.04);if(!still)A.pop(s)}}
  function draw(now){const fg=A.col('--fg'),ln=A.col('--line'),mu=A.col('--mut'),bg=A.col('--soft');c.clearRect(0,0,W,H);
   c.fillStyle=ln;clouds.forEach(k=>{c.beginPath();c.roundRect(k.x,k.y,46,12,6);c.fill()});
   c.strokeStyle=fg;c.lineWidth=2;c.beginPath();c.moveTo(0,GY);c.lineTo(W,GY);c.stroke();
@@ -52,5 +52,5 @@ function make(A){
  q('#go').onclick=e=>{e.currentTarget.blur();if(!A.user)return;start()};
  reset();raf=requestAnimationFrame(loop);
  return()=>{cancelAnimationFrame(raf);removeEventListener('keydown',kd);removeEventListener('keyup',ku);st='idle'}}
-(window.GIOCHI_EXTRA=window.GIOCHI_EXTRA||{}).dino={t:'Dino runner',d:'Corri ed evita cactus e uccelli: la velocità aumenta. Spazio/↑ per saltare, ↓ per abbassarti; su telefono tocca o scorri giù.',unit:'punti',asc:false,make};
+(window.GIOCHI_EXTRA=window.GIOCHI_EXTRA||{}).dino={t:'Dino runner',d:'Corri ed evita cactus e uccelli: la velocità non smette mai di aumentare e gli ostacoli si infittiscono. Spazio/↑ per saltare, ↓ per abbassarti; su telefono tocca o scorri giù.',unit:'punti',asc:false,make};
 })();
