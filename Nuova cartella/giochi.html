@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Giochi · Staskys</title>
+<meta name="description" content="Minigiochi di Staskys: Snake, Tempo di reazione, Clicker veloce, Flappy, Tetris, Dino runner, Quiz anime, Il Wordle di Staskys, 2048, Breakout, Stack, Suika, Prato fiorito e Battitura, con classifiche, streak e login Discord.">
+<meta property="og:title" content="Giochi · Staskys"><meta property="og:description" content="Minigiochi di Staskys: Wordle, 2048, Tetris, Suika, Flappy, Quiz anime e altri, con classifiche e streak."><meta property="og:image" content="assets/banner.png">
+<link rel="icon" href="assets/icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script>try{if(localStorage.theme==="dark"||(!localStorage.theme&&matchMedia("(prefers-color-scheme: dark)").matches))document.documentElement.dataset.theme="dark"}catch(e){}</script>
+</head>
+<body data-page="giochi">
+<main>
+<section class="page-hero ghero"><div><p class="label">Giochi</p><h1>Minigiochi.</h1><p class="lead">Sfida gli altri membri di Staskys e scala le classifiche. Gioca ogni giorno per allungare la tua streak 🔥</p></div>
+  <aside class="card streakbox reveal" id="streak"><h3>Streak 🔥</h3><p class="muted small">Caricamento…</p></aside></section>
+<section class="wrap tight">
+  <div class="gauth reveal" id="gauth"><span class="muted">Caricamento…</span></div>
+  <div class="gtabs reveal" role="tablist">
+    <button class="gtab active" data-game="snake" role="tab">Snake</button>
+    <button class="gtab" data-game="reaction" role="tab">Tempo di reazione</button>
+    <button class="gtab" data-game="clicker" role="tab">Clicker veloce</button>
+    <button class="gtab" data-game="flappy" role="tab">Flappy</button>
+    <button class="gtab" data-game="tetris" role="tab">Tetris</button>
+    <button class="gtab" data-game="dino" role="tab">Dino runner</button>
+    <button class="gtab" data-game="quiz" role="tab">Quiz anime</button>
+    <button class="gtab" data-game="wordle" role="tab">Wordle</button>
+    <button class="gtab" data-game="2048" role="tab">2048</button>
+    <button class="gtab" data-game="breakout" role="tab">Breakout</button>
+    <button class="gtab" data-game="stack" role="tab">Stack</button>
+    <button class="gtab" data-game="suika" role="tab">Suika</button>
+    <button class="gtab" data-game="mines" role="tab">Prato fiorito</button>
+    <button class="gtab" data-game="typing" role="tab">Battitura</button>
+  </div>
+  <div class="ggrid reveal">
+    <div class="card gcard">
+      <div class="ghead"><h3 id="gtitle">Snake</h3><p class="muted small" id="gdesc"></p></div>
+      <div class="gstage" id="gstage"></div>
+      <div class="glock" id="glock" hidden></div>
+    </div>
+    <div class="card gboard">
+      <div class="ghead"><h3>Classifica</h3><p class="muted small" id="bdesc">Top 10</p></div>
+      <ol class="lb" id="lb"><li class="muted">Caricamento…</li></ol>
+      <p class="kingnote" id="kingnote"></p>
+    </div>
+  </div>
+</section>
+</main>
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script src="giochi-config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="giochi-flappy.js"></script>
+<script src="giochi-tetris.js"></script>
+<script src="giochi-dino.js"></script>
+<script src="giochi-quiz.js"></script>
+<script src="giochi-2048.js"></script>
+<script src="giochi-breakout.js"></script>
+<script src="giochi-typing.js"></script>
+<script src="giochi-mines.js"></script>
+<script src="giochi-wordle.js"></script>
+<script src="giochi-stack.js"></script>
+<script src="giochi-suika.js"></script>
+<script src="giochi.js"></script>
+</body>
+</html>
