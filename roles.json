@@ -1,5 +1,5 @@
 {
- "updated": "2026-10-26T17:20:05.666243+00:00",
+ "updated": "2026-10-27T17:41:50.393168+00:00",
  "groups": {
   "staff": [
    {
@@ -110,7 +110,7 @@
    {
     "name": "Member",
     "color": null,
-    "members": 1952,
+    "members": 1949,
     "how": "Si ottiene completando la verifica."
    }
   ],
@@ -118,7 +118,7 @@
    {
     "name": "Rosa",
     "color": "#ca618b",
-    "members": 226,
+    "members": 228,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -154,7 +154,7 @@
    {
     "name": "Giallo",
     "color": "#fcf259",
-    "members": 49,
+    "members": 48,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -184,7 +184,7 @@
    {
     "name": "Rosso",
     "color": "#c5172e",
-    "members": 320,
+    "members": 319,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -202,7 +202,7 @@
    {
     "name": "Verde",
     "color": "#6ec207",
-    "members": 94,
+    "members": 93,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -320,7 +320,7 @@
    {
     "name": "Polls",
     "color": null,
-    "members": 436,
+    "members": 438,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -338,7 +338,7 @@
    {
     "name": "Events",
     "color": null,
-    "members": 351,
+    "members": 350,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -443,27 +443,27 @@
   {
    "level": 15,
    "name": "Livello 15",
-   "members": 190
+   "members": 191
   },
   {
    "level": 20,
    "name": "Livello 20",
-   "members": 146
+   "members": 147
   },
   {
    "level": 30,
    "name": "Livello 30",
-   "members": 84
+   "members": 85
   },
   {
    "level": 40,
    "name": "Livello 40",
-   "members": 55
+   "members": 56
   },
   {
    "level": 50,
    "name": "Livello 50",
-   "members": 30
+   "members": 31
   },
   {
    "level": 60,
