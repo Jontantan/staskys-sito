@@ -91,33 +91,82 @@ function noise(d=.1,w=0,v=.05,fq=1200,fq2){if(muted()||!AC)return;const t=AC.cur
  const s=AC.createBufferSource(),fl=AC.createBiquadFilter(),g=AC.createGain();s.buffer=b;fl.type='bandpass';fl.Q.value=1.2;fl.frequency.setValueAtTime(fq,t);if(fq2)fl.frequency.exponentialRampToValueAtTime(fq2,t+d);
  g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0001,t+d);s.connect(fl).connect(g).connect(AC.destination);s.start(t)}
 const TICK=false; // passo udibile: metti true per il "tic" ad ogni movimento (molto leggero)
+/* ===== SKIN SNAKE: soglia (record di mele, preso dalla classifica = segue l'account Discord) → aspetto. Modifica qui. ===== */
+const SKINS=[
+ {min:0,  id:'classico',  n:'Classico',   c:''},           // nero/bianco come il vecchio Nokia (colore del tema)
+ {min:0,  id:'verde',     n:'Verde',      c:'#3ecf5a'},
+ {min:10, id:'azzurro',   n:'Azzurro',    c:'#6cc8ff'},
+ {min:25, id:'giallo',    n:'Giallo',     c:'#ffd23f'},
+ {min:50, id:'arancione', n:'Arancione',  c:'#ff9a2e'},
+ {min:100,id:'viola',     n:'Viola',      c:'#a35cff'},
+ {min:150,id:'arcobaleno',n:'Arcobaleno', c:'#ff4545',fx:'rainbow'},
+ {min:200,id:'oro',       n:'Oro',        c:'#ffcc33',fx:'gold'},
+ {min:300,id:'neon',      n:'Neon',       c:'#39ff14',fx:'neon'}
+];
+const skinOf=s=>{let t=SKINS[1];for(const k of SKINS)if(s>=k.min&&k.min>0)t=k;return t};
+(()=>{const st=document.createElement('style');st.textContent=`
+.sav{position:relative;display:inline-flex;flex:none;width:32px;height:32px;border-radius:50%;padding:2px;box-sizing:content-box;background:var(--wc)}
+.sav img{position:relative;z-index:1;width:32px;height:32px}
+.sav.w-neon{box-shadow:0 0 8px 1px var(--wc)}
+.sav.w-classico{background:var(--fg)}
+.ssw{width:44px;height:14px;border-radius:7px;border:1px solid var(--fg);background:var(--wc)}
+.ssw.w-classico{background:var(--fg)}
+.ssw.w-neon{box-shadow:0 0 8px var(--wc)}`;document.head.appendChild(st)})();
+GAMES.snake.lbAvatar=(r,E)=>{const k=skinOf(Number(r.score)||0);return `<span class="sav w-${k.fx||'solid'}" style="--wc:${k.c}" title="Skin ${E(k.n)}">${r.avatar_url?`<img src="${E(r.avatar_url)}" alt="" loading="lazy">`:'<img alt="">'}</span>`};
 function snake(){
- stage.innerHTML='<div class="ghud"><span>Mele <b id="sc">0</b></span><span>Record <b id="rec">'+(+localStorage.snake_best||0)+'</b></span><button class="mute" id="mute" aria-label="Audio"></button></div><canvas id="cv" width="400" height="400" aria-label="Snake"></canvas><div class="pad"><button class="u" data-d="0,-1">↑</button><button class="l" data-d="-1,0">←</button><button class="d" data-d="0,1">↓</button><button class="r" data-d="1,0">→</button></div><button class="btn sm" id="go">Gioca</button><p class="gmsg"></p>';
+ stage.innerHTML='<div class="ghud"><span>Mele <b id="sc">0</b></span><span>Record <b id="rec">'+(+localStorage.snake_best||0)+'</b></span><button class="mute" id="mute" aria-label="Audio"></button></div><canvas id="cv" width="400" height="400" aria-label="Snake"></canvas><div class="pad"><button class="u" data-d="0,-1">↑</button><button class="l" data-d="-1,0">←</button><button class="d" data-d="0,1">↓</button><button class="r" data-d="1,0">→</button></div><button class="btn sm" id="go">Gioca</button><p class="gmsg"></p>'
+  +'<div class="wpick"><div class="wpick-h"><b>Personalizza</b><span class="muted small" id="wnote">Skin sbloccate col tuo record di mele</span></div><div class="wlist" id="wlist"></div></div>';
  const cv=q('#cv'),c=cv.getContext('2d'),N=20,S=20,RMo=matchMedia('(prefers-reduced-motion: reduce)').matches||document.documentElement.classList.contains('still');
- let sn,old,dir,nd,ap,score,timer=null,run=false,last=0,iv=130,raf=0,parts=[],flashT=-1e9,dead=0,eatT=-1e9;
+ let sn,old,dir,nd,ap,score,timer=null,run=false,last=0,iv=130,raf=0,parts=[],flashT=-1e9,dead=0,eatT=-1e9,apT=-1e9,trail=[];
+ let best=0,bestKnown=false,equipped=localStorage.snake_skin||'verde',crossed=new Set();
  const mb=q('#mute'),setM=()=>{mb.textContent=muted()?'🔇':'🔊';mb.title=muted()?'Audio disattivato':'Audio attivo'};setM();
  mb.onclick=()=>{localStorage.snake_mute=muted()?'0':'1';setM();if(!muted()){audio();beep(990,.05)}};
  const col=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
- function place(){do{ap={x:Math.random()*N|0,y:Math.random()*N|0}}while(sn.some(p=>p.x===ap.x&&p.y===ap.y))}
- function draw(now){const fg=col('--fg'),mu=col('--mut'),ln=col('--line'),bg=col('--soft');c.clearRect(0,0,400,400);
+ function skin(){const k=SKINS.find(k=>k.id===equipped);return k&&best>=k.min?k:SKINS[1]}
+ function renderPicker(){const L=q('#wlist');if(!L)return;const on=skin().id;
+  L.innerHTML=SKINS.map(k=>{const ok=best>=k.min;return `<button class="wopt ${ok?'':'locked'} ${on===k.id?'on':''}" data-s="${k.id}" ${ok?'':'disabled'} title="${ok?k.n:'Serve un record di '+k.min+' mele'}"><span class="ssw w-${k.fx||(k.c?'solid':'classico')}" style="--wc:${k.c||'var(--fg)'}"></span><span>${k.n}</span><small>${ok?(on===k.id?'In uso':'Sbloccata'):'🔒 '+k.min}</small></button>`}).join('');
+  qa('.wopt',L).forEach(b=>b.onclick=()=>{equipped=b.dataset.s;localStorage.snake_skin=equipped;renderPicker();audio();beep(990,.05)});
+  const nx=SKINS.find(k=>k.min>best);
+  q('#wnote').textContent=user?(bestKnown?`Il tuo record: ${best} mele. Prossima skin: `+(nx?`${nx.n} a ${nx.min}`:'tutte sbloccate!'):'Carico i tuoi sblocchi…'):'Accedi per sbloccare le skin'}
+ async function loadSkins(){if(!user){best=0;bestKnown=false;renderPicker();return}const b=await myBest('snake');best=Math.max(best,b||0);bestKnown=true;renderPicker()}
+ function toastMsg(t){const el=document.getElementById('toast');if(!el){msg(t);return}el.textContent=t;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),2200)}
+ function place(){do{ap={x:Math.random()*N|0,y:Math.random()*N|0}}while(sn.some(p=>p.x===ap.x&&p.y===ap.y));apT=performance.now()}
+ /* colore del segmento i (0 = testa) per la skin attiva */
+ function segCol(k,i,n,now,fg){if(!k.c)return fg;
+  if(k.fx==='rainbow')return `hsl(${((i*22-(RMo?0:now/6))%360+360)%360} 85% 58%)`;
+  if(k.fx==='gold'){const sh=RMo?0:Math.sin(now/260-i*.45);return `hsl(44 ${88}% ${Math.round(52+sh*14)}%)`}
+  return k.c}
+ function apple(now,mu){const cx=ap.x*S+S/2,cy=ap.y*S+S/2,age=(now-apT)/260,grow=RMo||age>=1?1:Math.max(.05,1-Math.pow(1-age,3)), // entra con un piccolo "pop"
+  pulse=RMo?1:1+.08*Math.sin(now/170),r=S/2.6*pulse*grow;
+  c.fillStyle='#ff4545';c.beginPath();c.arc(cx,cy+1,r,0,7);c.fill();
+  c.fillStyle='rgba(255,255,255,.55)';c.beginPath();c.arc(cx-r*.35,cy-r*.25,r*.28,0,7);c.fill();
+  c.strokeStyle=mu;c.lineWidth=1.6;c.beginPath();c.moveTo(cx,cy-r+1);c.lineTo(cx+1.5,cy-r-3.5*grow);c.stroke();
+  c.fillStyle='#3ecf5a';c.beginPath();c.ellipse(cx+4*grow,cy-r-2*grow,3.2*grow,1.7*grow,-.5,0,7);c.fill()}
+ function draw(now){const fg=col('--fg'),mu=col('--mut'),ln=col('--line'),bg=col('--soft'),k=skin();c.clearRect(0,0,400,400);
   c.fillStyle=ln;for(let x=0;x<N;x++)for(let y=0;y<N;y++)c.fillRect(x*S+S/2-1,y*S+S/2-1,2,2); // griglia LCD
-  const pulse=RMo?1:1+.15*Math.sin(now/140),blink=!RMo&&run&&Math.floor(now/400)%6===0;
-  if(!blink){c.fillStyle=mu;c.beginPath();c.arc(ap.x*S+S/2,ap.y*S+S/2,S/2.8*pulse,0,7);c.fill()}
-  const k=run&&!RMo?Math.max(0,Math.min(1,(now-last)/iv)):1,hide=dead&&Math.floor((now-dead)/150)%2===1;
-  if(!hide)sn.forEach((p,i)=>{const f=i<old.length?old[i]:p,x=(f.x+(p.x-f.x)*k)*S,y=(f.y+(p.y-f.y)*k)*S,pad=i?2:1;
-   const wave=(now-flashT)/28-i;c.fillStyle=wave>0&&wave<2.5?mu:fg;c.globalAlpha=i?Math.max(.5,1-i/40):1;
-   c.beginPath();c.roundRect(x+pad,y+pad,S-2*pad,S-2*pad,i?5:7);c.fill();c.globalAlpha=1;
-   if(!i){const d=run||!dead?nd:dir,cx=x+S/2+d.x*4,cy=y+S/2+d.y*4,ox=d.y*4,oy=d.x*4;c.fillStyle=bg;
-    [[1],[-1]].forEach(([s])=>{c.beginPath();c.arc(cx+ox*s,cy+oy*s,dead?1.2:2,0,7);c.fill()})}});
-  parts=parts.filter(p=>(p.l-=1)>0);parts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vx*=.92;p.vy*=.92;c.globalAlpha=p.l/24;c.fillStyle=fg;c.fillRect(p.x-1.5,p.y-1.5,3,3)});c.globalAlpha=1;
-  const er=(now-eatT)/300;if(!RMo&&er<1){c.strokeStyle=mu;c.globalAlpha=1-er;c.lineWidth=2;c.beginPath();c.arc(old[0]?sn[0].x*S+S/2:0,sn[0].y*S+S/2,S/2+er*16,0,7);c.stroke();c.globalAlpha=1}}
+  apple(now,mu); // la mela è sempre visibile (prima lampeggiava e a volte "spariva")
+  const kk=run&&!RMo?Math.max(0,Math.min(1,(now-last)/iv)):1,hide=dead&&Math.floor((now-dead)/150)%2===1;
+  const pos=sn.map((p,i)=>{const f=i<old.length?old[i]:p;return{x:(f.x+(p.x-f.x)*kk)*S,y:(f.y+(p.y-f.y)*kk)*S}});
+  if(k.fx==='neon'&&!RMo){ // scia luminosa
+   if(run&&pos[0]){const h=pos[0];if(!trail.length||Math.hypot(trail[trail.length-1].x-h.x,trail[trail.length-1].y-h.y)>3)trail.push({x:h.x,y:h.y,t:now})}
+   trail=trail.filter(t=>now-t.t<450);c.fillStyle=k.c;trail.forEach(t=>{const a=1-(now-t.t)/450;c.globalAlpha=a*.35;c.beginPath();c.arc(t.x+S/2,t.y+S/2,S/2.4*a+1,0,7);c.fill()});c.globalAlpha=1}
+  if(!hide){if(k.fx==='neon'){c.shadowColor=k.c;c.shadowBlur=RMo?6:12}
+   for(let i=pos.length-1;i>=0;i--){const {x,y}=pos[i],pad=i?2:1;
+    const wave=(now-flashT)/28-i;c.fillStyle=wave>0&&wave<2.5?(k.c?'#ffffff':mu):segCol(k,i,pos.length,now,fg);c.globalAlpha=i?Math.max(.55,1-i/40):1;
+    c.beginPath();c.roundRect(x+pad,y+pad,S-2*pad,S-2*pad,i?5:7);c.fill()}
+   c.globalAlpha=1;c.shadowBlur=0;
+   const h=pos[0],d=run||!dead?nd:dir,cx=h.x+S/2+d.x*4,cy=h.y+S/2+d.y*4,ox=d.y*4,oy=d.x*4;c.fillStyle=k.c?'#111':bg;
+   [1,-1].forEach(s=>{c.beginPath();c.arc(cx+ox*s,cy+oy*s,dead?1.2:2,0,7);c.fill()})}
+  parts=parts.filter(p=>(p.l-=1)>0);parts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vx*=.92;p.vy*=.92;c.globalAlpha=p.l/24;c.fillStyle=p.c||fg;c.fillRect(p.x-1.5,p.y-1.5,3,3)});c.globalAlpha=1;
+  const er=(now-eatT)/300;if(!RMo&&er<1&&sn[0]){c.strokeStyle=k.c||mu;c.globalAlpha=1-er;c.lineWidth=2;c.beginPath();c.arc(sn[0].x*S+S/2,sn[0].y*S+S/2,S/2+er*16,0,7);c.stroke();c.globalAlpha=1}}
  function loop(now){draw(now);raf=requestAnimationFrame(loop)}
- function reset(){sn=[{x:9,y:10},{x:8,y:10},{x:7,y:10}];old=sn.map(p=>({...p}));dir={x:1,y:0};nd=dir;score=0;dead=0;parts=[];q('#sc').textContent=0;place()}
+ function reset(){sn=[{x:9,y:10},{x:8,y:10},{x:7,y:10}];old=sn.map(p=>({...p}));dir={x:1,y:0};nd=dir;score=0;dead=0;parts=[];trail=[];crossed=new Set();q('#sc').textContent=0;place()}
  function step(){dir=nd;const h={x:sn[0].x+dir.x,y:sn[0].y+dir.y};
   if(h.x<0||h.y<0||h.x>=N||h.y>=N||sn.some(p=>p.x===h.x&&p.y===h.y))return end();
   old=sn.map(p=>({...p}));sn.unshift(h);last=performance.now();
   if(h.x===ap.x&&h.y===ap.y){score++;SFX.eat();flashT=last;eatT=last;
-   if(!RMo)for(let i=0;i<10;i++){const a=Math.random()*7,v=1.5+Math.random()*2.5;parts.push({x:ap.x*S+S/2,y:ap.y*S+S/2,vx:Math.cos(a)*v,vy:Math.sin(a)*v,l:24})}
+   if(!RMo)for(let i=0;i<10;i++){const a=Math.random()*7,v=1.5+Math.random()*2.5;parts.push({x:ap.x*S+S/2,y:ap.y*S+S/2,vx:Math.cos(a)*v,vy:Math.sin(a)*v,l:24,c:'#ff4545'})}
+   const t=SKINS.find(k=>k.min===score);if(t&&t.min>0&&bestKnown&&t.min>best&&!crossed.has(t.id)){crossed.add(t.id);toastMsg(`Skin sbloccata! ${t.n} 🐍`);[784,988,1175,1568].forEach((f,i)=>beep(f,.08,i*.08,.04))}
    const s=q('#sc');s.textContent=score;s.classList.remove('pop');void s.offsetWidth;s.classList.add('pop');if(sn.length>=N*N)return end();place()}else{sn.pop();if(TICK)SFX.tick()}
   iv=Math.max(70,130-score*2);timer=setTimeout(step,iv)}
  function end(){run=false;clearTimeout(timer);old=sn.map(p=>({...p}));SFX.over();
@@ -134,7 +183,9 @@ function snake(){
  let t0=null;cv.addEventListener('touchstart',e=>{t0=e.touches[0]},{passive:true});
  cv.addEventListener('touchmove',e=>{if(run)e.preventDefault()},{passive:false});
  cv.addEventListener('touchend',e=>{if(!t0)return;const t=e.changedTouches[0],dx=t.clientX-t0.clientX,dy=t.clientY-t0.clientY;t0=null;if(Math.max(Math.abs(dx),Math.abs(dy))<20)return;Math.abs(dx)>Math.abs(dy)?turn(Math.sign(dx),0):turn(0,Math.sign(dy))});
- reset();raf=requestAnimationFrame(loop);return()=>{clearTimeout(timer);cancelAnimationFrame(raf);run=false;removeEventListener('keydown',key)}}
+ GAMES.snake.onSaved=s=>{if(s>best){best=s;renderPicker()}};
+ GAMES.snake.onUser=()=>{best=0;bestKnown=false;loadSkins()};
+ reset();renderPicker();loadSkins();raf=requestAnimationFrame(loop);return()=>{clearTimeout(timer);cancelAnimationFrame(raf);run=false;removeEventListener('keydown',key)}}
 
 /* ---------- Tempo di reazione ---------- */
 function reaction(){
@@ -155,18 +206,35 @@ function reaction(){
  z.addEventListener('pointerdown',hit);z.addEventListener('keydown',e=>{if(e.key===' '||e.key==='Enter')hit(e)});
  return()=>clearTimeout(to)}
 
-/* ---------- Clicker veloce ---------- */
+/* ---------- Clicker veloce (anti-autoclicker) ----------
+   Contano solo i clic veri (event.isTrusted). Gli intervalli tra i clic (ms, performance.now) vengono analizzati
+   su una finestra mobile: se il ritmo è troppo regolare (coefficiente di variazione bassissimo, tipico dei programmi
+   autoclicker) la partita viene annullata. Soglie larghe: il drag-click umano (25-30+ CPS, a raffiche) passa. */
+const CLK={MAX:400,WIN:24,CV:.045,FAST:125,HITS:6};
+function clickCheck(iv){ // iv = intervalli in ms; ritorna true se la finestra finale è "da robot"
+ if(iv.length<CLK.WIN)return false;const w=iv.slice(-CLK.WIN),m=w.reduce((a,b)=>a+b,0)/w.length;if(m>CLK.FAST)return false;
+ const sd=Math.sqrt(w.reduce((a,b)=>a+(b-m)*(b-m),0)/w.length),cv=sd/m;
+ const med=[...w].sort((a,b)=>a-b)[w.length>>1],near=w.filter(x=>Math.abs(x-med)<=1.5).length/w.length;
+ return cv<CLK.CV||near>=.85}
 function clicker(){
  stage.innerHTML='<div class="ghud"><span>Tempo <b id="tm">10.0</b>s</span><span>Record <b id="rec">'+(+localStorage.clicker_best||0)+'</b></span></div><div class="czone" id="z"><span class="big" id="n">0</span><span id="h">Clicca qui per iniziare</span></div><p class="gmsg"></p>';
- const z=q('#z');let n=0,st='idle',end=0,raf=0,cool=0;
- function tick(){const left=Math.max(0,end-performance.now());q('#tm').textContent=(left/1000).toFixed(1);if(left>0){raf=requestAnimationFrame(tick);return}
-  st='done';z.classList.remove('on');cool=performance.now()+1200;q('#h').textContent=`Fine! ${n} clic — tocca per rigiocare`;
+ const z=q('#z');let n=0,st='idle',end=0,raf=0,cool=0,lastT=0,iv=[],hits=0,bad='';
+ function finish(){st='done';cancelAnimationFrame(raf);z.classList.remove('on');cool=performance.now()+1200;
+  if(bad){q('#h').textContent=`Partita non valida — tocca per rigiocare`;msg(bad);return}
+  q('#h').textContent=`Fine! ${n} clic — tocca per rigiocare`;
+  if(n>CLK.MAX){msg(`Più di ${CLK.MAX} clic in 10 secondi? Sospetto: punteggio non salvato.`);return}
   if(n>(+localStorage.clicker_best||0)){localStorage.clicker_best=n;q('#rec').textContent=n}
-  if(n<=200&&n>0)save('clicker',n);else if(n>200)msg('Più di 200 clic? Sospetto: punteggio non salvato.')}
+  if(n>0)save('clicker',n)}
+ function tick(){const left=Math.max(0,end-performance.now());q('#tm').textContent=(left/1000).toFixed(1);if(left>0){raf=requestAnimationFrame(tick);return}finish()}
+ function invalid(t){bad=t;SFX.over();finish()}
  z.addEventListener('pointerdown',e=>{e.preventDefault();if(!user)return;
-  if(st!=='run'){if(performance.now()<cool)return;n=0;st='run';end=performance.now()+10000;z.classList.add('on');q('#h').textContent='Vai, vai, vai!';msg('');raf=requestAnimationFrame(tick)}
+  if(!e.isTrusted){if(st==='run')invalid('Clic non validi rilevati (generati da uno script): partita annullata, punteggio non salvato.');return}
+  const now=performance.now();
+  if(st!=='run'){if(now<cool)return;n=0;iv=[];hits=0;bad='';lastT=now;st='run';end=now+10000;z.classList.add('on');q('#h').textContent='Vai, vai, vai!';msg('');raf=requestAnimationFrame(tick)}
+  else{iv.push(now-lastT);lastT=now;if(clickCheck(iv)&&++hits>=CLK.HITS)return invalid('Ritmo troppo regolare, sembra un autoclicker: partita annullata, punteggio non salvato.')}
   n++;audio();tone('triangle',300+Math.min(n,120)*9,.04,0,.025);const el=q('#n');el.textContent=n;el.classList.remove('pop');void el.offsetWidth;el.classList.add('pop')});
  return()=>cancelAnimationFrame(raf)}
+window.__clickCheck=clickCheck;
 
 /* ---------- giochi extra (giochi-*.js, caricati prima di questo file) ---------- */
 const MAKE={snake,reaction,clicker};
