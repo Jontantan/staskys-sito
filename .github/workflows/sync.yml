@@ -25,7 +25,7 @@ jobs:
       - name: Scarica dati da Discord
         env:
           STASKYS_BOT_TOKEN: ${{ secrets.STASKYS_BOT_TOKEN }}
-        run: python scripts/sync.py
+        run: python _scripts/sync.py
 
       - name: Salva le modifiche (solo se ci sono)
         run: |
