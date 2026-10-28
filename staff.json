@@ -1,5 +1,5 @@
 {
- "updated": "2026-10-28T17:15:15.820392+00:00",
+ "updated": "2026-10-28T21:39:53.550225+00:00",
  "staff": [
   {
    "role": "Founder",
@@ -32,7 +32,7 @@
    "avatar": "https://cdn.discordapp.com/avatars/1157053801249914941/cf7582fc9fe8240400d6d631d852252c.png?size=256"
   },
   {
-   "role": "Supervisor",
+   "role": "Admin",
    "name": "al3xy",
    "avatar": "https://cdn.discordapp.com/avatars/909544773730304081/a3b16568a1ac66dedfd509e0ec0341a3.png?size=256"
   },
@@ -40,6 +40,11 @@
    "role": "Supervisor",
    "name": "lentin",
    "avatar": "https://cdn.discordapp.com/guilds/1244253666295283713/users/760448374196404236/avatars/2a1dbdb586480f1c959f817f59fd016e.png?size=256"
+  },
+  {
+   "role": "Supervisor",
+   "name": "lumel",
+   "avatar": "https://cdn.discordapp.com/avatars/737016085076770932/3f1352a5230a8b74649e4faf2b226c0d.png?size=256"
   }
  ]
 }
