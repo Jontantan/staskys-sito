@@ -1,5 +1,5 @@
 {
- "updated": "2026-10-27T20:49:49.016015+00:00",
+ "updated": "2026-10-28T00:05:34.793092+00:00",
  "groups": {
   "staff": [
    {
@@ -184,7 +184,7 @@
    {
     "name": "Rosso",
     "color": "#c5172e",
-    "members": 319,
+    "members": 318,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -196,7 +196,7 @@
    {
     "name": "Rosso scuro",
     "color": "#7d0a0a",
-    "members": 79,
+    "members": 80,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -326,7 +326,7 @@
    {
     "name": "Annunci",
     "color": null,
-    "members": 411,
+    "members": 412,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -350,7 +350,7 @@
    {
     "name": "Revival Chat",
     "color": null,
-    "members": 535,
+    "members": 534,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -433,7 +433,7 @@
   {
    "level": 5,
    "name": "Livello 5",
-   "members": 529
+   "members": 531
   },
   {
    "level": 10,
@@ -453,7 +453,7 @@
   {
    "level": 30,
    "name": "Livello 30",
-   "members": 85
+   "members": 86
   },
   {
    "level": 40,
