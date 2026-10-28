@@ -1,5 +1,5 @@
 {
- "updated": "2026-10-28T11:29:08.581701+00:00",
+ "updated": "2026-10-28T17:15:15.820392+00:00",
  "groups": {
   "staff": [
    {
@@ -47,7 +47,7 @@
    {
     "name": "Helper",
     "color": null,
-    "members": 2,
+    "members": 5,
     "how": "Candidature staff o promozione interna."
    },
    {
@@ -104,13 +104,13 @@
    {
     "name": "Server Booster",
     "color": "#850154",
-    "members": 6,
+    "members": 13,
     "how": "Boosta il server una volta."
    },
    {
     "name": "Member",
     "color": null,
-    "members": 1949,
+    "members": 1950,
     "how": "Si ottiene completando la verifica."
    }
   ],
@@ -208,7 +208,7 @@
    {
     "name": "Verde chiaro",
     "color": "#c0eba6",
-    "members": 9,
+    "members": 10,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -220,7 +220,7 @@
    {
     "name": "Blu",
     "color": "#3674b5",
-    "members": 191,
+    "members": 190,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -332,19 +332,19 @@
    {
     "name": "Giveaways",
     "color": null,
-    "members": 503,
+    "members": 504,
     "how": "Scegli da Canali & Ruoli."
    },
    {
     "name": "Events",
     "color": null,
-    "members": 350,
+    "members": 352,
     "how": "Scegli da Canali & Ruoli."
    },
    {
     "name": "Mini events",
     "color": "#95a5a6",
-    "members": 85,
+    "members": 86,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -356,7 +356,7 @@
    {
     "name": "Revival Vocal",
     "color": null,
-    "members": 452,
+    "members": 454,
     "how": "Scegli da Canali & Ruoli."
    },
    {
