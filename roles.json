@@ -1,5 +1,5 @@
 {
- "updated": "2026-10-29T01:13:16.351515+00:00",
+ "updated": "2026-10-29T07:07:52.439417+00:00",
  "groups": {
   "staff": [
    {
@@ -110,7 +110,7 @@
    {
     "name": "Member",
     "color": null,
-    "members": 1953,
+    "members": 1954,
     "how": "Si ottiene completando la verifica."
    }
   ],
