@@ -1,5 +1,5 @@
 {
- "updated": "2026-10-30T15:56:52.949627+00:00",
+ "updated": "2026-10-30T20:18:13.148702+00:00",
  "groups": {
   "staff": [
    {
@@ -47,7 +47,7 @@
    {
     "name": "Helper",
     "color": null,
-    "members": 9,
+    "members": 10,
     "how": "Candidature staff o promozione interna."
    },
    {
@@ -110,7 +110,7 @@
    {
     "name": "Member",
     "color": null,
-    "members": 1951,
+    "members": 1950,
     "how": "Si ottiene completando la verifica."
    }
   ],
@@ -118,7 +118,7 @@
    {
     "name": "Rosa",
     "color": "#ca618b",
-    "members": 229,
+    "members": 228,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -214,13 +214,13 @@
    {
     "name": "Verde scuro",
     "color": "#185519",
-    "members": 10,
+    "members": 11,
     "how": "Scegli da Canali & Ruoli."
    },
    {
     "name": "Blu",
     "color": "#3674b5",
-    "members": 190,
+    "members": 189,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -232,7 +232,7 @@
    {
     "name": "Blu scuro",
     "color": "#001a6e",
-    "members": 86,
+    "members": 85,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -320,7 +320,7 @@
    {
     "name": "Polls",
     "color": null,
-    "members": 440,
+    "members": 438,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -350,13 +350,13 @@
    {
     "name": "Revival Chat",
     "color": null,
-    "members": 537,
+    "members": 538,
     "how": "Scegli da Canali & Ruoli."
    },
    {
     "name": "Revival Vocal",
     "color": null,
-    "members": 455,
+    "members": 456,
     "how": "Scegli da Canali & Ruoli."
    },
    {
