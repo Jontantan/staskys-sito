@@ -27,6 +27,12 @@ jobs:
           STASKYS_BOT_TOKEN: ${{ secrets.STASKYS_BOT_TOKEN }}
         run: python _scripts/sync.py
 
+      - name: Aggiorna i ruoli King
+        continue-on-error: true
+        env:
+          STASKYS_BOT_TOKEN: ${{ secrets.STASKYS_BOT_TOKEN }}
+        run: python _scripts/kings.py
+
       - name: Salva le modifiche (solo se ci sono)
         run: |
           git config user.name "github-actions[bot]"
