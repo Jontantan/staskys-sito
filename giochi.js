@@ -4,7 +4,7 @@ const q=(s,r=document)=>r.querySelector(s),qa=(s,r=document)=>[...r.querySelecto
 const E=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const CFG=window.GIOCHI_CONFIG||{};
 const READY=!!(CFG.SUPABASE_URL&&CFG.SUPABASE_ANON_KEY&&!/INCOLLA_QUI/.test(CFG.SUPABASE_URL+CFG.SUPABASE_ANON_KEY)&&window.supabase);
-const sb=READY?window.supabase.createClient(CFG.SUPABASE_URL,CFG.SUPABASE_ANON_KEY,{auth:{flowType:'pkce',detectSessionInUrl:true,persistSession:true}}):null;
+const sb=READY?window.supabase.createClient(CFG.SUPABASE_URL,CFG.SUPABASE_ANON_KEY,{auth:{flowType:'pkce',detectSessionInUrl:true,persistSession:true,autoRefreshToken:true,storage:window.localStorage,storageKey:'sb-otxtpwojvuyxksrsfpdl-auth-token'}}):null;
 const GAMES={
  snake:{t:'Snake',k:'King Snake',d:'Mangia più mele possibile senza sbattere. Frecce/WASD su PC, scorri o usa i tasti su telefono.',unit:'mele',asc:false},
  reaction:{t:'Tempo di reazione',k:'King Reazione',d:'Tocca appena lo schermo diventa scuro. 3 tentativi: conta la media. Meno è meglio.',unit:'ms',asc:true,lbDesc:'tempo medio più basso',fmt:v=>v+' ms'},
@@ -17,12 +17,14 @@ const stage=q('#gstage'),lock=q('#glock'),msg=t=>{const m=q('.gmsg',stage);if(m)
 function profile(u){const m=u.user_metadata||{};return{name:(m.custom_claims&&m.custom_claims.global_name)||m.full_name||m.name||m.user_name||'Utente',avatar:m.avatar_url||m.picture||''}}
 function renderAuth(){const a=q('#gauth');
  if(!READY){a.innerHTML='<span><b>Giochi in arrivo.</b> <span class="muted">Stiamo preparando le classifiche: torna presto!</span></span>';return}
+ if(!inited){a.innerHTML='<span class="muted">Controllo l\'accesso…</span>';return} // finché la sessione salvata non è letta, non mostrare "Accedi"
  if(user){const p=profile(user);a.innerHTML=`<span class="who">${p.avatar?`<img src="${E(p.avatar)}" alt="">`:''}${E(p.name)}</span><button class="btn ghost sm" id="logout">Esci</button>`;q('#logout').onclick=()=>sb.auth.signOut()}
  else a.innerHTML='<span class="muted">Accedi con Discord per giocare e salvare i tuoi punteggi.</span><button class="btn sm" data-login>Accedi con Discord</button>';
  bindLogin(a)}
-function bindLogin(r){qa('[data-login]',r).forEach(b=>b.onclick=()=>sb.auth.signInWithOAuth({provider:'discord',options:{redirectTo:location.origin+location.pathname}}))}
+function bindLogin(r){qa('[data-login]',r).forEach(b=>b.onclick=()=>{try{sessionStorage.giochi_torna=cur}catch(e){}sb.auth.signInWithOAuth({provider:'discord',options:{redirectTo:location.origin+location.pathname}})})}
 function renderLock(){
  if(user&&READY){lock.hidden=true;return}
+ if(READY&&!inited){lock.hidden=false;lock.innerHTML='<p class="muted small">Caricamento…</p>';return}
  lock.hidden=false;
  lock.innerHTML=READY?'<h3>Accedi per giocare</h3><p class="muted small">Serve il tuo account Discord: così il punteggio finisce in classifica con il tuo nome.</p><button class="btn magnetic" data-login>Accedi con Discord per giocare</button>'
   :'<h3>Giochi in arrivo</h3><p class="muted small">I minigiochi saranno disponibili a breve. Resta sintonizzato sul server!</p>';
@@ -251,8 +253,9 @@ function open(game){stop();cur=game;qa('.gtab').forEach(b=>b.classList.toggle('a
  q('#gtitle').textContent=GAMES[game].t;q('#gdesc').textContent=GAMES[game].d;q('#kingnote').textContent=GAMES[game].k?`Il primo in classifica riceve il ruolo ${GAMES[game].k} sul server Discord.`:'';stop=MAKE[game]();renderLock();board(game);loadBest(game);
  if(inited)try{history.replaceState(null,'',location.pathname+'#'+game)}catch(e){}}
 qa('.gtab').forEach(b=>b.onclick=()=>open(b.dataset.game));
-const start=GAMES[location.hash.slice(1)]?location.hash.slice(1):'snake';
-if(sb){sb.auth.getSession().then(({data})=>{user=data.session?.user||null;inited=true;renderAuth();open(cur);loadStreak()});
+let torna='';try{torna=sessionStorage.giochi_torna||'';sessionStorage.removeItem('giochi_torna')}catch(e){}
+const start=GAMES[location.hash.slice(1)]?location.hash.slice(1):GAMES[torna]?torna:'snake';
+if(sb){sb.auth.getSession().then(({data})=>{user=data.session?.user||null},()=>{}).then(()=>{inited=true;renderAuth();open(cur);loadStreak()});
  sb.auth.onAuthStateChange((_e,s)=>{const was=user?.id;user=s?.user||null;if(was!==user?.id){renderAuth();renderLock();board(cur);loadStreak();for(const k in BEST)delete BEST[k];loadBest(cur);if(GAMES[cur].onUser)try{GAMES[cur].onUser(user)}catch(e){}}})}
 if(!sb)inited=true;cur=start;renderAuth();open(start);loadStreak();
 })();
