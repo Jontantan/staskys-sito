@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-02T08:34:28.703644+00:00",
+ "updated": "2026-11-02T18:47:42.227761+00:00",
  "groups": {
   "staff": [
    {
@@ -110,7 +110,7 @@
    {
     "name": "Member",
     "color": null,
-    "members": 1951,
+    "members": 1953,
     "how": "Si ottiene completando la verifica."
    }
   ],
@@ -262,7 +262,7 @@
    {
     "name": "Bianco",
     "color": "#ffffff",
-    "members": 163,
+    "members": 165,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -300,7 +300,7 @@
    {
     "name": "Brawl Stars",
     "color": null,
-    "members": 93,
+    "members": 92,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -320,7 +320,7 @@
    {
     "name": "Polls",
     "color": null,
-    "members": 438,
+    "members": 439,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -350,7 +350,7 @@
    {
     "name": "Revival Chat",
     "color": null,
-    "members": 538,
+    "members": 539,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -453,7 +453,7 @@
   {
    "level": 30,
    "name": "Livello 30",
-   "members": 88
+   "members": 89
   },
   {
    "level": 40,
