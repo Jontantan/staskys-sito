@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-03T15:53:07.607098+00:00",
+ "updated": "2026-11-03T21:20:41.898260+00:00",
  "groups": {
   "staff": [
    {
@@ -110,7 +110,7 @@
    {
     "name": "Member",
     "color": null,
-    "members": 1954,
+    "members": 1955,
     "how": "Si ottiene completando la verifica."
    }
   ],
@@ -184,7 +184,7 @@
    {
     "name": "Rosso",
     "color": "#c5172e",
-    "members": 316,
+    "members": 317,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -276,7 +276,7 @@
    {
     "name": "Minecraft",
     "color": null,
-    "members": 138,
+    "members": 139,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -300,7 +300,7 @@
    {
     "name": "Brawl Stars",
     "color": null,
-    "members": 92,
+    "members": 93,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -350,13 +350,13 @@
    {
     "name": "Revival Chat",
     "color": null,
-    "members": 539,
+    "members": 540,
     "how": "Scegli da Canali & Ruoli."
    },
    {
     "name": "Revival Vocal",
     "color": null,
-    "members": 455,
+    "members": 456,
     "how": "Scegli da Canali & Ruoli."
    },
    {
