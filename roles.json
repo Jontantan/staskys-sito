@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-03T07:59:18.652880+00:00",
+ "updated": "2026-11-03T15:53:07.607098+00:00",
  "groups": {
   "staff": [
    {
@@ -110,7 +110,7 @@
    {
     "name": "Member",
     "color": null,
-    "members": 1953,
+    "members": 1954,
     "how": "Si ottiene completando la verifica."
    }
   ],
@@ -208,7 +208,7 @@
    {
     "name": "Verde chiaro",
     "color": "#c0eba6",
-    "members": 10,
+    "members": 11,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -344,7 +344,7 @@
    {
     "name": "Mini events",
     "color": "#95a5a6",
-    "members": 89,
+    "members": 90,
     "how": "Scegli da Canali & Ruoli."
    },
    {
