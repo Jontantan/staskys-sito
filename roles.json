@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-04T15:55:38.667449+00:00",
+ "updated": "2026-11-04T21:37:58.986647+00:00",
  "groups": {
   "staff": [
    {
@@ -110,7 +110,7 @@
    {
     "name": "Member",
     "color": null,
-    "members": 1955,
+    "members": 1956,
     "how": "Si ottiene completando la verifica."
    }
   ],
@@ -118,13 +118,13 @@
    {
     "name": "Rosa",
     "color": "#ca618b",
-    "members": 228,
+    "members": 229,
     "how": "Scegli da Canali & Ruoli."
    },
    {
     "name": "Rosa chiaro",
     "color": "#ff90bb",
-    "members": 87,
+    "members": 88,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -220,7 +220,7 @@
    {
     "name": "Blu",
     "color": "#3674b5",
-    "members": 189,
+    "members": 188,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -320,7 +320,7 @@
    {
     "name": "Polls",
     "color": null,
-    "members": 441,
+    "members": 442,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -344,7 +344,7 @@
    {
     "name": "Mini events",
     "color": "#95a5a6",
-    "members": 90,
+    "members": 91,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -458,7 +458,7 @@
   {
    "level": 40,
    "name": "Livello 40",
-   "members": 58
+   "members": 59
   },
   {
    "level": 50,
