@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-04T07:57:20.307780+00:00",
+ "updated": "2026-11-04T15:55:38.667449+00:00",
  "groups": {
   "staff": [
    {
@@ -196,7 +196,7 @@
    {
     "name": "Rosso scuro",
     "color": "#7d0a0a",
-    "members": 81,
+    "members": 80,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -332,7 +332,7 @@
    {
     "name": "Giveaways",
     "color": null,
-    "members": 506,
+    "members": 505,
     "how": "Scegli da Canali & Ruoli."
    },
    {
