@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-05T16:44:02.881550+00:00",
+ "updated": "2026-11-05T22:20:29.702303+00:00",
  "groups": {
   "staff": [
    {
@@ -110,7 +110,7 @@
    {
     "name": "Member",
     "color": null,
-    "members": 1956,
+    "members": 1955,
     "how": "Si ottiene completando la verifica."
    }
   ],
@@ -184,7 +184,7 @@
    {
     "name": "Rosso",
     "color": "#c5172e",
-    "members": 317,
+    "members": 316,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -196,7 +196,7 @@
    {
     "name": "Rosso scuro",
     "color": "#7d0a0a",
-    "members": 80,
+    "members": 81,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -350,13 +350,13 @@
    {
     "name": "Revival Chat",
     "color": null,
-    "members": 541,
+    "members": 542,
     "how": "Scegli da Canali & Ruoli."
    },
    {
     "name": "Revival Vocal",
     "color": null,
-    "members": 455,
+    "members": 456,
     "how": "Scegli da Canali & Ruoli."
    },
    {
