@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-04T21:37:58.986647+00:00",
+ "updated": "2026-11-05T01:45:46.714467+00:00",
  "groups": {
   "staff": [
    {
@@ -110,7 +110,7 @@
    {
     "name": "Member",
     "color": null,
-    "members": 1956,
+    "members": 1955,
     "how": "Si ottiene completando la verifica."
    }
   ],
@@ -356,7 +356,7 @@
    {
     "name": "Revival Vocal",
     "color": null,
-    "members": 456,
+    "members": 455,
     "how": "Scegli da Canali & Ruoli."
    },
    {
