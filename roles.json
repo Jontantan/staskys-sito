@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-07T18:48:30.144956+00:00",
+ "updated": "2026-11-07T22:21:45.535431+00:00",
  "groups": {
   "staff": [
    {
@@ -110,7 +110,7 @@
    {
     "name": "Member",
     "color": null,
-    "members": 1959,
+    "members": 1961,
     "how": "Si ottiene completando la verifica."
    }
   ],
@@ -202,7 +202,7 @@
    {
     "name": "Verde",
     "color": "#6ec207",
-    "members": 93,
+    "members": 94,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -268,7 +268,7 @@
    {
     "name": "Grigio",
     "color": "#515151",
-    "members": 30,
+    "members": 31,
     "how": "Scegli da Canali & Ruoli."
    }
   ],
@@ -326,13 +326,13 @@
    {
     "name": "Annunci",
     "color": null,
-    "members": 416,
+    "members": 417,
     "how": "Scegli da Canali & Ruoli."
    },
    {
     "name": "Giveaways",
     "color": null,
-    "members": 506,
+    "members": 507,
     "how": "Scegli da Canali & Ruoli."
    },
    {
