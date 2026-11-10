@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-10T10:22:07.841362+00:00",
+ "updated": "2026-11-10T18:01:46.288466+00:00",
  "groups": {
   "staff": [
    {
@@ -110,7 +110,7 @@
    {
     "name": "Member",
     "color": null,
-    "members": 1959,
+    "members": 1957,
     "how": "Si ottiene completando la verifica."
    }
   ],
@@ -136,7 +136,7 @@
    {
     "name": "Viola",
     "color": "#aa60c8",
-    "members": 272,
+    "members": 270,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -276,7 +276,7 @@
    {
     "name": "Minecraft",
     "color": null,
-    "members": 141,
+    "members": 140,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -306,13 +306,13 @@
    {
     "name": "Roblox",
     "color": null,
-    "members": 141,
+    "members": 140,
     "how": "Scegli da Canali & Ruoli."
    },
    {
     "name": "Fortnite",
     "color": null,
-    "members": 66,
+    "members": 65,
     "how": "Scegli da Canali & Ruoli."
    }
   ],
@@ -320,43 +320,43 @@
    {
     "name": "Polls",
     "color": null,
-    "members": 444,
+    "members": 443,
     "how": "Scegli da Canali & Ruoli."
    },
    {
     "name": "Annunci",
     "color": null,
-    "members": 419,
+    "members": 418,
     "how": "Scegli da Canali & Ruoli."
    },
    {
     "name": "Giveaways",
     "color": null,
-    "members": 506,
+    "members": 505,
     "how": "Scegli da Canali & Ruoli."
    },
    {
     "name": "Events",
     "color": null,
-    "members": 354,
+    "members": 353,
     "how": "Scegli da Canali & Ruoli."
    },
    {
     "name": "Mini events",
     "color": "#95a5a6",
-    "members": 95,
+    "members": 94,
     "how": "Scegli da Canali & Ruoli."
    },
    {
     "name": "Revival Chat",
     "color": null,
-    "members": 546,
+    "members": 545,
     "how": "Scegli da Canali & Ruoli."
    },
    {
     "name": "Revival Vocal",
     "color": null,
-    "members": 458,
+    "members": 457,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -368,37 +368,37 @@
    {
     "name": "Confessioni",
     "color": null,
-    "members": 69,
+    "members": 68,
     "how": "Scegli da Canali & Ruoli."
    },
    {
     "name": "film",
     "color": null,
-    "members": 76,
+    "members": 75,
     "how": "Scegli da Canali & Ruoli."
    },
    {
     "name": "anime・manga",
     "color": null,
-    "members": 89,
+    "members": 88,
     "how": "Scegli da Canali & Ruoli."
    },
    {
     "name": "musica",
     "color": null,
-    "members": 95,
+    "members": 94,
     "how": "Scegli da Canali & Ruoli."
    },
    {
     "name": "formula1",
     "color": null,
-    "members": 33,
+    "members": 32,
     "how": "Scegli da Canali & Ruoli."
    },
    {
     "name": "calcio",
     "color": null,
-    "members": 26,
+    "members": 25,
     "how": "Scegli da Canali & Ruoli."
    }
   ],
@@ -433,7 +433,7 @@
   {
    "level": 5,
    "name": "Livello 5",
-   "members": 537
+   "members": 536
   },
   {
    "level": 10,
