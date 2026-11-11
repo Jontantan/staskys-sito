@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-11T09:52:46.491388+00:00",
+ "updated": "2026-11-11T17:32:33.717383+00:00",
  "groups": {
   "staff": [
    {
@@ -110,7 +110,7 @@
    {
     "name": "Member",
     "color": null,
-    "members": 1956,
+    "members": 1958,
     "how": "Si ottiene completando la verifica."
    }
   ],
@@ -118,7 +118,7 @@
    {
     "name": "Rosa",
     "color": "#ca618b",
-    "members": 228,
+    "members": 229,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -148,7 +148,7 @@
    {
     "name": "Viola scuro",
     "color": "#69247c",
-    "members": 88,
+    "members": 90,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -262,7 +262,7 @@
    {
     "name": "Bianco",
     "color": "#ffffff",
-    "members": 166,
+    "members": 167,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -320,43 +320,43 @@
    {
     "name": "Polls",
     "color": null,
-    "members": 441,
+    "members": 442,
     "how": "Scegli da Canali & Ruoli."
    },
    {
     "name": "Annunci",
     "color": null,
-    "members": 417,
+    "members": 418,
     "how": "Scegli da Canali & Ruoli."
    },
    {
     "name": "Giveaways",
     "color": null,
-    "members": 502,
+    "members": 504,
     "how": "Scegli da Canali & Ruoli."
    },
    {
     "name": "Events",
     "color": null,
-    "members": 352,
+    "members": 353,
     "how": "Scegli da Canali & Ruoli."
    },
    {
     "name": "Mini events",
     "color": "#95a5a6",
-    "members": 93,
+    "members": 95,
     "how": "Scegli da Canali & Ruoli."
    },
    {
     "name": "Revival Chat",
     "color": null,
-    "members": 543,
+    "members": 546,
     "how": "Scegli da Canali & Ruoli."
    },
    {
     "name": "Revival Vocal",
     "color": null,
-    "members": 455,
+    "members": 458,
     "how": "Scegli da Canali & Ruoli."
    },
    {
