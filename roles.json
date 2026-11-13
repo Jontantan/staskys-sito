@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-12T20:32:22.337283+00:00",
+ "updated": "2026-11-13T01:26:25.706265+00:00",
  "groups": {
   "staff": [
    {
@@ -110,7 +110,7 @@
    {
     "name": "Member",
     "color": null,
-    "members": 1956,
+    "members": 1957,
     "how": "Si ottiene completando la verifica."
    }
   ],
@@ -184,7 +184,7 @@
    {
     "name": "Rosso",
     "color": "#c5172e",
-    "members": 316,
+    "members": 317,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -220,7 +220,7 @@
    {
     "name": "Blu",
     "color": "#3674b5",
-    "members": 188,
+    "members": 187,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -256,7 +256,7 @@
    {
     "name": "Nero",
     "color": "#070707",
-    "members": 390,
+    "members": 391,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -320,19 +320,19 @@
    {
     "name": "Polls",
     "color": null,
-    "members": 442,
+    "members": 443,
     "how": "Scegli da Canali & Ruoli."
    },
    {
     "name": "Annunci",
     "color": null,
-    "members": 418,
+    "members": 417,
     "how": "Scegli da Canali & Ruoli."
    },
    {
     "name": "Giveaways",
     "color": null,
-    "members": 503,
+    "members": 502,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -356,7 +356,7 @@
    {
     "name": "Revival Vocal",
     "color": null,
-    "members": 458,
+    "members": 459,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -433,7 +433,7 @@
   {
    "level": 5,
    "name": "Livello 5",
-   "members": 535
+   "members": 534
   },
   {
    "level": 10,
