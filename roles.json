@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-13T08:20:52.871414+00:00",
+ "updated": "2026-11-13T16:36:02.921445+00:00",
  "groups": {
   "staff": [
    {
@@ -130,7 +130,7 @@
    {
     "name": "Rosa scuro",
     "color": "#ac1754",
-    "members": 45,
+    "members": 46,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -256,7 +256,7 @@
    {
     "name": "Nero",
     "color": "#070707",
-    "members": 391,
+    "members": 390,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -453,7 +453,7 @@
   {
    "level": 30,
    "name": "Livello 30",
-   "members": 89
+   "members": 90
   },
   {
    "level": 40,
