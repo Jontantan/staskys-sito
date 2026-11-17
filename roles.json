@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-16T19:52:57.301787+00:00",
+ "updated": "2026-11-17T02:41:10.704936+00:00",
  "groups": {
   "staff": [
    {
@@ -118,7 +118,7 @@
    {
     "name": "Rosa",
     "color": "#ca618b",
-    "members": 226,
+    "members": 227,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -184,7 +184,7 @@
    {
     "name": "Rosso",
     "color": "#c5172e",
-    "members": 316,
+    "members": 317,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -196,7 +196,7 @@
    {
     "name": "Rosso scuro",
     "color": "#7d0a0a",
-    "members": 81,
+    "members": 80,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -262,7 +262,7 @@
    {
     "name": "Bianco",
     "color": "#ffffff",
-    "members": 166,
+    "members": 165,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -276,7 +276,7 @@
    {
     "name": "Minecraft",
     "color": null,
-    "members": 139,
+    "members": 140,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -326,13 +326,13 @@
    {
     "name": "Annunci",
     "color": null,
-    "members": 418,
+    "members": 417,
     "how": "Scegli da Canali & Ruoli."
    },
    {
     "name": "Giveaways",
     "color": null,
-    "members": 500,
+    "members": 501,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -356,7 +356,7 @@
    {
     "name": "Revival Vocal",
     "color": null,
-    "members": 459,
+    "members": 460,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -368,7 +368,7 @@
    {
     "name": "Confessioni",
     "color": null,
-    "members": 68,
+    "members": 69,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -386,7 +386,7 @@
    {
     "name": "musica",
     "color": null,
-    "members": 93,
+    "members": 94,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -418,13 +418,13 @@
    {
     "name": "MVP | TORNEO CODM 2k26",
     "color": null,
-    "members": 1,
+    "members": null,
     "how": "Partecipando ai tornei della community."
    },
    {
     "name": "VINCITORI TORNEO CODM",
     "color": null,
-    "members": 3,
+    "members": 2,
     "how": "Partecipando ai tornei della community."
    }
   ]
@@ -438,7 +438,7 @@
   {
    "level": 10,
    "name": "Livello 10",
-   "members": 273
+   "members": 274
   },
   {
    "level": 15,
