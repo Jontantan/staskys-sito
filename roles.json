@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-19T16:54:13.277991+00:00",
+ "updated": "2026-11-19T23:19:55.405519+00:00",
  "groups": {
   "staff": [
    {
@@ -118,7 +118,7 @@
    {
     "name": "Rosa",
     "color": "#ca618b",
-    "members": 227,
+    "members": 226,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -326,13 +326,13 @@
    {
     "name": "Annunci",
     "color": null,
-    "members": 418,
+    "members": 417,
     "how": "Scegli da Canali & Ruoli."
    },
    {
     "name": "Giveaways",
     "color": null,
-    "members": 500,
+    "members": 501,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -433,17 +433,17 @@
   {
    "level": 5,
    "name": "Livello 5",
-   "members": 531
+   "members": 532
   },
   {
    "level": 10,
    "name": "Livello 10",
-   "members": 274
+   "members": 275
   },
   {
    "level": 15,
    "name": "Livello 15",
-   "members": 190
+   "members": 191
   },
   {
    "level": 20,
