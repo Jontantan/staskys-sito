@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-21T08:48:27.759996+00:00",
+ "updated": "2026-11-21T16:24:50.874621+00:00",
  "groups": {
   "staff": [
    {
@@ -110,7 +110,7 @@
    {
     "name": "Member",
     "color": null,
-    "members": 1952,
+    "members": 1953,
     "how": "Si ottiene completando la verifica."
    }
   ],
@@ -326,7 +326,7 @@
    {
     "name": "Annunci",
     "color": null,
-    "members": 417,
+    "members": 418,
     "how": "Scegli da Canali & Ruoli."
    },
    {
