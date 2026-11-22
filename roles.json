@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-22T08:45:39.220845+00:00",
+ "updated": "2026-11-22T16:39:42.934294+00:00",
  "groups": {
   "staff": [
    {
@@ -142,13 +142,13 @@
    {
     "name": "Lila",
     "color": "#d69ade",
-    "members": 34,
+    "members": 35,
     "how": "Scegli da Canali & Ruoli."
    },
    {
     "name": "Viola scuro",
     "color": "#69247c",
-    "members": 92,
+    "members": 91,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -326,13 +326,13 @@
    {
     "name": "Annunci",
     "color": null,
-    "members": 418,
+    "members": 417,
     "how": "Scegli da Canali & Ruoli."
    },
    {
     "name": "Giveaways",
     "color": null,
-    "members": 500,
+    "members": 499,
     "how": "Scegli da Canali & Ruoli."
    },
    {
