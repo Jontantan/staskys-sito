@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-22T21:59:59.071285+00:00",
+ "updated": "2026-11-23T02:21:06.787917+00:00",
  "groups": {
   "staff": [
    {
@@ -110,7 +110,7 @@
    {
     "name": "Member",
     "color": null,
-    "members": 1952,
+    "members": 1951,
     "how": "Si ottiene completando la verifica."
    }
   ],
@@ -124,7 +124,7 @@
    {
     "name": "Rosa chiaro",
     "color": "#ff90bb",
-    "members": 87,
+    "members": 88,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -136,7 +136,7 @@
    {
     "name": "Viola",
     "color": "#aa60c8",
-    "members": 271,
+    "members": 270,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -320,7 +320,7 @@
    {
     "name": "Polls",
     "color": null,
-    "members": 434,
+    "members": 435,
     "how": "Scegli da Canali & Ruoli."
    },
    {
