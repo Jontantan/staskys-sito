@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-23T10:57:22.028630+00:00",
+ "updated": "2026-11-23T22:24:52.422131+00:00",
  "groups": {
   "staff": [
    {
@@ -35,19 +35,19 @@
    {
     "name": "Supervisor",
     "color": null,
-    "members": 2,
+    "members": 3,
     "how": "Candidature staff o promozione interna."
    },
    {
     "name": "Mod",
     "color": null,
-    "members": null,
+    "members": 1,
     "how": "Candidature staff o promozione interna."
    },
    {
     "name": "Helper",
     "color": null,
-    "members": 7,
+    "members": 5,
     "how": "Candidature staff o promozione interna."
    },
    {
@@ -118,7 +118,7 @@
    {
     "name": "Rosa",
     "color": "#ca618b",
-    "members": 226,
+    "members": 227,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -202,7 +202,7 @@
    {
     "name": "Verde",
     "color": "#6ec207",
-    "members": 96,
+    "members": 95,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -214,13 +214,13 @@
    {
     "name": "Verde scuro",
     "color": "#185519",
-    "members": 10,
+    "members": 11,
     "how": "Scegli da Canali & Ruoli."
    },
    {
     "name": "Blu",
     "color": "#3674b5",
-    "members": 187,
+    "members": 186,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -250,7 +250,7 @@
    {
     "name": "Beige",
     "color": "#e8c999",
-    "members": 15,
+    "members": 16,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -344,19 +344,19 @@
    {
     "name": "Mini events",
     "color": "#95a5a6",
-    "members": 93,
+    "members": 94,
     "how": "Scegli da Canali & Ruoli."
    },
    {
     "name": "Revival Chat",
     "color": null,
-    "members": 548,
+    "members": 547,
     "how": "Scegli da Canali & Ruoli."
    },
    {
     "name": "Revival Vocal",
     "color": null,
-    "members": 462,
+    "members": 463,
     "how": "Scegli da Canali & Ruoli."
    },
    {
