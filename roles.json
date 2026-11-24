@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-24T06:11:17.300989+00:00",
+ "updated": "2026-11-24T17:47:42.325237+00:00",
  "groups": {
   "staff": [
    {
@@ -136,7 +136,7 @@
    {
     "name": "Viola",
     "color": "#aa60c8",
-    "members": 270,
+    "members": 269,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -148,7 +148,7 @@
    {
     "name": "Viola scuro",
     "color": "#69247c",
-    "members": 91,
+    "members": 90,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -276,13 +276,13 @@
    {
     "name": "Minecraft",
     "color": null,
-    "members": 140,
+    "members": 139,
     "how": "Scegli da Canali & Ruoli."
    },
    {
     "name": "Valorant",
     "color": null,
-    "members": 51,
+    "members": 50,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -300,13 +300,13 @@
    {
     "name": "Brawl Stars",
     "color": null,
-    "members": 93,
+    "members": 92,
     "how": "Scegli da Canali & Ruoli."
    },
    {
     "name": "Roblox",
     "color": null,
-    "members": 139,
+    "members": 138,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -320,7 +320,7 @@
    {
     "name": "Polls",
     "color": null,
-    "members": 435,
+    "members": 436,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -380,13 +380,13 @@
    {
     "name": "anime・manga",
     "color": null,
-    "members": 87,
+    "members": 86,
     "how": "Scegli da Canali & Ruoli."
    },
    {
     "name": "musica",
     "color": null,
-    "members": 93,
+    "members": 92,
     "how": "Scegli da Canali & Ruoli."
    },
    {
