@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BREAKING: Staskys rivoluziona le candidature staff · Staskys</title>
+<meta name="description" content="Comunicato ufficiale (più o meno): il nuovo sistema di selezione dello staff di Staskys.">
+<meta property="og:title" content="📢 BREAKING: Staskys rivoluziona le candidature staff"><meta property="og:description" content="Comunicato ufficiale (più o meno)."><meta property="og:image" content="assets/news/breaking.jpg">
+<link rel="icon" href="assets/icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="news-candidature.css">
+<script>try{if(localStorage.theme==="dark"||(!localStorage.theme&&matchMedia("(prefers-color-scheme: dark)").matches))document.documentElement.dataset.theme="dark"}catch(e){}</script>
+</head>
+<body data-page="candidature">
+<main>
+<section class="page-hero art-hero">
+  <p class="label"><a href="index.html#news" class="back">← News</a> · 24 novembre 2026</p>
+  <h1>📢 BREAKING: Staskys rivoluziona le candidature staff</h1>
+  <p class="lead"><i>Comunicato ufficiale (più o meno)</i></p>
+  <figure class="art-cover"><img src="assets/news/breaking.jpg" alt="" width="1152" height="864"><span class="fx-tag">Breaking news</span></figure>
+</section>
+
+<section class="wrap tight art">
+  <div class="prose reveal"><p>Dopo anni di moduli lunghissimi, colloqui e domande del tipo <i>"perché vuoi entrare nello staff?"</i>, Staskys annuncia finalmente il nuovo sistema di selezione. Con effetto immediato, la candidatura diventa <b>facoltativa</b>, mentre resta <b>fortemente consigliata</b> l'amicizia con l'owner.</p></div>
+</section>
+
+<section class="wrap art" id="modulo">
+  <span class="label reveal">Modulo</span><h2 class="reveal">Il nuovo modulo di candidatura</h2>
+  <form class="nquiz reveal" id="quiz" novalidate>
+    <fieldset data-q="1"><legend><b>1.</b> Conosci ele?</legend>
+      <div class="opts"><button type="button" data-v="1">Sì</button><button type="button" data-v="0">No</button></div></fieldset>
+    <fieldset data-q="2"><legend><b>2.</b> Da quanti anni?</legend>
+      <div class="opts"><button type="button" data-v="0">Meno di 1</button><button type="button" data-v="0">1-2</button><button type="button" data-v="1">3 o più</button></div></fieldset>
+    <fieldset data-q="3"><legend><b>3.</b> Sei già stato staff?</legend>
+      <div class="opts"><button type="button" data-v="1">Sì</button><button type="button" data-v="0">No</button></div></fieldset>
+    <fieldset data-q="4"><legend><b>4.</b> Hai mai chiesto a ele come sta? <span class="bonus">bonus</span></legend>
+      <div class="opts"><button type="button" data-v="1">Sì</button><button type="button" data-v="0">No</button></div></fieldset>
+    <div class="qfoot"><p class="muted small" id="qhint">Rispondi a tutte le domande e premi Invia.</p><button type="submit" class="btn magnetic" id="send">Invia</button></div>
+  </form>
+</section>
+
+<section class="wrap art">
+  <span class="label reveal">FAQ</span><h2 class="reveal">Domande frequenti.</h2>
+  <div class="faq reveal">
+    <details><summary>Ho fatto la candidatura perfetta, perché non mi hanno preso?</summary><p>Ottima candidatura, ma manca il requisito principale: l'amicizia con ele.</p></details>
+    <details><summary>Posso ancora candidarmi?</summary><p>Certo, chiedi ad ele come sta, parlale un pò e ottieni già un 75% di passare nello staff, bonus high staff se la conoscevi da prima.</p></details>
+    <details><summary>È uno scherzo?</summary><p>Lo sembra, ma è tutto vero.</p></details>
+  </div>
+  <p class="congrats reveal">Congratulazioni a luky per il nuovo ruolo da supervisore 🎉 ci aspettiamo grandi cose</p>
+</section>
+
+<section class="wrap art match" id="match">
+  <h2 class="m-title">quasi dimenticavo! peggior match 2026 di staskys se l'aggiudicano...</h2>
+  <div class="stage" id="stage">
+    <p class="cue" id="cue" aria-live="polite">&nbsp;</p>
+    <p class="m-win" id="mwin">🏆 Peggior match 2026 🏆</p>
+    <div class="trio">
+      <figure class="who"><span class="horn" aria-hidden="true">🎉</span><img src="assets/news/luky.png" alt="" width="256" height="256"><figcaption>cle luky</figcaption></figure>
+      <figure class="who"><span class="horn" aria-hidden="true">🎉</span><img src="assets/news/chadi.png" alt="" width="256" height="256"><figcaption>cle chadi</figcaption></figure>
+      <figure class="who"><span class="horn" aria-hidden="true">🎉</span><img src="assets/news/miniele.png" alt="" width="256" height="256"><figcaption>cle miniele</figcaption></figure>
+    </div>
+  </div>
+  <p class="center"><button class="btn ghost sm" id="replay" type="button">🔊 attiva audio</button></p>
+  <p class="center" style="margin-top:3rem"><a class="btn ghost" href="index.html#news">← Torna alle news</a></p>
+</section>
+</main>
+
+<div class="nresult" id="result" hidden role="dialog" aria-modal="true" aria-labelledby="rtitle">
+  <div class="rain" id="rain" aria-hidden="true"></div>
+  <div class="rbox"><div class="remoji" id="remoji"></div><h3 id="rtitle"></h3><p id="rtext" class="muted"></p>
+  <div class="rbtns"><button class="btn" id="retry" type="button">Riprova</button><button class="btn ghost" id="rclose" type="button">Chiudi</button></div></div>
+</div>
+<canvas id="confetti" aria-hidden="true"></canvas>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script src="news-candidature.js"></script>
+</body>
+</html>
