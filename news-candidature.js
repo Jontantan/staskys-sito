@@ -96,6 +96,13 @@ q('#rclose').onclick=hide;
 q('#retry').onclick=()=>{hide();qa('.opts button',form).forEach(x=>{x.classList.remove('on');x.removeAttribute('aria-pressed')});qa('fieldset',form).forEach(f=>f.classList.remove('done'));q('#qhint').textContent='Rispondi a tutte le domande e premi Invia.';q('#modulo').scrollIntoView({behavior:'smooth'})};
 addEventListener('keydown',e=>{if(e.key==='Escape'&&!res.hidden)hide()});
 
+/* ---------- congratulazioni: entra con animazione e coriandoli (una volta) ---------- */
+const cg=q('#congrats'),RMq=matchMedia('(prefers-reduced-motion: reduce)').matches||document.documentElement.classList.contains('still');
+if(cg&&!RMq&&'IntersectionObserver' in window){cg.classList.add('wait');
+ new IntersectionObserver((es,o)=>es.forEach(e=>{if(!e.isIntersecting)return;o.disconnect();cg.classList.remove('wait');cg.classList.add('go');
+  setTimeout(()=>burst(180,1600),250);
+  if(audioOn()){const b=bus();SFX.fanfare(b,AC.currentTime+.2,false);setTimeout(()=>b.disconnect(),4000)}}),{threshold:.6}).observe(cg)}
+
 /* ---------- peggior match ---------- */
 const stage=q('#stage'),cue=q('#cue'),who=qa('.who',stage),rp=q('#replay');let timers=[],mbus=null,played=false;
 const at=(ms,f)=>timers.push(setTimeout(f,ms));
