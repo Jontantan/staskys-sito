@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-25T10:26:12.567938+00:00",
+ "updated": "2026-11-25T20:00:37.739125+00:00",
  "groups": {
   "staff": [
    {
@@ -110,7 +110,7 @@
    {
     "name": "Member",
     "color": null,
-    "members": 1951,
+    "members": 1950,
     "how": "Si ottiene completando la verifica."
    }
   ],
@@ -148,7 +148,7 @@
    {
     "name": "Viola scuro",
     "color": "#69247c",
-    "members": 90,
+    "members": 89,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -220,7 +220,7 @@
    {
     "name": "Blu",
     "color": "#3674b5",
-    "members": 186,
+    "members": 185,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -326,13 +326,13 @@
    {
     "name": "Annunci",
     "color": null,
-    "members": 416,
+    "members": 415,
     "how": "Scegli da Canali & Ruoli."
    },
    {
     "name": "Giveaways",
     "color": null,
-    "members": 499,
+    "members": 498,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -380,13 +380,13 @@
    {
     "name": "anime・manga",
     "color": null,
-    "members": 86,
+    "members": 85,
     "how": "Scegli da Canali & Ruoli."
    },
    {
     "name": "musica",
     "color": null,
-    "members": 92,
+    "members": 91,
     "how": "Scegli da Canali & Ruoli."
    },
    {
@@ -468,7 +468,7 @@
   {
    "level": 60,
    "name": "Livello 60",
-   "members": 26
+   "members": 27
   },
   {
    "level": 70,
