@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-24T17:47:42.325237+00:00",
+ "updated": "2026-11-25T01:38:12.499553+00:00",
  "groups": {
   "staff": [
    {
@@ -47,7 +47,7 @@
    {
     "name": "Helper",
     "color": null,
-    "members": 5,
+    "members": 4,
     "how": "Candidature staff o promozione interna."
    },
    {
@@ -104,7 +104,7 @@
    {
     "name": "Server Booster",
     "color": "#850154",
-    "members": 12,
+    "members": 11,
     "how": "Boosta il server una volta."
    },
    {
