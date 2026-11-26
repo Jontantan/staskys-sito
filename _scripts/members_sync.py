@@ -24,13 +24,17 @@ def _ids(site):
     url, key = _supabase(site)
     ids = set()
     for table in ("leaderboard", "media_ratings", "site_profiles"):
-        try:
-            req = urllib.request.Request(f"{url}/rest/v1/{table}?select=discord_id&limit=5000",
-                                         headers={"apikey": key, "Authorization": "Bearer " + key})
-            for r in json.load(urllib.request.urlopen(req, timeout=20)):
-                d = str(r.get("discord_id") or "")
-                if d.isdigit():
-                    ids.add(d)
+        try:  # Supabase dà al massimo 1000 righe per richiesta: si legge a pagine
+            for off in range(0, 50000, 1000):
+                req = urllib.request.Request(f"{url}/rest/v1/{table}?select=discord_id&limit=1000&offset={off}",
+                                             headers={"apikey": key, "Authorization": "Bearer " + key})
+                page = json.load(urllib.request.urlopen(req, timeout=20))
+                for r in page:
+                    d = str(r.get("discord_id") or "")
+                    if d.isdigit():
+                        ids.add(d)
+                if len(page) < 1000:
+                    break
         except Exception as e:  # tabella non ancora creata: si salta
             print(f"members: {table} non letta ({e.__class__.__name__})")
     return sorted(ids)

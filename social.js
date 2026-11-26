@@ -60,14 +60,17 @@ function demoRows(){const rows=[];let t=0;
  return rows}
 
 /* ---------- caricamento ---------- */
+/* Supabase dà al massimo 1000 righe per richiesta: si chiede a pagine finché non finiscono */
+async function paged(make,page=1000,max=50000){let out=[];for(let o=0;o<max;o+=page){const r=await make().range(o,o+page-1);if(r.error)return o?{data:out}:r;out=out.concat(r.data||[]);if(!r.data||r.data.length<page)break}return{data:out}}
 let cache=null;
 async function loadAll(){if(cache)return cache;
  if(A.DEMO)return cache=regAv(demoRows());
  if(!A.sb)return cache=[];
  const cols='discord_id,user_id,username,avatar_url,kind,media_id,title,cover,year,rating,status,updated_at';
- let r=await A.sb.from('media_ratings').select(cols+',top_pos,episodes,total_episodes').limit(10000);
- if(r.error)r=await A.sb.from('media_ratings').select(cols+',top_pos').limit(10000); /* prima di fase3 */
- if(r.error)r=await A.sb.from('media_ratings').select(cols).limit(10000); /* prima di fase2-top10.sql */
+ const get=c=>paged(()=>A.sb.from('media_ratings').select(c).order('id'));
+ let r=await get(cols+',top_pos,episodes,total_episodes');
+ if(r.error)r=await get(cols+',top_pos'); /* prima di fase3 */
+ if(r.error)r=await get(cols); /* prima di fase2-top10.sql */
  return cache=regAv((r.data||[]).map(x=>({...x,rating:x.rating==null?null:+x.rating})))}
 /* avatar dai voti del catalogo: il più recente per primo (vedi STASKYS.avList) */
 function regAv(rows){rows.slice().sort((a,b)=>String(b.updated_at||'').localeCompare(String(a.updated_at||''))).forEach(r=>A.addAv(r.discord_id,r.avatar_url,2));return rows}
@@ -86,21 +89,29 @@ async function saveTop10(kind,ids){
  if(A.DEMO){let s={};try{s=JSON.parse(localStorage.demo_top10||'null')||Object.fromEntries(Object.entries(DEMO_TOP).map(([k,v])=>[k,v.map(x=>T[x][1])]))}catch(e){}s[kind]=ids;localStorage.demo_top10=JSON.stringify(s);reset();return null}
  const {error}=await A.sb.rpc('set_top10',{p_kind:kind,p_ids:ids});reset();return error}
 
-/* ---------- compatibilità ---------- */
-/* titoli votati da entrambi; punteggio = quanto sono vicini i voti (0–100),
-   avvicinato al 50% quando i titoli in comune sono pochi (così 1 solo titolo non fa "100%") */
+/* ---------- compatibilità (patch 2.2) ---------- */
+/* Titoli votati da entrambi. Conta soprattutto COME votate:
+   1) vicinanza (60%): per ogni titolo 1 − differenza/4 (2 punti di distacco = metà, 4 o più = zero), in media;
+   2) gusti (40%): correlazione tra i vostri voti (alzate e abbassate il voto sugli stessi titoli?).
+      r ≤ −0,2 → 0, r ≥ 0,8 → 1. Serve almeno 3 titoli e voti non tutti uguali, altrimenti conta solo la vicinanza.
+   3) fiducia: con pochi titoli il risultato è avvicinato al 50% (k=3), più un piccolo bonus fino a +3 se ne avete tanti in comune. */
+const CMP={W:4,WC:.4,K:3};
 function compare(aRows,bRows){const B=new Map(bRows.filter(has).map(r=>[K(r),r]));
  const shared=aRows.filter(r=>has(r)&&B.has(K(r))).map(r=>{const o=B.get(K(r));return{kind:r.kind,media_id:r.media_id,title:r.title,cover:r.cover,a:+r.rating,b:+o.rating,d:Math.abs(r.rating-o.rating)}});
  const n=shared.length;if(!n)return{n:0,pct:null,shared,agree:[],differ:[]};
- const raw=100*(1-shared.reduce((s,x)=>s+x.d,0)/n/10),k=3,pct=Math.round((raw*n+50*k)/(n+k));
+ const close=shared.reduce((s,x)=>s+Math.max(0,1-x.d/CMP.W),0)/n;let score=close,corr=null;
+ if(n>=3){const ma=shared.reduce((s,x)=>s+x.a,0)/n,mb=shared.reduce((s,x)=>s+x.b,0)/n;let sab=0,saa=0,sbb=0;
+  shared.forEach(x=>{sab+=(x.a-ma)*(x.b-mb);saa+=(x.a-ma)**2;sbb+=(x.b-mb)**2});
+  if(saa>0&&sbb>0){corr=sab/Math.sqrt(saa*sbb);score=(1-CMP.WC)*close+CMP.WC*Math.min(1,Math.max(0,corr+.2))}}
+ const pct=Math.min(100,Math.round((100*score*n+50*CMP.K)/(n+CMP.K)+Math.min(3,n/10)));
  const agree=shared.slice().sort((x,y)=>x.d-y.d||(y.a+y.b)-(x.a+x.b)).filter(x=>x.d<=1).slice(0,5);
  const differ=shared.slice().sort((x,y)=>y.d-x.d||(y.a+y.b)-(x.a+x.b)).filter(x=>x.d>=3).slice(0,5);
- return{n,pct,shared,agree,differ}}
-function label(p){return p>=85?['soulmate','Soulmate']:p>=72?['great','Great match']:p>=60?['good','Good match']:null}
+ return{n,pct,close,corr,shared,agree,differ}}
+function label(p){return p>=85?['soulmate','Soulmate']:p>=75?['great','Great match']:p>=65?['good','Good match']:null}
 function byUser(rows){const m=new Map();rows.forEach(r=>{const id=String(r.discord_id||'');if(!id)return;if(!m.has(id))m.set(id,[]);m.get(id).push(r)});return m}
-/* membri più compatibili con did (servono almeno 3 titoli in comune) */
+/* membri più compatibili con did (servono almeno 3 titoli in comune; l'etichetta solo da 65%) */
 function similar(rows,did,max=5){const M=byUser(rows),mine=M.get(did)||[];const out=[];
- M.forEach((L,id)=>{if(id===did)return;const c=compare(mine,L);if(c.n>=3&&label(c.pct))out.push({did:id,name:A.nameOf(id,lastName(L)),avatar:A.avList(id)[0],...c,label:label(c.pct)})});
+ M.forEach((L,id)=>{if(id===did)return;const c=compare(mine,L);if(c.n>=3)out.push({did:id,name:A.nameOf(id,lastName(L)),avatar:A.avList(id)[0],...c,label:label(c.pct)})});
  return out.sort((a,b)=>b.pct-a.pct||b.n-a.n).slice(0,max)}
 
 /* ---------- classifica per media voti (PONDERATA, patch 2.2) ---------- */
@@ -119,7 +130,7 @@ async function loadRanking(kind){
  if(A.DEMO)return ranking(await loadAll(),kind);
  if(!A.sb)return[];
  /* tutti i titoli votati della categoria (anche con 1 voto, servono per la media generale C), ordinati qui */
- const {data,error}=await A.sb.from('media_avg').select('kind,media_id,title,cover,year,avg_rating,votes').eq('kind',kind).limit(5000);
+ const {data,error}=await paged(()=>A.sb.from('media_avg').select('kind,media_id,title,cover,year,avg_rating,votes').eq('kind',kind).order('media_id'));
  return error?ranking(await loadAll(),kind):weigh((data||[]).map(r=>({...r,avg_rating:+r.avg_rating,votes:+r.votes})))}
 
 
@@ -138,9 +149,9 @@ let gcache=null;
 async function loadGames(){if(gcache)return gcache;
  let lb=[],st=[];const rname={};
  if(A.DEMO)({lb,st}=demoGames());
- else if(A.sb){const [a,b]=await Promise.all([A.sb.from('leaderboard').select('game,user_id,discord_id,username,avatar_url,score').limit(5000),A.sb.from('streaks').select('*').limit(5000),A.loadMembers(),
+ else if(A.sb){const [a,b]=await Promise.all([paged(()=>A.sb.from('leaderboard').select('game,user_id,discord_id,username,avatar_url,score').order('game').order('user_id')),paged(()=>A.sb.from('streaks').select('*').order('user_id')),A.loadMembers(),
    /* avatar e nomi più recenti dai voti del catalogo (se non già caricati) */
-   cache?null:A.sb.from('media_ratings').select('discord_id,username,avatar_url,updated_at').order('updated_at',{ascending:false}).limit(5000).then(r=>{(r.data||[]).forEach(x=>{A.addAv(x.discord_id,x.avatar_url,2);const d=String(x.discord_id||'');if(d&&x.username&&!rname[d])rname[d]=x.username})},()=>{})]);
+   cache?null:paged(()=>A.sb.from('media_ratings').select('discord_id,username,avatar_url,updated_at').order('updated_at',{ascending:false}).order('id')).then(r=>{(r.data||[]).forEach(x=>{A.addAv(x.discord_id,x.avatar_url,2);const d=String(x.discord_id||'');if(d&&x.username&&!rname[d])rname[d]=x.username})},()=>{})]);
   lb=a.data||[];st=b.data||[];if(cache)byUser(cache).forEach((L,d)=>rname[d]=lastName(L))}
  const byGame={};lb.forEach(r=>(byGame[r.game]=byGame[r.game]||[]).push(r));
  Object.entries(byGame).forEach(([g,L])=>L.sort((x,y)=>ASC.has(g)?x.score-y.score:y.score-x.score).forEach((r,i)=>r.rank=i+1));

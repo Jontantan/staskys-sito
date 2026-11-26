@@ -49,7 +49,7 @@ function compareHTML(u,viewer,c){
   <p class="muted tiny">A sinistra il tuo voto, a destra il suo.</p></div>`}
 function similarHTML(list,u){
  return`<div class="card side-card"><h3>Membri simili</h3><p class="muted small">Chi ha gusti più vicini a ${u.isMe?'te':E(u.nick)}</p>
- ${list.length?`<ul class="sim">${list.map(m=>`<li><a href="${prof(m.did)}"><img ${A.avAttr(m.did,m.avatar)} alt="" loading="lazy"><span class="simn"><b>${m.did===VIEWER?'Tu':E(A.nameOf(m.did,m.name)||'Membro')}</b><small>${m.n} titoli in comune</small></span><span class="simp"><b>${m.pct}%</b><span class="mlab ${m.label[0]}">${m.label[1]}</span></span></a></li>`).join('')}</ul>`
+ ${list.length?`<ul class="sim">${list.map(m=>`<li><a href="${prof(m.did)}"><img ${A.avAttr(m.did,m.avatar)} alt="" loading="lazy"><span class="simn"><b>${m.did===VIEWER?'Tu':E(A.nameOf(m.did,m.name)||'Membro')}</b><small>${m.n} titoli in comune</small></span><span class="simp"><b>${m.pct}%</b>${m.label?`<span class="mlab ${m.label[0]}">${m.label[1]}</span>`:''}</span></a></li>`).join('')}</ul>`
  :`<p class="muted small" style="margin-top:.8rem">Ancora nessuno: servono almeno 3 titoli votati in comune con un altro membro.</p>`}</div>`}
 const searchHTML=()=>`<div class="card side-card msearch"><h3>Cerca membri</h3><p class="muted small">Apri il passaporto di chiunque e scopri quanto siete simili</p>
  <label class="msq"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="msq" type="search" placeholder="Scrivi un nickname…" autocomplete="off" enterkeyhint="search" aria-label="Cerca membri"></label>
