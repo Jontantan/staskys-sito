@@ -73,7 +73,7 @@ qa('[data-st]').forEach(b=>b.onclick=()=>{stFilter=b.dataset.st;qa('[data-st]').
 let t;q('#q').addEventListener('input',e=>{clearTimeout(t);t=setTimeout(()=>{term=e.target.value.trim();render()},350)});
 const P=new URLSearchParams(location.search);if(P.get('tipo')&&A.KINDS[P.get('tipo')])kind=P.get('tipo');if(P.get('q')){term=P.get('q');q('#q').value=term}
 qa('#ctabs button').forEach(x=>x.classList.toggle('active',x.dataset.kind===kind));q('#q').placeholder=PH[kind];
-if(A.DEMO){q('main').insertAdjacentHTML('afterbegin','<div class="demo-ribbon">DEMO · anteprima con dati finti salvati solo in questo browser</div>');
+if(A.DEMO){q('#torank').href='classifica.html?demo=1';q('main').insertAdjacentHTML('afterbegin','<div class="demo-ribbon">DEMO · anteprima con dati finti salvati solo in questo browser</div>');
  if(!localStorage.demo_ratings)localStorage.demo_ratings=JSON.stringify({'anime:al154587':{kind:'anime',media_id:'al154587',title:"Frieren: Beyond Journey's End",cover:'https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx154587-qQTzQnEJJ3oB.jpg',year:2023,rating:10,status:'visto',updated_at:'2026-11-20'}})}
 DB.load().then(render);document.addEventListener('staskys-auth',()=>DB.load().then(render));
 })();

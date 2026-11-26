@@ -167,3 +167,10 @@ footer{border-top:1px solid var(--line);margin-top:3rem;background:#050506}
 @media(min-width:1000px){.list.four{grid-template-columns:repeat(4,1fr)}}
 .topbar a{white-space:nowrap}
 .b2048{background:#17171a!important;border:1px solid var(--line2)}.b2048 i{background:rgba(255,255,255,.06)!important}
+/* schermi medi (tablet / portatili piccoli): menu col pulsante, senza barra in basso */
+@media(min-width:861px) and (max-width:1140px){
+ .nav nav{display:none!important}
+ .burger{display:block}
+ .nav .me{margin-left:auto}
+ .sheet-in{bottom:auto;top:5.2rem;left:auto;right:1rem;width:440px}
+}
