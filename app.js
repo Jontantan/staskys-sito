@@ -11,7 +11,7 @@ const BAKED=window.STASKYS_DATA||{};
 /* dati: prova il file .json, se non va (es. doppio clic) usa la copia in data.js */
 const load=name=>fetch(name+'.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw 0;return r.json()}).catch(()=>BAKED[name]||null);
 const INVITE_URL='https://discord.gg/'+S.INVITE;
-const PAGES=[['index','Home'],['giochi','Giochi'],['catalogo','Catalogo'],['classifica','Classifica'],['eventi','Eventi'],['server','Server'],['minecraft','Minecraft'],['livelli','Livelli'],['ruoli','Ruoli'],['guide','Guide'],['staff','Staff'],['stato','Stato'],['supporta','Supporta']];
+const PAGES=[['index','Home'],['giochi','Giochi'],['catalogo','Catalogo'],['classifica','Classifica'],['awards','Awards'],['eventi','Eventi'],['server','Server'],['livelli','Livelli'],['ruoli','Ruoli'],['guide','Guide'],['staff','Staff'],['stato','Stato'],['supporta','Supporta']];
 const MAIN_PAGES=7; /* le prime 7 nella barra, le altre in "Altro" */
 const PAGE=document.body.dataset.page||'index';
 document.documentElement.dataset.theme='dark'; /* nuovo stile: sempre scuro */
@@ -38,7 +38,7 @@ const ME=(()=>{try{const t=JSON.parse(localStorage['sb-otxtpwojvuyxksrsfpdl-auth
   <div><a href="index.html" class="brand"><img src="assets/icon.png" alt="">Staskys</a><p class="muted small" style="margin-top:.8rem">Chatting · Eventi · Anime. Community italiana su Discord dal 2022.</p>
   <div class="social"><a href="${INVITE_URL}" target="_blank" rel="noopener">Discord</a><a href="https://www.instagram.com/stas.kys" target="_blank" rel="noopener">Instagram</a><a href="https://www.tiktok.com/@stas.kys" target="_blank" rel="noopener">TikTok</a><a href="https://disboard.org/it/server/${S.GUILD}" target="_blank" rel="noopener">Disboard</a></div></div>
   <nav>${PAGES.map(([p,t])=>`<a href="${p}.html">${t}</a>`).join('')}<a href="profilo.html">Profilo</a></nav>
-  <div class="copy"><span>© Staskys</span><span>Non affiliato a Discord Inc. o Mojang.</span></div></div></footer>
+  <div class="copy"><span>© Staskys</span><span>Non affiliato a Discord Inc.</span></div></div></footer>
   <button class="totop" id="totop" aria-label="Torna su">↑</button><div class="toast" id="toast"></div>`);
  const sheet=$('#sheet'),toggle=o=>{o=o??!document.body.classList.contains('open');document.body.classList.toggle('open',o);$('#burger').setAttribute('aria-expanded',o);sheet.setAttribute('aria-hidden',!o)};
  $('#burger').onclick=()=>toggle();$('#tabmore').onclick=()=>toggle();sheet.onclick=e=>{if(e.target===sheet)toggle(false)};
@@ -91,7 +91,7 @@ function liveCounts(){const go=()=>getInvite().then(d=>{$$('[data-live]').forEac
  $$('[data-live=members]').forEach(el=>animate(el,d.approximate_member_count));$$('[data-live=online]').forEach(el=>animate(el,d.approximate_presence_count))}).catch(()=>{});
  const v=()=>getWidget().then(w=>{$$('[data-live=voice]').forEach(el=>{animate(el,w.voice);const h=el.closest('[data-hide-empty]');h&&(h.hidden=false)})}).catch(()=>{});
  go();v();setInterval(go,45000);setInterval(v,60000)}
-function mcStatus(el){const f=()=>getMC().then(d=>{const on=d.online;el.innerHTML=`<i class="dot ${on?'':'off'}"></i><span>${on?`Online · ${d.players?.online??0}/${d.players?.max??20} giocatori`:'Offline'}</span>`}).catch(()=>{el.innerHTML='<i class="dot off"></i><span>Stato non disponibile</span>'});f();setInterval(f,60000)}
+function mcStatus(el){const f=()=>$('#s-mc')&&getMC().then(d=>{const on=d.online;el.innerHTML=`<i class="dot ${on?'':'off'}"></i><span>${on?`Online · ${d.players?.online??0}/${d.players?.max??20} giocatori`:'Offline'}</span>`}).catch(()=>{el.innerHTML='<i class="dot off"></i><span>Stato non disponibile</span>'});f();setInterval(f,60000)}
 
 /* ---------- componenti ---------- */
 const md=s=>esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/__(.+?)__/g,'$1').replace(/\*(.+?)\*/g,'<i>$1</i>').replace(/^(&gt;|-#)\s?/gm,'').replace(/^#+\s*/gm,'').replace(/https?:\/\/\S+/g,'').replace(/[~`]/g,'');
@@ -119,7 +119,7 @@ const INIT={
    $('#levels tbody').innerHTML=L.map(l=>`<tr><td><b>Livello ${l.level}</b></td><td>Ruolo <code>lvl ${l.level}</code></td><td class="num hide-m">${fmt(T(l.level))} XP</td>${d.counts?`<td class="num">${l.members!=null?fmt(l.members):'–'}</td><td class="hide-m"><div class="bar"><i data-w="${((l.members||0)/max*100).toFixed(1)}"></i></div></td>`:''}</tr>`).join('');
    if(!d.counts)$$('#levels .cnt').forEach(e=>e.remove());
    const t=$('#levels');const fill=()=>$$('.bar i',t).forEach(i=>i.style.width=i.dataset.w+'%');t.classList.contains('in')?fill():t.addEventListener('revealed',fill,{once:true})})},
- ruoli(){load('roles').then(d=>{if(!d)return;const G=[['colori','Colori','Scegli il colore del tuo nome da Canali & Ruoli.'],['ping','Notifiche','Ricevi un ping solo per ciò che ti interessa.'],['giochi','Giochi','Mostra a cosa giochi e trova compagni. “Minecraft” sblocca anche i canali StaskysMC.'],['supporter','Supporter e riconoscimenti','Ruoli per chi supporta il server o si distingue.'],['tornei','Tornei','Ruoli dei tornei a cui la community ha partecipato.'],['staff','Staff','Ruoli dello staff. Per entrare guarda la pagina Staff.']];
+ ruoli(){load('roles').then(d=>{if(!d)return;const G=[['colori','Colori','Scegli il colore del tuo nome da Canali & Ruoli.'],['ping','Notifiche','Ricevi un ping solo per ciò che ti interessa.'],['giochi','Giochi','Mostra a cosa giochi e trova compagni.'],['supporter','Supporter e riconoscimenti','Ruoli per chi supporta il server o si distingue.'],['tornei','Tornei','Ruoli dei tornei a cui la community ha partecipato.'],['staff','Staff','Ruoli dello staff. Per entrare guarda la pagina Staff.']];
   $('#roles').innerHTML=G.filter(([k])=>(d.groups[k]||[]).length).map(([k,t,p])=>`<div class="rgroup reveal"><div><h3>${t}</h3><p>${p}</p></div><div class="roles">${d.groups[k].map(r=>`<span class="role-pill" title="${esc(r.how||'')}"${r.color?` style="--sw:${r.color}"`:''}><i></i>${esc(r.name)}${d.counts&&r.members?` <small>${fmt(r.members)}</small>`:''}</span>`).join('')}</div></div>`).join('');observe($('#roles'))})},
  staff(){load('staff').then(d=>{const g=$('#staffgrid');g.innerHTML=staffCards((d&&d.staff)||[]);observe(g);tilt(g)})},
  stato(){
@@ -128,7 +128,7 @@ const INIT={
   const run=()=>{const t0=performance.now();
    getInvite().then(d=>set('s-discord','ok','Online',`${fmt(d.approximate_member_count)} membri · ${fmt(d.approximate_presence_count)} online`)).catch(()=>set('s-discord','bad','Non raggiungibile'));
    getWidget().then(w=>set('s-voice','ok',`${fmt(w.voice)} in vocale`,`${fmt(w.rooms)} stanze attive`)).catch(()=>set('s-voice','warn','Non disponibile','widget disattivato'));
-   getMC().then(d=>d.online?set('s-mc','ok','Online',`${d.players?.online??0}/${d.players?.max??20} giocatori${d.version?' · '+esc(String(d.version).slice(0,30)):''}`):set('s-mc','bad','Offline',S.MC)).catch(()=>set('s-mc','warn','Stato non disponibile'));
+   $('#s-mc')&&getMC().then(d=>d.online?set('s-mc','ok','Online',`${d.players?.online??0}/${d.players?.max??20} giocatori${d.version?' · '+esc(String(d.version).slice(0,30)):''}`):set('s-mc','bad','Offline',S.MC)).catch(()=>set('s-mc','warn','Stato non disponibile'));
    (location.protocol==='file:'?Promise.resolve(1):fetch('index.html',{cache:'no-store',method:'HEAD'})).then(()=>set('s-web','ok','Online',location.protocol==='file:'?'aperto in locale':`risposta in ${Math.round(performance.now()-t0)} ms`)).catch(()=>set('s-web','bad','Errore'));
    load('guild').then(g=>{if(!g)return set('s-sync','bad','Mai eseguito');const m=(Date.now()-new Date(g.updated))/60000;set('s-sync',m<20?'ok':m<180?'warn':'bad',ago(g.updated),new Date(g.updated).toLocaleString('it-IT'))});
    $('#checked').textContent=new Date().toLocaleTimeString('it-IT')};

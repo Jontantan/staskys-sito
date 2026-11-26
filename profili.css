@@ -29,7 +29,7 @@
 .cm{font-size:.76rem;color:var(--mut)}
 .rbadge{position:absolute;top:8px;right:8px;min-width:30px;height:30px;padding:0 .45rem;border-radius:999px;display:grid;place-items:center;font:700 .82rem Inter,sans-serif;background:#fff;color:#000;box-shadow:0 4px 14px rgba(0,0,0,.5)}
 .sdot{position:absolute;left:8px;bottom:8px;padding:.22rem .55rem;border-radius:999px;font-size:.66rem;font-weight:600;background:rgba(0,0,0,.72);backdrop-filter:blur(6px);color:#fff}
-.sdot.s-in_corso{background:#3ee07a;color:#000}.sdot.s-voglio{background:rgba(255,255,255,.88);color:#000}
+.sdot.s-in_corso{background:#3ee07a;color:#000}.sdot.s-voglio{background:rgba(255,255,255,.88);color:#000}.sdot.s-droppato{background:#ff5a5a;color:#000}
 .citem.sk .ccover{background:linear-gradient(100deg,#0e0e10 30%,#18181b 50%,#0e0e10 70%);background-size:300% 100%;animation:shim 1.2s infinite linear}
 .citem.sk .ct,.citem.sk .cm{height:.8rem;border-radius:6px;background:#121215}.citem.sk .cm{width:50%}
 @keyframes shim{to{background-position:-150% 0}}

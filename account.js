@@ -16,9 +16,12 @@ const A={sb,READY,E,LOCAL,user:null,
  /* membri del server (members.json, aggiornato ogni 10 min dal bot) */
  members:null,
  loadMembers(){return this.members||(this.members=fetch('members.json',{cache:'no-store'}).then(r=>r.ok?r.json():{members:{}}).catch(()=>({members:{}})).then(d=>d.members||{}))},
- KINDS:{anime:{t:'Anime',verb:'sta guardando',icon:'🎌'},game:{t:'Giochi',verb:'sta giocando',icon:'🎮'},movie:{t:'Film',verb:'sta guardando',icon:'🎬'}},
- STATUS:{visto:'Visto',in_corso:'In corso',voglio:'Voglio vederlo'},
- statusLabel(kind,s){if(kind==='game')return{visto:'Giocato',in_corso:'Sto giocando',voglio:'Voglio giocarci'}[s]||s;return this.STATUS[s]||s},
+ KINDS:{anime:{t:'Anime',one:'anime',verb:'sta guardando',icon:'🎌',eps:true},game:{t:'Giochi',one:'gioco',verb:'sta giocando',icon:'🎮'},movie:{t:'Film',one:'film',verb:'sta guardando',icon:'🎬'},tv:{t:'Serie',one:'serie',verb:'sta guardando',icon:'📺',eps:true}},
+ STATUS:{visto:'Visto',in_corso:'In corso',droppato:'Droppato',voglio:'Voglio vederlo'},
+ statusLabel(kind,s){if(kind==='game')return{visto:'Giocato',in_corso:'Sto giocando',droppato:'Droppato',voglio:'Voglio giocarci'}[s]||s;return this.STATUS[s]||s},
+ /* voti 0–10 con un decimale: 0 è un voto valido, null = nessun voto */
+ hasR:r=>r&&r.rating!=null&&r.rating!==''&&!isNaN(+r.rating),
+ fmtR:v=>v==null||v===''?'':(Math.round(+v*10)/10).toLocaleString('it-IT',{minimumFractionDigits:+v%1?1:0,maximumFractionDigits:1}),
  /* colore dominante dell'avatar (per colorare la card) */
  color(src){return new Promise(res=>{const fb=()=>{let h=0;for(const c of String(src))h=(h*31+c.charCodeAt(0))%360;res(`hsl(${h} 70% 55%)`)};if(!src)return fb();
   const i=new Image();i.crossOrigin='anonymous';i.onload=()=>{try{const c=document.createElement('canvas');c.width=c.height=24;const x=c.getContext('2d');x.drawImage(i,0,0,24,24);const d=x.getImageData(0,0,24,24).data;

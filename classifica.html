@@ -3,29 +3,31 @@
 <head>
 <meta charset="utf-8"><meta name="theme-color" content="#000000"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Classifica · Staskys</title>
-<meta name="description" content="La classifica di Staskys: gli anime, i giochi e i film con la media voti più alta della community.">
+<meta name="description" content="La classifica di Staskys: gli anime, i giochi, i film e le serie con la media voti più alta della community, e la classifica punti dei minigiochi.">
 <meta property="og:title" content="Classifica · Staskys"><meta property="og:description" content="I titoli più amati dalla community di Staskys."><meta property="og:image" content="assets/banner.png">
 <link rel="icon" href="assets/icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css?v=3">
 <link rel="stylesheet" href="v2.css?v=2">
-<link rel="stylesheet" href="profili.css?v=2">
+<link rel="stylesheet" href="profili.css?v=3">
+<link rel="stylesheet" href="fase3.css?v=1">
 </head>
 <body data-page="classifica">
 <main>
-<section class="page-hero"><p class="label">Classifica</p><h1>I più amati.</h1><p class="lead">Gli anime, i giochi e i film con la media voti più alta tra i membri di Staskys. Per entrare servono almeno <b id="minv">2</b> voti.</p></section>
+<section class="page-hero"><p class="label">Classifica</p><h1 id="rtitle">I più amati.</h1><p class="lead" id="lead">Gli anime, i giochi, i film e le serie con la media voti più alta tra i membri di Staskys. Per entrare servono almeno <b id="minv">2</b> voti.</p></section>
 <section class="wrap tight">
-  <div class="cbar"><div class="seg" role="tablist" id="rtabs"><button class="active" data-kind="anime" role="tab">🎌 Anime</button><button data-kind="game" role="tab">🎮 Giochi</button><button data-kind="movie" role="tab">🎬 Film</button></div>
-  <a class="chip" id="tocat" href="catalogo.html">Vota nel catalogo →</a></div>
+  <div class="cbar"><div class="seg" role="tablist" id="rtabs"><button class="active" data-kind="anime" role="tab">🎌 Anime</button><button data-kind="game" role="tab">🎮 Giochi</button><button data-kind="movie" role="tab">🎬 Film</button><button data-kind="tv" role="tab">📺 Serie</button><button data-kind="punti" role="tab">🏅 Punti</button></div>
+  <a class="chip" id="tocat" href="catalogo.html">Vota nel catalogo →</a><a class="chip" id="togames" href="giochi.html" hidden>Gioca ai minigiochi →</a></div>
   <div id="rank"></div>
 </section>
 </main>
 <script src="data.js"></script>
-<script src="app.js?v=7"></script>
+<script src="app.js?v=8"></script>
 <script src="giochi-config.js?v=3"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
-<script src="account.js?v=2"></script>
-<script src="social.js?v=1"></script>
-<script src="classifica.js?v=1"></script>
+<script src="account.js?v=3"></script>
+<script src="social.js?v=2"></script>
+<script src="decorazioni-config.js?v=1"></script>
+<script src="classifica.js?v=2"></script>
 </body>
 </html>
