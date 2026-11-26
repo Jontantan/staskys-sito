@@ -23,7 +23,7 @@ const DB={
  async upsert(rows){
   if(A.DEMO){rows.forEach(r=>mine[key(r.kind,r.media_id)]=r);localStorage.demo_ratings=JSON.stringify(mine);return null}
   if(!A.user)return{message:'login'};
-  const p=A.profile(A.user),full=rows.map(r=>({...r,username:p.name,avatar_url:p.avatar}));
+  const p=A.me(),full=rows.map(r=>({...r,username:p.name,avatar_url:p.avatar}));
   let {error}=await A.sb.from('media_ratings').upsert(full,{onConflict:'user_id,kind,media_id'});
   if(error&&/episodes|total_episodes|column/i.test(error.message||'')){DB.v3=false;/* database vecchio: salva senza episodi */
    ({error}=await A.sb.from('media_ratings').upsert(full.map(({episodes,total_episodes,...r})=>r),{onConflict:'user_id,kind,media_id'}))}

@@ -16,7 +16,7 @@ const MAIN_PAGES=7; /* le prime 7 nella barra, le altre in "Altro" */
 const PAGE=document.body.dataset.page||'index';
 document.documentElement.dataset.theme='dark'; /* nuovo stile: sempre scuro */
 /* chi è collegato (letto dalla sessione Supabase salvata, senza caricare librerie) */
-const ME=(()=>{try{const t=JSON.parse(localStorage['sb-otxtpwojvuyxksrsfpdl-auth-token']||'null');const u=t&&(t.user||(t.currentSession&&t.currentSession.user));if(!u)return null;const m=u.user_metadata||{};return{name:(m.custom_claims&&m.custom_claims.global_name)||m.full_name||m.name||'Tu',avatar:m.avatar_url||m.picture||''}}catch(e){return null}})();
+const ME=(()=>{try{const t=JSON.parse(localStorage['sb-otxtpwojvuyxksrsfpdl-auth-token']||'null');const u=t&&(t.user||(t.currentSession&&t.currentSession.user));if(!u)return null;const m=u.user_metadata||{};let c=null;try{c=JSON.parse(localStorage.staskys_me_sp||'null');if(!c||c.did!==String(m.provider_id||m.sub||''))c=null}catch(e){}/* patch 2.3: prima il profilo del server Staskys */return{name:(c&&c.nick)||(m.custom_claims&&m.custom_claims.global_name)||m.full_name||m.name||'Tu',avatar:(c&&c.avatar)||m.avatar_url||m.picture||''}}catch(e){return null}})();
 
 /* ---------- header / footer condivisi ---------- */
 (function layout(){

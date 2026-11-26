@@ -14,7 +14,7 @@ const NO_STATS={rec:[],points:0,firsts:0,podiums:0,streak:0,bestStreak:0,best:{}
 function sanitizeEq(eq,unl){eq=eq||{};const ok=id=>id&&unl.includes(id)&&D.byId[id];
  return{frame:ok(eq.frame)&&D.byId[eq.frame].tipo==='frame'?eq.frame:'',effect:ok(eq.effect)&&D.byId[eq.effect].tipo==='effect'?eq.effect:'',bg:ok(eq.bg)&&D.byId[eq.bg].tipo==='bg'?eq.bg:'',
   badges:(Array.isArray(eq.badges)?eq.badges:[]).filter(id=>ok(id)&&D.byId[id].tipo==='badge').slice(0,D.MAX_BADGE)}}
-function cleanTheme(t){t=t&&typeof t==='object'?t:{};return{accent:/^#[0-9a-f]{6}$/i.test(t.accent||'')?t.accent:'',bg:D.SFONDI[t.bg]?t.bg:'grad',banner:D.BANNER[t.banner]?t.banner:'none',frame:D.CORNICI[t.frame]?t.frame:'round',
+function cleanTheme(t){t=t&&typeof t==='object'?t:{};return{accent:/^#[0-9a-f]{6}$/i.test(t.accent||'')?t.accent:'',bg:D.SFONDI[t.bg]?t.bg:'grad',banner:t.banner==='none'&&!t.bp?'auto':t.banner==='discord'||D.BANNER[t.banner]?t.banner:'auto',bp:t.bp?1:0,frame:D.CORNICI[t.frame]?t.frame:'round',
  font:D.FONT[t.font]?t.font:'inter',order:Array.isArray(t.order)?[...new Set(t.order.filter(k=>ORDER.includes(k))),...ORDER].filter((k,i,a)=>a.indexOf(k)===i):ORDER.slice(),stars:t.stars!==false}}
 async function loadUser(did,all,games,profiles){
  const st=games.users.get(did)||{...NO_STATS},pf=profiles.get(did)||{},unl=D.unlocked(st);
@@ -23,7 +23,7 @@ async function loadUser(did,all,games,profiles){
   return{...base,nick:L[0]?.username||st.name||'Membro demo',username:me?'demo_staskys':'',avatar:L[0]?.avatar_url||st.avatar||'',joined:me?'2024-03-12':'',inServer:true,demo:true,isMe:me}}
  const mem=await A.loadMembers(),m=mem[did]||{};
  const me=A.user&&A.profile(A.user).discord===did?A.profile(A.user):null,r0=base.ratings[0]||{};
- return{...base,nick:A.clean(m.nick||me?.name||st.name||r0.username||'Membro'),username:m.username||'',avatar:A.avList(did,m.avatar,st.avatar,r0.avatar_url)[0],joined:m.joined||'',inServer:m.in_server!==false,isMe:!!me}}
+ return{...base,nick:A.clean(m.nick||me?.name||st.name||r0.username||'Membro'),username:m.username||'',avatar:A.avList(did,m.avatar,st.avatar,r0.avatar_url)[0],joined:m.joined||'',banner:A.bannerOf(did),inServer:m.in_server!==false,isMe:!!me}}
 
 /* ---------- pezzi di vista ---------- */
 const cover=(r,cls='')=>`<span class="cv ${cls}">${r.cover?`<img src="${E(r.cover)}" alt="" loading="lazy">`:`<i>${A.KINDS[r.kind]?.icon||''}</i>`}${A.hasR(r)?`<b class="rbadge">${A.fmtR(r.rating)}</b>`:''}</span>`;
@@ -57,12 +57,15 @@ const searchHTML=()=>`<div class="card side-card msearch"><h3>Cerca membri</h3><
 const badgeHTML=id=>{const d=D.byId[id];return d?`<span class="dbadge r-${d.rarita}" title="${E(d.nome)} · ${E(D.RARITA[d.rarita])}">${d.icona||'★'}</span>`:''};
 function avatarHTML(u){const t=u.theme,eq=u.equipped;
  return`<span class="avwrap shape-${t.frame}${eq.frame?' fr fr-'+eq.frame:''}"><img class="pass-av" ${A.avAttr(u.did,u.avatar)} alt="">${eq.frame==='fr_crown'?'<i class="crown" aria-hidden="true"></i>':''}${eq.frame==='fr_orbit'?'<i class="orb" aria-hidden="true"></i>':''}</span>`}
+/* banner: 'auto' (mai scelto) = banner del profilo Discord/server se c'è; 'discord' solo se c'è davvero (patch 2.3) */
+const banOf=u=>{const b=u.theme.banner;if(b==='auto'||b==='discord')return u.banner?'discord':'none';return b};
+const banHTML=(u,k)=>k==='discord'?`<div class="pass-ban ban-discord" aria-hidden="true" style="background-image:url('${E(u.banner)}')"></div>`:`<div class="pass-ban ban-${k}" aria-hidden="true"></div>`;
 function passHTML(u,ctx){
  const t=u.theme,eq=u.equipped,rated=u.ratings.filter(A.hasR);
  const now=u.ratings.filter(r=>r.status==='in_corso').sort((a,b)=>String(b.updated_at).localeCompare(a.updated_at))[0];
  const since=u.joined?new Date(u.joined).toLocaleDateString('it-IT',{month:'long',year:'numeric'}):'';
- return`<article class="pass bg-${t.bg} font-${t.font}${eq.bg?' dbg dbg-'+eq.bg:''}${t.banner!=='none'?' has-ban':''}" style="--c:${t.accent||ctx.avColor||'#555'}">
-   ${t.banner!=='none'?`<div class="pass-ban ban-${t.banner}" aria-hidden="true"></div>`:''}
+ return`<article class="pass bg-${t.bg} font-${t.font}${eq.bg?' dbg dbg-'+eq.bg:''}${banOf(u)!=='none'?' has-ban':''}" style="--c:${t.accent||ctx.avColor||'#555'}">
+   ${banOf(u)!=='none'?banHTML(u,banOf(u)):''}
    ${eq.bg?`<div class="dbg-layer" aria-hidden="true"></div>`:''}
    <div class="pass-glow" aria-hidden="true"></div>
    <header class="pass-head">
@@ -170,7 +173,7 @@ function openCustomize(u,rerender){
     <label class="czc custom${t.accent&&!D.PALETTE.includes(t.accent)?' on':''}" title="Colore personalizzato" style="--sw:${t.accent||'#888'}"><input type="color" id="czpick" value="${t.accent||'#8b5cf6'}" aria-label="Colore personalizzato"></label>
     <button class="czauto${t.accent?'':' on'}" data-c="">Auto (avatar)</button></div>
    <p class="label">Sfondo</p><div class="czrow">${sw('bg',D.SFONDI,t.bg)}</div>
-   <p class="label">Banner</p><div class="czgrid">${sw('ban',D.BANNER,t.banner)}</div>
+   <p class="label">Banner</p><div class="czgrid">${u.banner?`<button class="czo ban-discord${banOf({...u,theme:t})==='discord'?' on':''}" data-g="ban" data-v="discord"><i class="ban-discord" style="background-image:url('${E(u.banner)}')"></i><span>Discord</span></button>`:''}${sw('ban',D.BANNER,banOf({...u,theme:t}))}</div>
    <p class="label">Forma avatar</p><div class="czrow">${sw('shape',D.CORNICI,t.frame)}</div>
    <p class="label">Font del nome</p><div class="czrow fonts">${Object.entries(D.FONT).map(([k,v])=>`<button class="czo font-${k}${t.font===k?' on':''}" data-g="font" data-v="${k}"><b style="font-family:'${v[1]}',Inter,sans-serif">Aa</b><span>${E(v[0])}</span></button>`).join('')}</div>
    <p class="label">Sezioni</p><label class="cztog"><input type="checkbox" id="czstars" ${t.stars?'checked':''}> Mostra “Le mie stelle” nel passaporto</label>
@@ -182,7 +185,7 @@ function openCustomize(u,rerender){
   const bi=q('#bio',box);bi.oninput=()=>{bio=bi.value.replace(/\s+/g,' ').slice(0,160);q('#bioc',box).textContent=bio.length+'/160';live()};
   qa('[data-c]',box).forEach(b=>b.onclick=()=>{t.accent=b.dataset.c;live();draw()});
   const pk=q('#czpick',box);pk.oninput=()=>{t.accent=pk.value;live();pk.parentElement.style.setProperty('--sw',pk.value)};pk.onchange=()=>draw();
-  qa('.czo',box).forEach(b=>b.onclick=()=>{const g=b.dataset.g,v=b.dataset.v;if(g==='bg')t.bg=v;if(g==='ban')t.banner=v;if(g==='shape')t.frame=v;if(g==='font')t.font=v;live();draw()});
+  qa('.czo',box).forEach(b=>b.onclick=()=>{const g=b.dataset.g,v=b.dataset.v;if(g==='bg')t.bg=v;if(g==='ban'){t.banner=v;t.bp=1}if(g==='shape')t.frame=v;if(g==='font')t.font=v;live();draw()});
   q('#czstars',box).onchange=e=>{t.stars=e.target.checked;live()};
   qa('[data-ou]',box).forEach(b=>b.onclick=()=>{const i=+b.dataset.ou;[t.order[i-1],t.order[i]]=[t.order[i],t.order[i-1]];live();draw()});
   qa('[data-od]',box).forEach(b=>b.onclick=()=>{const i=+b.dataset.od;[t.order[i+1],t.order[i]]=[t.order[i],t.order[i+1]];live();draw()});

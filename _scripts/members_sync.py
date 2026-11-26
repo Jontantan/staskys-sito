@@ -1,4 +1,4 @@
-"""Profili del sito: nickname e avatar del server Staskys per chi usa il sito.
+"""Profili del sito: nickname, avatar e banner del server Staskys per chi usa il sito.
 
 Viene chiamato alla fine di sync.py (ogni 10 minuti dalla GitHub Action).
 Legge da Supabase (chiave pubblica "anon", sola lettura) gli ID Discord di chi ha
@@ -47,14 +47,17 @@ def run(member, guild, site, write):
             out[uid] = {"in_server": False}
             continue
         u = m.get("user") or {}
-        if m.get("avatar"):
-            av = f"https://cdn.discordapp.com/guilds/{guild}/users/{uid}/avatars/{m['avatar']}.png?size=256"
-        elif u.get("avatar"):
-            av = f"https://cdn.discordapp.com/avatars/{uid}/{u['avatar']}.png?size=256"
-        else:
-            av = f"https://cdn.discordapp.com/embed/avatars/{(int(uid) >> 22) % 6}.png"
+        # PROFILO DEL SERVER prima di tutto (patch 2.3): avatar, nickname e banner impostati in Staskys,
+        # poi quelli normali di Discord. Avatar animati (codice che inizia con a_) come .gif.
+        def pic(path, h, size):
+            return f"https://cdn.discordapp.com/{path}/{h}.{'gif' if h.startswith('a_') else 'png'}?size={size}" if h else ""
+        g_av = pic(f"guilds/{guild}/users/{uid}/avatars", m.get("avatar"), 256)
+        u_av = pic(f"avatars/{uid}", u.get("avatar"), 256)
+        av = g_av or u_av or f"https://cdn.discordapp.com/embed/avatars/{(int(uid) >> 22) % 6}.png"
+        banner = pic(f"guilds/{guild}/users/{uid}/banners", m.get("banner"), 600) or pic(f"banners/{uid}", u.get("banner"), 600)
         out[uid] = {"in_server": True, "nick": clean_nick(m.get("nick") or u.get("global_name") or u.get("username") or ""),
-                    "username": u.get("username") or "", "avatar": av, "joined": (m.get("joined_at") or "")[:10]}
+                    "username": u.get("username") or "", "avatar": av, "global_avatar": u_av, "banner": banner,
+                    "joined": (m.get("joined_at") or "")[:10]}
     from datetime import datetime, timezone
     write("members.json", json.dumps({"updated": datetime.now(timezone.utc).isoformat(), "members": out},
                                      ensure_ascii=False, indent=1))

@@ -14,14 +14,19 @@ let inited=false,user=null,cur='snake',stop=()=>{};
 const stage=q('#gstage'),lock=q('#glock'),msg=t=>{const m=q('.gmsg',stage);if(m)m.textContent=t};
 
 /* ---------- utente ---------- */
-function profile(u){const m=u.user_metadata||{};return{name:(m.custom_claims&&m.custom_claims.global_name)||m.full_name||m.name||m.user_name||'Utente',avatar:m.avatar_url||m.picture||''}}
+const SP=window.STASKYS_SP||null;
+/* tu: prima il tuo profilo del SERVER Staskys (patch 2.3, server-profile.js), poi quello del login */
+function profile(u){const m=u.user_metadata||{},did=String(m.provider_id||m.sub||''),c=SP&&SP.cached(did);
+ const base={name:(m.custom_claims&&m.custom_claims.global_name)||m.full_name||m.name||m.user_name||'Utente',avatar:m.avatar_url||m.picture||''};
+ return c?{name:SP.clean(c.nick)||base.name,avatar:c.avatar||base.avatar}:base}
+const didOf=u=>{const m=(u&&u.user_metadata)||{};return String(m.provider_id||m.sub||'')};
 function renderAuth(){const a=q('#gauth');
  if(!READY){a.innerHTML='<span><b>Giochi in arrivo.</b> <span class="muted">Stiamo preparando le classifiche: torna presto!</span></span>';return}
  if(!inited){a.innerHTML='<span class="muted">Controllo l\'accesso…</span>';return} // finché la sessione salvata non è letta, non mostrare "Accedi"
  if(user){const p=profile(user);a.innerHTML=`<span class="who">${p.avatar?`<img src="${E(p.avatar)}" alt="">`:''}${E(p.name)}</span><button class="btn ghost sm" id="logout">Esci</button>`;q('#logout').onclick=()=>sb.auth.signOut()}
  else a.innerHTML='<span class="muted">Accedi con Discord per giocare e salvare i tuoi punteggi.</span><button class="btn sm" data-login>Accedi con Discord</button>';
  bindLogin(a)}
-function bindLogin(r){qa('[data-login]',r).forEach(b=>b.onclick=()=>{try{sessionStorage.giochi_torna=cur}catch(e){}sb.auth.signInWithOAuth({provider:'discord',options:{redirectTo:location.origin+location.pathname}})})}
+function bindLogin(r){qa('[data-login]',r).forEach(b=>b.onclick=()=>{try{sessionStorage.giochi_torna=cur}catch(e){}sb.auth.signInWithOAuth({provider:'discord',options:{redirectTo:location.origin+location.pathname,scopes:SP?SP.SCOPES:undefined}})})}
 function renderLock(){
  if(user&&READY){lock.hidden=true;return}
  if(READY&&!inited){lock.hidden=false;lock.innerHTML='<p class="muted small">Caricamento…</p>';return}
@@ -67,26 +72,28 @@ function celebrate(game,score,first){const g=GAMES[game],card=q('.gcard');if(!ca
 /* tasto R = Rigioca (quando il pulsante è visibile e non stai scrivendo) */
 addEventListener('keydown',e=>{if((e.key!=='r'&&e.key!=='R')||e.ctrlKey||e.metaKey||e.altKey||/INPUT|TEXTAREA/.test(e.target.tagName))return;
  const b=q('#go',stage);if(b&&!b.hidden&&b.offsetParent&&!GAMES[cur].noR){e.preventDefault();b.click()}});
-/* ---------- avatar aggiornati (patch 2.2) ----------
-   L'avatar salvato col punteggio scade quando uno cambia avatar su Discord: cerchiamo un indirizzo più recente
-   (il tuo dal login, members.json del server, ultimo voto nel catalogo, streak) e, se non carica, passiamo al successivo. */
+/* ---------- avatar e nomi del SERVER (patch 2.2 + 2.3) ----------
+   L'avatar/nome salvati col punteggio possono essere vecchi: si mostra il profilo del server Staskys
+   (server-profile.js: members.json del bot + quello salvato al login, il più recente), uguale per tutti.
+   Riserve: voti del catalogo, streak, quello salvato col punteggio, avatar standard di Discord, icona. */
 let AVMAP=null;const NM={};
 const safe=p=>Promise.resolve(p).then(r=>r&&r.data||[],()=>[]);
 function avMap(){return AVMAP||(AVMAP=Promise.all([
   safe(sb.from('leaderboard').select('user_id,discord_id').limit(5000)),
-  fetch('members.json',{cache:'no-store'}).then(r=>r.ok?r.json():{}).catch(()=>({})),
-  safe(sb.from('media_ratings').select('user_id,avatar_url,updated_at').order('updated_at',{ascending:false}).limit(5000)),
+  SP?SP.load(sb):{},
+  safe(sb.from('media_ratings').select('user_id,discord_id,avatar_url,updated_at').order('updated_at',{ascending:false}).limit(1000)),
   safe(sb.from('streaks').select('user_id,avatar_url').limit(5000))
- ]).then(([ids,mj,mr,st])=>{const m={},add=(u,a)=>{if(u&&/^https?:\/\//.test(a||'')&&!(m[u]=m[u]||[]).includes(a))m[u].push(a)};
-  if(user)add(user.id,profile(user).avatar);const mem=(mj&&mj.members)||{},did={};
-  ids.forEach(r=>{did[r.user_id]=r.discord_id;const x=mem[r.discord_id];if(x){add(r.user_id,x.avatar);if(x.nick)NM[r.user_id]=x.nick}});
+ ]).then(([ids,mem,mr,st])=>{const m={},add=(u,a)=>{if(u&&/^https?:\/\//.test(a||'')&&!(m[u]=m[u]||[]).includes(a))m[u].push(a)},did={};
+  ids.forEach(r=>{did[r.user_id]=String(r.discord_id||'')});mr.forEach(r=>{if(r.discord_id&&!did[r.user_id])did[r.user_id]=String(r.discord_id)});
+  Object.entries(did).forEach(([u,d])=>{const x=mem[d];if(x){[x.avatar,x.alt,x.avatar2].forEach(a=>add(u,a));if(x.nick)NM[u]=x.nick}});
   mr.forEach(r=>add(r.user_id,r.avatar_url));st.forEach(r=>add(r.user_id,r.avatar_url));
-  Object.entries(did).forEach(([u,d])=>{try{add(u,`https://cdn.discordapp.com/embed/avatars/${Number((BigInt(d)>>22n)%6n)}.png`)}catch(e){}});
+  if(user)add(user.id,profile(user).avatar);
+  Object.entries(did).forEach(([u,d])=>{const a=SP&&SP.defAv(d);a&&add(u,a)});
   return m}))}
 function nextAv(img){const L=img._av||[];if(!L.length){img.onerror=null;img.src='assets/icon.png';return}img.src=L.shift()}
 async function fixAv(root){if(!READY||!root)return;const m=await avMap().catch(()=>({}));
- /* nome vuoto salvato col punteggio: usa il nickname del server */
- root.querySelectorAll('li[data-uid] .n').forEach(n=>{const t=n.firstChild;if((!t||t.nodeType!==3||!t.textContent.trim())&&NM[n.closest('li').dataset.uid])n.insertBefore(document.createTextNode(NM[n.closest('li').dataset.uid]),n.firstChild)});
+ /* nome: sempre il nickname del server, se lo conosciamo */
+ root.querySelectorAll('li[data-uid] .n').forEach(n=>{const nk=NM[n.closest('li').dataset.uid];if(!nk)return;const t=n.firstChild;if(t&&t.nodeType===3)t.textContent=nk+(/\s$/.test(t.textContent)?' ':'');else n.insertBefore(document.createTextNode(nk),n.firstChild)});
  root.querySelectorAll('li[data-uid] img').forEach(img=>{const L=(m[img.closest('li').dataset.uid]||[]).slice(),cur=img.getAttribute('src');
   if(cur&&!L.includes(cur))L.push(cur);img._av=L;img.onerror=()=>nextAv(img);if(L.length&&L[0]!==cur)nextAv(img);else if(L[0]===cur)L.shift();if(img.complete&&img.naturalWidth===0)nextAv(img)})}
 
@@ -278,7 +285,10 @@ function open(game){stop();cur=game;qa('.gtab').forEach(b=>b.classList.toggle('a
 qa('.gtab').forEach(b=>b.onclick=()=>open(b.dataset.game));
 let torna='';try{torna=sessionStorage.giochi_torna||'';sessionStorage.removeItem('giochi_torna')}catch(e){}
 const start=GAMES[location.hash.slice(1)]?location.hash.slice(1):GAMES[torna]?torna:'snake';
-if(sb){sb.auth.getSession().then(({data})=>{user=data.session?.user||null},()=>{}).then(()=>{inited=true;renderAuth();open(cur);loadStreak()});
+if(sb){sb.auth.getSession().then(async({data})=>{user=data.session?.user||null;
+  /* subito dopo il login: salva il tuo profilo del server; poi tieni in memoria il tuo avatar/nickname del server */
+  if(user&&SP){if(data.session.provider_token)await Promise.race([SP.syncSelf(sb).catch(()=>null),new Promise(r=>setTimeout(r,4000))]);
+   SP.load(sb).then(m=>{const d=didOf(user);if(m[d]){SP.remember(d,m[d]);renderAuth()}})}},()=>{}).then(()=>{inited=true;renderAuth();open(cur);loadStreak()});
  sb.auth.onAuthStateChange((_e,s)=>{const was=user?.id;user=s?.user||null;if(was!==user?.id){renderAuth();renderLock();board(cur);loadStreak();for(const k in BEST)delete BEST[k];loadBest(cur);if(GAMES[cur].onUser)try{GAMES[cur].onUser(user)}catch(e){}}})}
 if(!sb)inited=true;cur=start;renderAuth();open(start);loadStreak();
 })();

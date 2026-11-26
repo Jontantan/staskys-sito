@@ -303,3 +303,7 @@ a.rk-row{text-decoration:none;color:inherit}
 /* patch 2.2: righe della classifica non escono dallo schermo su telefono (titoli lunghi) */
 .rk-list{padding:0}
 .rk-list>*,.rk-list>li>.rk-row{min-width:0}
+
+/* patch 2.3: banner del profilo Discord/server sul passaporto */
+.ban-discord{background-color:#111;background-size:cover;background-position:center}
+.czo i.ban-discord{background-size:cover;background-position:center}
