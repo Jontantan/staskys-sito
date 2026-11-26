@@ -91,7 +91,7 @@ function catsHTML(u){return`<section class="cats sec" data-sec="cats">
   </section>`}
 const awardsCard=()=>`<section class="card myaw sec" data-sec="awards" id="myaw"><p class="muted small">Carico gli Awards…</p></section>`;
 function pageHTML(u,ctx){
- const secs={t10:`<section class="card t10card sec" data-sec="t10" id="t10">${topHTML(u,ctx.kind)}</section>`,cats:catsHTML(u),awards:u.isMe?awardsCard():''};
+ const secs={t10:`<section class="card t10card sec" data-sec="t10" id="t10">${topHTML(u,ctx.kind)}</section>`,cats:catsHTML(u),awards:u.isMe&&W?awardsCard():''};
  return`${u.demo?`<div class="demo-ribbon">DEMO · ${u.isMe?'profilo di esempio':'confronto di esempio'} con dati finti</div>`:''}
  <section class="pf-wrap">
  <div class="pf-main">

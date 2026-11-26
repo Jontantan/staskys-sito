@@ -11,7 +11,7 @@ const BAKED=window.STASKYS_DATA||{};
 /* dati: prova il file .json, se non va (es. doppio clic) usa la copia in data.js */
 const load=name=>fetch(name+'.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw 0;return r.json()}).catch(()=>BAKED[name]||null);
 const INVITE_URL='https://discord.gg/'+S.INVITE;
-const PAGES=[['index','Home'],['giochi','Giochi'],['catalogo','Catalogo'],['classifica','Classifica'],['awards','Awards'],['eventi','Eventi'],['server','Server'],['livelli','Livelli'],['ruoli','Ruoli'],['guide','Guide'],['staff','Staff'],['stato','Stato'],['supporta','Supporta']];
+const PAGES=[['index','Home'],['giochi','Giochi'],['catalogo','Catalogo'],['classifica','Classifica'],['eventi','Eventi'],['server','Server'],['livelli','Livelli'],['ruoli','Ruoli'],['guide','Guide'],['staff','Staff'],['stato','Stato'],['supporta','Supporta']];
 const MAIN_PAGES=7; /* le prime 7 nella barra, le altre in "Altro" */
 const PAGE=document.body.dataset.page||'index';
 document.documentElement.dataset.theme='dark'; /* nuovo stile: sempre scuro */

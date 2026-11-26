@@ -19,7 +19,7 @@ window.STASKYS_DECO={
  BANNER:{none:'Nessuno',aurora:'Aurora',sunset:'Tramonto',ocean:'Oceano',sakura:'Sakura',circuit:'Circuito',galaxy:'Galassia',ember:'Brace'},
  CORNICI:{round:'Tonda',ring:'Anello',square:'Squadrata',hex:'Esagono'},
  FONT:{inter:['Classico','Inter',''],serif:['Elegante','Playfair Display','Playfair+Display:wght@700'],pixel:['Pixel','Press Start 2P','Press+Start+2P'],bold:['Potente','Archivo Black','Archivo+Black']},
- SEZIONI:{t10:'Top 10',cats:'Categorie',awards:'I miei Awards'}, /* ordine sotto il passaporto; "Le mie stelle" si può nascondere */
+ SEZIONI:{t10:'Top 10',cats:'Categorie'}, /* Awards: rimessi nel terzo update (aggiungere awards:'I miei Awards') */ /* ordine sotto il passaporto; "Le mie stelle" si può nascondere */
  RARITA:{comune:'Comune',rara:'Rara',epica:'Epica',leggendaria:'Leggendaria'},
  TIPI:{frame:'Cornici animate',effect:'Effetti nome',bg:'Sfondi',badge:'Badge'},
  DECO:[
