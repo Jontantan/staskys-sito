@@ -11,28 +11,41 @@ const BAKED=window.STASKYS_DATA||{};
 /* dati: prova il file .json, se non va (es. doppio clic) usa la copia in data.js */
 const load=name=>fetch(name+'.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw 0;return r.json()}).catch(()=>BAKED[name]||null);
 const INVITE_URL='https://discord.gg/'+S.INVITE;
-const PAGES=[['index','Home'],['server','Server'],['minecraft','Minecraft'],['eventi','Eventi'],['livelli','Livelli'],['ruoli','Ruoli'],['guide','Guide'],['staff','Staff'],['stato','Stato'],['giochi','Giochi'],['supporta','Supporta']];
+const PAGES=[['index','Home'],['giochi','Giochi'],['catalogo','Catalogo'],['eventi','Eventi'],['server','Server'],['minecraft','Minecraft'],['livelli','Livelli'],['ruoli','Ruoli'],['guide','Guide'],['staff','Staff'],['stato','Stato'],['supporta','Supporta']];
+const MAIN_PAGES=6; /* le prime 6 nella barra, le altre in "Altro" */
 const PAGE=document.body.dataset.page||'index';
+document.documentElement.dataset.theme='dark'; /* nuovo stile: sempre scuro */
+/* chi è collegato (letto dalla sessione Supabase salvata, senza caricare librerie) */
+const ME=(()=>{try{const t=JSON.parse(localStorage['sb-otxtpwojvuyxksrsfpdl-auth-token']||'null');const u=t&&(t.user||(t.currentSession&&t.currentSession.user));if(!u)return null;const m=u.user_metadata||{};return{name:(m.custom_claims&&m.custom_claims.global_name)||m.full_name||m.name||'Tu',avatar:m.avatar_url||m.picture||''}}catch(e){return null}})();
 
 /* ---------- header / footer condivisi ---------- */
 (function layout(){
- const nav=PAGES.map(([p,t])=>`<a href="${p}.html"${p===PAGE?' class="active" aria-current="page"':''}>${t}</a>`).join('');
+ const link=([p,t])=>`<a href="${p}.html"${p===PAGE?' class="active" aria-current="page"':''}>${t}</a>`;
+ const main=PAGES.slice(0,MAIN_PAGES),more=PAGES.slice(MAIN_PAGES),inMore=more.some(([p])=>p===PAGE);
+ const acc=ME?`<a class="me${PAGE==='profilo'?' active':''}" href="profilo.html" title="Il mio profilo">${ME.avatar?`<img src="${esc(ME.avatar)}" alt="">`:''}<span>${esc(ME.name)}</span></a>`:`<a class="me login${PAGE==='profilo'?' active':''}" href="profilo.html">Accedi</a>`;
+ const ico={index:'<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>',giochi:'<rect x="2" y="7" width="20" height="11" rx="5"/><path d="M7 11v3M5.5 12.5h3M16 11.5h.01M18 13.5h.01"/>',catalogo:'<path d="M4 4h6v16H4zM14 4l6 1.5-3.5 15L11 19"/>',profilo:'<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>',altro:'<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>'};
+ const tab=(p,t,href,extra='')=>`<a href="${href}" class="${p===PAGE?'active':''}" ${extra}><svg viewBox="0 0 24 24" aria-hidden="true">${ico[p]}</svg><span>${t}</span></a>`;
  document.body.insertAdjacentHTML('afterbegin',`<div class="progress" id="progress"></div><div class="spot" id="spot"></div>
  <div id="topbar"></div>
  <header class="nav"><a href="index.html" class="brand"><img src="assets/icon.png" alt="">Staskys</a>
- <nav id="menu">${nav}</nav>
- <button class="theme" id="theme" aria-label="Tema chiaro/scuro"><span></span></button>
- <a class="btn sm magnetic" href="${INVITE_URL}" target="_blank" rel="noopener">Entra</a>
- <button class="burger" aria-label="Menu" aria-expanded="false" id="burger">Menu</button></header>`);
+ <nav id="menu">${main.map(link).join('')}<div class="navmore${inMore?' has-active':''}"><button type="button" aria-haspopup="true" aria-expanded="false">Altro <span aria-hidden="true">▾</span></button><div class="more-pop">${more.map(link).join('')}</div></div></nav>
+ ${acc}
+ <a class="btn sm magnetic join" href="${INVITE_URL}" target="_blank" rel="noopener">Entra</a>
+ <button class="burger" aria-label="Menu" aria-expanded="false" id="burger"><i></i><i></i></button></header>
+ <div class="sheet" id="sheet" aria-hidden="true"><div class="sheet-in"><p class="label">Tutte le pagine</p><div class="sheet-grid">${PAGES.map(link).join('')}<a href="profilo.html"${PAGE==='profilo'?' class="active"':''}>Profilo</a></div><a class="btn" href="${INVITE_URL}" target="_blank" rel="noopener">Entra nel server Discord</a></div></div>
+ <nav class="tabbar" aria-label="Navigazione rapida">${tab('index','Home','index.html')}${tab('giochi','Giochi','giochi.html')}${tab('catalogo','Catalogo','catalogo.html')}${tab('profilo','Profilo','profilo.html')}<button type="button" id="tabmore" class="${inMore?'active':''}"><svg viewBox="0 0 24 24" aria-hidden="true">${ico.altro}</svg><span>Altro</span></button></nav>`);
  document.body.insertAdjacentHTML('beforeend',`<footer><div class="foot">
   <div><a href="index.html" class="brand"><img src="assets/icon.png" alt="">Staskys</a><p class="muted small" style="margin-top:.8rem">Chatting · Eventi · Anime. Community italiana su Discord dal 2022.</p>
   <div class="social"><a href="${INVITE_URL}" target="_blank" rel="noopener">Discord</a><a href="https://www.instagram.com/stas.kys" target="_blank" rel="noopener">Instagram</a><a href="https://www.tiktok.com/@stas.kys" target="_blank" rel="noopener">TikTok</a><a href="https://disboard.org/it/server/${S.GUILD}" target="_blank" rel="noopener">Disboard</a></div></div>
-  <nav>${PAGES.map(([p,t])=>`<a href="${p}.html">${t}</a>`).join('')}</nav>
+  <nav>${PAGES.map(([p,t])=>`<a href="${p}.html">${t}</a>`).join('')}<a href="profilo.html">Profilo</a></nav>
   <div class="copy"><span>© Staskys</span><span>Non affiliato a Discord Inc. o Mojang.</span></div></div></footer>
   <button class="totop" id="totop" aria-label="Torna su">↑</button><div class="toast" id="toast"></div>`);
- $('#burger').onclick=()=>{const o=document.body.classList.toggle('open');$('#burger').setAttribute('aria-expanded',o)};
- $('#theme').onclick=()=>{const d=document.documentElement,dark=d.dataset.theme!=='dark';if(dark)d.dataset.theme='dark';else delete d.dataset.theme;try{localStorage.theme=dark?'dark':'light'}catch(e){}};
- $$('[data-invite]').forEach(a=>{a.href=INVITE_URL;a.target='_blank';a.rel='noopener'});
+ const sheet=$('#sheet'),toggle=o=>{o=o??!document.body.classList.contains('open');document.body.classList.toggle('open',o);$('#burger').setAttribute('aria-expanded',o);sheet.setAttribute('aria-hidden',!o)};
+ $('#burger').onclick=()=>toggle();$('#tabmore').onclick=()=>toggle();sheet.onclick=e=>{if(e.target===sheet)toggle(false)};
+ addEventListener('keydown',e=>{if(e.key==='Escape'){toggle(false);$$(".navmore.open").forEach(m=>m.classList.remove('open'))}});
+ const more$=$(".nav .navmore");$('button',more$).onclick=e=>{e.stopPropagation();const o=more$.classList.toggle('open');$('button',more$).setAttribute('aria-expanded',o)};
+ document.addEventListener('click',e=>{if(!more$.contains(e.target))more$.classList.remove('open')});
+$$('[data-invite]').forEach(a=>{a.href=INVITE_URL;a.target='_blank';a.rel='noopener'});
  $$('[data-ch]').forEach(a=>{a.href=S.ch(S.C[a.dataset.ch]||a.dataset.ch);a.target='_blank';a.rel='noopener'});
 })();
 

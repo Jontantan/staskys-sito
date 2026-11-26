@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="it" data-theme="dark">
+<head>
+<meta charset="utf-8"><meta name="theme-color" content="#000000"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Catalogo · Staskys</title>
+<meta name="description" content="Il catalogo di Staskys: cerca anime, giochi e film, dai un voto da 1 a 10 e crea la tua lista.">
+<meta property="og:title" content="Catalogo · Staskys"><meta property="og:description" content="Cerca anime, giochi e film, vota da 1 a 10 e crea la tua lista su Staskys."><meta property="og:image" content="assets/banner.png">
+<link rel="icon" href="assets/icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=3">
+<link rel="stylesheet" href="v2.css?v=1">
+<link rel="stylesheet" href="profili.css?v=1">
+</head>
+<body data-page="catalogo">
+<main>
+<section class="page-hero"><p class="label">Catalogo</p><h1>Cosa guardi?<br><span class="dim">Cosa giochi?</span></h1><p class="lead">Cerca anime, giochi e film, dai un voto da 1 a 10 e segna se l'hai visto, se ci sei dentro o se vuoi vederlo. Tutto finisce sul tuo profilo.</p></section>
+<section class="wrap tight cat">
+  <div class="cbar">
+    <div class="seg" role="tablist" id="ctabs">
+      <button class="active" data-kind="anime" role="tab">🎌 Anime</button><button data-kind="game" role="tab">🎮 Giochi</button><button data-kind="movie" role="tab">🎬 Film</button>
+    </div>
+    <label class="csearch"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q" type="search" placeholder="Cerca un anime…" autocomplete="off" enterkeyhint="search"></label>
+  </div>
+  <div class="cfilters" id="cfilters">
+    <button class="chip active" data-view="scopri">Scopri</button><button class="chip" data-view="mia">La mia lista <b id="mycount"></b></button>
+    <span class="cstat" hidden id="cstat"><button class="chip sm" data-st="">Tutti</button><button class="chip sm" data-st="visto">Visto</button><button class="chip sm" data-st="in_corso">In corso</button><button class="chip sm" data-st="voglio">Voglio vederlo</button></span>
+  </div>
+  <p class="muted small" id="chint"></p>
+  <div class="cgrid" id="cgrid"></div>
+</section>
+</main>
+<div class="csheet" id="csheet" hidden><div class="csheet-in" role="dialog" aria-modal="true" aria-labelledby="cs-title"></div></div>
+<script src="data.js"></script>
+<script src="app.js?v=6"></script>
+<script src="giochi-config.js?v=3"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
+<script src="account.js?v=1"></script>
+<script src="catalogo.js?v=1"></script>
+</body>
+</html>

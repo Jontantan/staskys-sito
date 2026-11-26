@@ -1,14 +1,14 @@
 <!doctype html>
-<html lang="it">
+<html lang="it" data-theme="dark">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8"><meta name="theme-color" content="#000000"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Staskys · Chatting • Eventi • Anime</title>
 <meta name="description" content="Staskys è una community italiana su Discord: chat, vocali, eventi, giveaway, anime e un server Minecraft Fazioni.">
 <meta property="og:title" content="Staskys · Chatting • Eventi • Anime"><meta property="og:description" content="Staskys è una community italiana su Discord: chat, vocali, eventi, giveaway, anime e un server Minecraft Fazioni."><meta property="og:image" content="assets/banner.png">
 <link rel="icon" href="assets/icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
-<script>try{if(localStorage.theme==="dark"||(!localStorage.theme&&matchMedia("(prefers-color-scheme: dark)").matches))document.documentElement.dataset.theme="dark"}catch(e){}</script>
+<link rel="stylesheet" href="v2.css?v=1">
 </head>
 <body data-page="index">
 <main>
@@ -25,6 +25,15 @@
   </a>
   <div class="news" id="newsgrid"><p class="muted">Caricamento…</p></div>
   <button class="btn ghost more" id="more" hidden>Mostra altri</button>
+</section>
+
+<section class="wrap">
+  <div class="promo reveal">
+    <div><span class="label">Novità · Profili</span><h2>Il tuo passaporto Staskys.</h2>
+    <p class="muted">Accedi con Discord e crea il tuo profilo: nickname e avatar presi dal server, punti e streak dei minigiochi, e il tuo catalogo di anime, giochi e film con i voti da 1 a 10.</p>
+    <div class="cta"><a class="btn magnetic" href="profilo.html">Crea il tuo profilo</a><a class="btn ghost magnetic" href="catalogo.html">Apri il catalogo</a></div></div>
+    <div class="promo-art" aria-hidden="true"><div class="pp"><div class="av"></div><b>Il tuo nome</b><small>sta guardando · Frieren</small><div class="row"><i></i><i></i><i></i></div></div><div class="pp"></div></div>
+  </div>
 </section>
 
 <section class="hero">
@@ -50,7 +59,9 @@
 </section>
 <section class="wrap">
   <span class="label reveal">Esplora</span><h2 class="reveal">Tutto quello che c'è su Staskys.</h2>
-  <div class="list">
+  <div class="list four">
+    <a class="tile reveal" href="giochi.html"><span class="arrow">→</span><h3>Giochi</h3><p>Minigiochi con classifiche, streak e ruoli King.</p></a>
+    <a class="tile reveal" href="catalogo.html"><span class="arrow">→</span><h3>Catalogo</h3><p>Anime, giochi e film: vota e crea la tua lista.</p></a>
     <a class="tile reveal" href="server.html"><span class="arrow">→</span><h3>Il server</h3><p>Canali, vocali, bot e stanze private.</p></a>
     <a class="tile reveal" href="minecraft.html"><span class="arrow">→</span><h3>StaskysMC</h3><p>Il nostro server Minecraft Fazioni, con stato live.</p></a>
     <a class="tile reveal" href="eventi.html"><span class="arrow">→</span><h3>Eventi</h3><p>Prossimi eventi con countdown e i nostri format.</p></a>
@@ -72,6 +83,6 @@
 </section>
 </main>
 <script src="data.js"></script>
-<script src="app.js"></script>
+<script src="app.js?v=6"></script>
 </body>
 </html>

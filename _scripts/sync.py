@@ -263,3 +263,10 @@ except (OSError, ValueError):
 write("data.js", "window.STASKYS_DATA=" + json.dumps(docs, ensure_ascii=False) + ";\n")
 print(f"OK: {len(items)} annunci, {len(staff)} staff, {sum(map(len, groups.values()))} ruoli, {len(levels)} livelli, "
       f"{len(events)} eventi, MOTW {'sì' if motw else 'no'}, membri {'letti' if members_ok else 'non disponibili'} -> {SITE}")
+
+# ---------- profili del sito (members.json): se qualcosa va storto non blocca il resto ----------
+try:
+    import members_sync
+    print(f"members.json: {members_sync.run(member, GUILD, SITE, write)} profili")
+except Exception as e:
+    print("members.json non aggiornato:", e.__class__.__name__)
