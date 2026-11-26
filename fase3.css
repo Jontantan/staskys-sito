@@ -284,3 +284,15 @@ a.rk-row{text-decoration:none;color:inherit}
 .demo-ribbon a{color:inherit;text-decoration:underline}
 @media(max-width:760px){.aw-steps,.aw-how-g{grid-template-columns:1fr}.aw-hero{padding:2.6rem 1.2rem 1.6rem}.aw-tabs button{flex:1 1 30%;padding:.55rem .4rem;font-size:.8rem}}
 .pill{white-space:nowrap;overflow:hidden}.pill b{min-width:0}
+
+/* ---------- patch 2.1: il profilo non si sovrappone mai alla colonna di destra ---------- */
+.pf-wrap>*,.pf-main>*{min-width:0}
+.pf-main{grid-template-columns:minmax(0,1fr)}
+.pass-head,.pass-id,.pass h1{min-width:0;max-width:100%}
+.pname{max-width:100%;overflow-wrap:anywhere;word-break:break-word}
+.pass.font-pixel h1 .pname{word-break:break-all}
+.pill{max-width:100%;min-width:0}.pill b{overflow:hidden;text-overflow:ellipsis}
+.stars-head .seg.mini{flex-wrap:wrap;max-width:100%}
+.cmp,.cmp-cols>div,.cmpl li{min-width:0}
+@media(max-width:1100px){.pf-wrap{grid-template-columns:minmax(0,1fr)}.pf-side{position:static;grid-template-columns:1fr 1fr}}
+@media(max-width:700px){.pf-side{grid-template-columns:minmax(0,1fr)}}
