@@ -38,7 +38,7 @@ async function board(game){const g=GAMES[game],lb=q('#lb');q('#bdesc').textConte
  if(game!==cur)return;
  if(error){lb.innerHTML='<li class="muted">Classifica non disponibile al momento.</li>';return}
  if(!data.length){lb.innerHTML='<li class="muted">Ancora nessun punteggio. Sii il primo!</li>';return}
- lb.innerHTML=data.map((r,i)=>`<li class="${user&&r.user_id===user.id?'me':''}" style="animation-delay:${i*.04}s">${g.lbAvatar?g.lbAvatar(r,E):r.avatar_url?`<img src="${E(r.avatar_url)}" alt="" loading="lazy">`:'<img alt="">'}<span class="n">${E(r.username)}${i===0?' <span class="crown" title="'+E(g.k||'Primo in classifica')+'">👑</span>':''}</span><span class="s">${g.lbScore?g.lbScore(r.score):Number(r.score).toLocaleString('it-IT')} <small class="muted">${g.unit}</small></span></li>`).join('')}
+ lb.innerHTML=data.map((r,i)=>`<li data-uid="${E(r.user_id)}" class="${user&&r.user_id===user.id?'me':''}" style="animation-delay:${i*.04}s">${g.lbAvatar?g.lbAvatar(r,E):r.avatar_url?`<img src="${E(r.avatar_url)}" alt="" loading="lazy">`:'<img alt="">'}<span class="n">${E(r.username)}${i===0?' <span class="crown" title="'+E(g.k||'Primo in classifica')+'">👑</span>':''}</span><span class="s">${g.lbScore?g.lbScore(r.score):Number(r.score).toLocaleString('it-IT')} <small class="muted">${g.unit}</small></span></li>`).join('');fixAv(lb)}
 async function save(game,score){
  if(!READY||!user)return;const p=profile(user),g=GAMES[game];score=Math.round(score);
  const prev=BEST[game],rec=!g.noRecord&&(prev==null||(g.asc?score<prev:score>prev));
@@ -67,6 +67,29 @@ function celebrate(game,score,first){const g=GAMES[game],card=q('.gcard');if(!ca
 /* tasto R = Rigioca (quando il pulsante è visibile e non stai scrivendo) */
 addEventListener('keydown',e=>{if((e.key!=='r'&&e.key!=='R')||e.ctrlKey||e.metaKey||e.altKey||/INPUT|TEXTAREA/.test(e.target.tagName))return;
  const b=q('#go',stage);if(b&&!b.hidden&&b.offsetParent&&!GAMES[cur].noR){e.preventDefault();b.click()}});
+/* ---------- avatar aggiornati (patch 2.2) ----------
+   L'avatar salvato col punteggio scade quando uno cambia avatar su Discord: cerchiamo un indirizzo più recente
+   (il tuo dal login, members.json del server, ultimo voto nel catalogo, streak) e, se non carica, passiamo al successivo. */
+let AVMAP=null;const NM={};
+const safe=p=>Promise.resolve(p).then(r=>r&&r.data||[],()=>[]);
+function avMap(){return AVMAP||(AVMAP=Promise.all([
+  safe(sb.from('leaderboard').select('user_id,discord_id').limit(5000)),
+  fetch('members.json',{cache:'no-store'}).then(r=>r.ok?r.json():{}).catch(()=>({})),
+  safe(sb.from('media_ratings').select('user_id,avatar_url,updated_at').order('updated_at',{ascending:false}).limit(5000)),
+  safe(sb.from('streaks').select('user_id,avatar_url').limit(5000))
+ ]).then(([ids,mj,mr,st])=>{const m={},add=(u,a)=>{if(u&&/^https?:\/\//.test(a||'')&&!(m[u]=m[u]||[]).includes(a))m[u].push(a)};
+  if(user)add(user.id,profile(user).avatar);const mem=(mj&&mj.members)||{},did={};
+  ids.forEach(r=>{did[r.user_id]=r.discord_id;const x=mem[r.discord_id];if(x){add(r.user_id,x.avatar);if(x.nick)NM[r.user_id]=x.nick}});
+  mr.forEach(r=>add(r.user_id,r.avatar_url));st.forEach(r=>add(r.user_id,r.avatar_url));
+  Object.entries(did).forEach(([u,d])=>{try{add(u,`https://cdn.discordapp.com/embed/avatars/${Number((BigInt(d)>>22n)%6n)}.png`)}catch(e){}});
+  return m}))}
+function nextAv(img){const L=img._av||[];if(!L.length){img.onerror=null;img.src='assets/icon.png';return}img.src=L.shift()}
+async function fixAv(root){if(!READY||!root)return;const m=await avMap().catch(()=>({}));
+ /* nome vuoto salvato col punteggio: usa il nickname del server */
+ root.querySelectorAll('li[data-uid] .n').forEach(n=>{const t=n.firstChild;if((!t||t.nodeType!==3||!t.textContent.trim())&&NM[n.closest('li').dataset.uid])n.insertBefore(document.createTextNode(NM[n.closest('li').dataset.uid]),n.firstChild)});
+ root.querySelectorAll('li[data-uid] img').forEach(img=>{const L=(m[img.closest('li').dataset.uid]||[]).slice(),cur=img.getAttribute('src');
+  if(cur&&!L.includes(cur))L.push(cur);img._av=L;img.onerror=()=>nextAv(img);if(L.length&&L[0]!==cur)nextAv(img);else if(L[0]===cur)L.shift();if(img.complete&&img.naturalWidth===0)nextAv(img)})}
+
 /* ---------- streak giornaliera ---------- */
 async function loadStreak(){const box=q('#streak');if(!box)return;
  if(!READY){box.innerHTML='<h3>Streak 🔥</h3><p class="muted small">In arrivo.</p>';return}
@@ -74,8 +97,8 @@ async function loadStreak(){const box=q('#streak');if(!box)return;
  let mine=null;if(user){const m=await sb.from('streaks').select('streak').eq('user_id',user.id).limit(1);if(!m.error)mine=m.data[0]?.streak||0}
  if(error){box.innerHTML='<h3>Streak 🔥</h3><p class="muted small">Streak non disponibili al momento.</p>';return}
  box.innerHTML=`<div class="ghead"><h3>Streak 🔥</h3><p class="muted small">Giorni di fila con almeno una partita</p></div>
- <ol class="lb sk">${data.length?data.map((r,i)=>`<li class="${user&&r.user_id===user.id?'me':''}" style="animation-delay:${i*.04}s">${r.avatar_url?`<img src="${E(r.avatar_url)}" alt="" loading="lazy">`:'<img alt="">'}<span class="n">${E(r.username)}</span><span class="s">🔥 ${r.streak} <small class="muted">${r.streak===1?'giorno':'giorni'}</small></span></li>`).join(''):'<li class="muted">Nessuna streak attiva. Inizia oggi!</li>'}</ol>
- ${user?`<p class="skme">La tua streak: <b>🔥 ${mine||0}</b> ${mine?'':'<span class="muted small">— gioca una partita oggi per iniziarla</span>'}</p>`:''}`}
+ <ol class="lb sk">${data.length?data.map((r,i)=>`<li data-uid="${E(r.user_id)}" class="${user&&r.user_id===user.id?'me':''}" style="animation-delay:${i*.04}s">${r.avatar_url?`<img src="${E(r.avatar_url)}" alt="" loading="lazy">`:'<img alt="">'}<span class="n">${E(r.username)}</span><span class="s">🔥 ${r.streak} <small class="muted">${r.streak===1?'giorno':'giorni'}</small></span></li>`).join(''):'<li class="muted">Nessuna streak attiva. Inizia oggi!</li>'}</ol>
+ ${user?`<p class="skme">La tua streak: <b>🔥 ${mine||0}</b> ${mine?'':'<span class="muted small">— gioca una partita oggi per iniziarla</span>'}</p>`:''}`;fixAv(box)}
 /* miglior punteggio dell'utente (dalla classifica Supabase, segue l'account Discord) */
 async function myBest(game){if(!READY||!user)return null;const {data,error}=await sb.from('leaderboard').select('score').eq('game',game).eq('user_id',user.id).limit(1);return error||!data.length?null:data[0].score}
 

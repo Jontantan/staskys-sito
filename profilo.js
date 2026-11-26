@@ -23,7 +23,7 @@ async function loadUser(did,all,games,profiles){
   return{...base,nick:L[0]?.username||st.name||'Membro demo',username:me?'demo_staskys':'',avatar:L[0]?.avatar_url||st.avatar||'',joined:me?'2024-03-12':'',inServer:true,demo:true,isMe:me}}
  const mem=await A.loadMembers(),m=mem[did]||{};
  const me=A.user&&A.profile(A.user).discord===did?A.profile(A.user):null,r0=base.ratings[0]||{};
- return{...base,nick:A.clean(m.nick||me?.name||st.name||r0.username||'Membro'),username:m.username||'',avatar:m.avatar||me?.avatar||st.avatar||r0.avatar_url||'',joined:m.joined||'',inServer:m.in_server!==false,isMe:!!me}}
+ return{...base,nick:A.clean(m.nick||me?.name||st.name||r0.username||'Membro'),username:m.username||'',avatar:A.avList(did,m.avatar,st.avatar,r0.avatar_url)[0],joined:m.joined||'',inServer:m.in_server!==false,isMe:!!me}}
 
 /* ---------- pezzi di vista ---------- */
 const cover=(r,cls='')=>`<span class="cv ${cls}">${r.cover?`<img src="${E(r.cover)}" alt="" loading="lazy">`:`<i>${A.KINDS[r.kind]?.icon||''}</i>`}${A.hasR(r)?`<b class="rbadge">${A.fmtR(r.rating)}</b>`:''}</span>`;
@@ -49,14 +49,14 @@ function compareHTML(u,viewer,c){
   <p class="muted tiny">A sinistra il tuo voto, a destra il suo.</p></div>`}
 function similarHTML(list,u){
  return`<div class="card side-card"><h3>Membri simili</h3><p class="muted small">Chi ha gusti più vicini a ${u.isMe?'te':E(u.nick)}</p>
- ${list.length?`<ul class="sim">${list.map(m=>`<li><a href="${prof(m.did)}"><img src="${E(m.avatar||'assets/icon.png')}" alt="" loading="lazy" onerror="this.src='assets/icon.png'"><span class="simn"><b>${m.did===VIEWER?'Tu':E(A.clean(m.name))}</b><small>${m.n} titoli in comune</small></span><span class="simp"><b>${m.pct}%</b><span class="mlab ${m.label[0]}">${m.label[1]}</span></span></a></li>`).join('')}</ul>`
+ ${list.length?`<ul class="sim">${list.map(m=>`<li><a href="${prof(m.did)}"><img ${A.avAttr(m.did,m.avatar)} alt="" loading="lazy"><span class="simn"><b>${m.did===VIEWER?'Tu':E(A.nameOf(m.did,m.name)||'Membro')}</b><small>${m.n} titoli in comune</small></span><span class="simp"><b>${m.pct}%</b><span class="mlab ${m.label[0]}">${m.label[1]}</span></span></a></li>`).join('')}</ul>`
  :`<p class="muted small" style="margin-top:.8rem">Ancora nessuno: servono almeno 3 titoli votati in comune con un altro membro.</p>`}</div>`}
 const searchHTML=()=>`<div class="card side-card msearch"><h3>Cerca membri</h3><p class="muted small">Apri il passaporto di chiunque e scopri quanto siete simili</p>
  <label class="msq"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="msq" type="search" placeholder="Scrivi un nickname…" autocomplete="off" enterkeyhint="search" aria-label="Cerca membri"></label>
  <ul class="sim mres" id="mres"></ul></div>`;
 const badgeHTML=id=>{const d=D.byId[id];return d?`<span class="dbadge r-${d.rarita}" title="${E(d.nome)} · ${E(D.RARITA[d.rarita])}">${d.icona||'★'}</span>`:''};
 function avatarHTML(u){const t=u.theme,eq=u.equipped;
- return`<span class="avwrap shape-${t.frame}${eq.frame?' fr fr-'+eq.frame:''}"><img class="pass-av" src="${E(u.avatar||'assets/icon.png')}" alt="" onerror="this.src='assets/icon.png'">${eq.frame==='fr_crown'?'<i class="crown" aria-hidden="true"></i>':''}${eq.frame==='fr_orbit'?'<i class="orb" aria-hidden="true"></i>':''}</span>`}
+ return`<span class="avwrap shape-${t.frame}${eq.frame?' fr fr-'+eq.frame:''}"><img class="pass-av" ${A.avAttr(u.did,u.avatar)} alt="">${eq.frame==='fr_crown'?'<i class="crown" aria-hidden="true"></i>':''}${eq.frame==='fr_orbit'?'<i class="orb" aria-hidden="true"></i>':''}</span>`}
 function passHTML(u,ctx){
  const t=u.theme,eq=u.equipped,rated=u.ratings.filter(A.hasR);
  const now=u.ratings.filter(r=>r.status==='in_corso').sort((a,b)=>String(b.updated_at).localeCompare(a.updated_at))[0];
@@ -193,7 +193,7 @@ function openCustomize(u,rerender){
 
 /* ---------- le mie decorazioni ---------- */
 function decoPreview(d,u){
- if(d.tipo==='frame')return`<span class="avwrap shape-round fr fr-${d.id} mini"><img class="pass-av" src="${E(u.avatar||'assets/icon.png')}" alt="" onerror="this.src='assets/icon.png'">${d.id==='fr_crown'?'<i class="crown"></i>':''}${d.id==='fr_orbit'?'<i class="orb"></i>':''}</span>`;
+ if(d.tipo==='frame')return`<span class="avwrap shape-round fr fr-${d.id} mini"><img class="pass-av" ${A.avAttr(u.did,u.avatar)} alt="">${d.id==='fr_crown'?'<i class="crown"></i>':''}${d.id==='fr_orbit'?'<i class="orb"></i>':''}</span>`;
  if(d.tipo==='effect')return`<span class="pname fx ${d.id}" data-text="Aa">Aa</span>`;
  if(d.tipo==='bg')return`<span class="dbg dbg-${d.id} bgmini"><span class="dbg-layer"></span></span>`;
  return`<span class="dbadge big r-${d.rarita}">${d.icona||'★'}</span>`}
@@ -236,7 +236,7 @@ async function fillAwards(u){const el=q('#myaw');if(!el||!W)return;
 function bindSearch(all,viewer){const inp=q('#msq'),out=q('#mres');if(!inp)return;let list=null,t;
  const go=async()=>{const term=inp.value.trim();if(!term){out.innerHTML='';return}list=list||await S.members(all);
   const R=S.searchMembers(list,all,viewer,term);
-  out.innerHTML=R.length?R.map(m=>`<li><a href="${prof(m.did)}"><img src="${E(m.avatar||'assets/icon.png')}" alt="" loading="lazy" onerror="this.src='assets/icon.png'"><span class="simn"><b>${E(m.name)}</b><small>${m.n?`${m.n} ${m.n===1?'titolo':'titoli'} in comune`:'nessun titolo in comune'}</small></span>${viewer&&m.n?`<span class="simp"><b>${m.pct}%</b>${S.label(m.pct)?`<span class="mlab ${S.label(m.pct)[0]}">${S.label(m.pct)[1]}</span>`:''}</span>`:''}</a></li>`).join('')
+  out.innerHTML=R.length?R.map(m=>`<li><a href="${prof(m.did)}"><img ${A.avAttr(m.did,m.avatar)} alt="" loading="lazy"><span class="simn"><b>${E(m.name)}</b><small>${m.n?`${m.n} ${m.n===1?'titolo':'titoli'} in comune`:'nessun titolo in comune'}</small></span>${viewer&&m.n?`<span class="simp"><b>${m.pct}%</b>${S.label(m.pct)?`<span class="mlab ${S.label(m.pct)[0]}">${S.label(m.pct)[1]}</span>`:''}</span>`:''}</a></li>`).join('')
    :`<li class="muted small mnone">Nessun membro trovato.</li>`};
  inp.oninput=()=>{clearTimeout(t);t=setTimeout(go,140)};inp.onfocus=()=>{if(!list)S.members(all).then(l=>list=l)}}
 
@@ -244,7 +244,7 @@ function bindSearch(all,viewer){const inp=q('#msq'),out=q('#mres');if(!inp)retur
 function landing(members){const list=Object.entries(members).filter(([,m])=>m.in_server!==false&&m.nick).slice(0,24);
  return`<section class="page-hero"><p class="label">Profilo</p><h1>Il tuo passaporto.</h1><p class="lead">Accedi con Discord: nickname e avatar arrivano dal server Staskys, punti e streak dai minigiochi, e i voti dal catalogo.</p>
  <div class="cta" style="justify-content:flex-start">${A.READY?'<button class="btn magnetic" id="login">Accedi con Discord</button>':''}<a class="btn ghost" href="profilo.html?demo=1">Guarda un profilo demo</a></div></section>
- ${list.length?`<section class="wrap tight"><p class="label">Profili dei membri</p><div class="mgrid">${list.map(([id,m])=>`<a class="mchip" href="profilo.html?u=${E(id)}"><img src="${E(m.avatar)}" alt="" loading="lazy" onerror="this.src='assets/icon.png'"><span>${E(A.clean(m.nick))}</span></a>`).join('')}</div></section>`:''}`}
+ ${list.length?`<section class="wrap tight"><p class="label">Profili dei membri</p><div class="mgrid">${list.map(([id,m])=>`<a class="mchip" href="profilo.html?u=${E(id)}"><img ${A.avAttr(id,m.avatar)} alt="" loading="lazy"><span>${E(A.clean(m.nick))}</span></a>`).join('')}</div></section>`:''}`}
 
 let VIEWER='';
 async function show(){

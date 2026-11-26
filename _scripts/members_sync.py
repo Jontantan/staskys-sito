@@ -23,7 +23,7 @@ def _supabase(site):
 def _ids(site):
     url, key = _supabase(site)
     ids = set()
-    for table in ("leaderboard", "media_ratings"):
+    for table in ("leaderboard", "media_ratings", "site_profiles"):
         try:
             req = urllib.request.Request(f"{url}/rest/v1/{table}?select=discord_id&limit=5000",
                                          headers={"apikey": key, "Authorization": "Bearer " + key})

@@ -62,13 +62,17 @@ function demoRows(){const rows=[];let t=0;
 /* ---------- caricamento ---------- */
 let cache=null;
 async function loadAll(){if(cache)return cache;
- if(A.DEMO)return cache=demoRows();
+ if(A.DEMO)return cache=regAv(demoRows());
  if(!A.sb)return cache=[];
  const cols='discord_id,user_id,username,avatar_url,kind,media_id,title,cover,year,rating,status,updated_at';
  let r=await A.sb.from('media_ratings').select(cols+',top_pos,episodes,total_episodes').limit(10000);
  if(r.error)r=await A.sb.from('media_ratings').select(cols+',top_pos').limit(10000); /* prima di fase3 */
  if(r.error)r=await A.sb.from('media_ratings').select(cols).limit(10000); /* prima di fase2-top10.sql */
- return cache=(r.data||[]).map(x=>({...x,rating:x.rating==null?null:+x.rating}))}
+ return cache=regAv((r.data||[]).map(x=>({...x,rating:x.rating==null?null:+x.rating})))}
+/* avatar dai voti del catalogo: il più recente per primo (vedi STASKYS.avList) */
+function regAv(rows){rows.slice().sort((a,b)=>String(b.updated_at||'').localeCompare(String(a.updated_at||''))).forEach(r=>A.addAv(r.discord_id,r.avatar_url,2));return rows}
+/* nome più recente salvato nei voti di un membro */
+function lastName(L){let b=null;L.forEach(r=>{if(r.username&&(!b||String(r.updated_at||'')>String(b.updated_at||'')))b=r});return b?b.username:''}
 function reset(){cache=null}
 
 /* ---------- Top 10 ---------- */
@@ -96,17 +100,27 @@ function label(p){return p>=85?['soulmate','Soulmate']:p>=72?['great','Great mat
 function byUser(rows){const m=new Map();rows.forEach(r=>{const id=String(r.discord_id||'');if(!id)return;if(!m.has(id))m.set(id,[]);m.get(id).push(r)});return m}
 /* membri più compatibili con did (servono almeno 3 titoli in comune) */
 function similar(rows,did,max=5){const M=byUser(rows),mine=M.get(did)||[];const out=[];
- M.forEach((L,id)=>{if(id===did)return;const c=compare(mine,L);if(c.n>=3&&label(c.pct))out.push({did:id,name:L[0].username,avatar:L[0].avatar_url,...c,label:label(c.pct)})});
+ M.forEach((L,id)=>{if(id===did)return;const c=compare(mine,L);if(c.n>=3&&label(c.pct))out.push({did:id,name:A.nameOf(id,lastName(L)),avatar:A.avList(id)[0],...c,label:label(c.pct)})});
  return out.sort((a,b)=>b.pct-a.pct||b.n-a.n).slice(0,max)}
 
-/* ---------- classifica per media voti ---------- */
+/* ---------- classifica per media voti (PONDERATA, patch 2.2) ---------- */
+/* Media ponderata "alla IMDb": punteggio = v/(v+m)·R + m/(v+m)·C
+   R = media del titolo, v = numero di voti, C = media di TUTTI i voti della categoria, m = WEIGHT_M.
+   Con pochi voti il punteggio resta vicino alla media generale; più voti ha, più conta la sua media vera.
+   Così due 10 non battono un 9,8 con 6 voti. Sul sito si mostra comunque la media vera. */
+const WEIGHT_M=5;
+function weigh(list,C,min=MIN_VOTES){if(C==null){const v=list.reduce((s,o)=>s+o.votes,0);C=v?list.reduce((s,o)=>s+o.avg_rating*o.votes,0)/v:0}
+ return list.filter(o=>o.votes>=min).map(o=>({...o,C,score:(o.votes/(o.votes+WEIGHT_M))*o.avg_rating+(WEIGHT_M/(o.votes+WEIGHT_M))*C}))
+  .sort((a,b)=>b.score-a.score||b.votes-a.votes||b.avg_rating-a.avg_rating||String(a.title).localeCompare(String(b.title)))}
 function ranking(rows,kind,min=MIN_VOTES){const m=new Map();rows.filter(r=>r.kind===kind&&has(r)).forEach(r=>{const k=K(r);const o=m.get(k)||{kind:r.kind,media_id:r.media_id,title:r.title,cover:r.cover,year:r.year,sum:0,votes:0};o.sum+=+r.rating;o.votes++;m.set(k,o)});
- return [...m.values()].filter(o=>o.votes>=min).map(o=>({...o,avg_rating:Math.round(o.sum/o.votes*10)/10})).sort((a,b)=>b.avg_rating-a.avg_rating||b.votes-a.votes)}
+ const all=[...m.values()],v=all.reduce((s,o)=>s+o.votes,0),C=v?all.reduce((s,o)=>s+o.sum,0)/v:0;
+ return weigh(all.map(o=>({...o,avg_rating:Math.round(o.sum/o.votes*10)/10})),C,min)}
 async function loadRanking(kind){
  if(A.DEMO)return ranking(await loadAll(),kind);
  if(!A.sb)return[];
- const {data,error}=await A.sb.from('media_avg').select('kind,media_id,title,cover,year,avg_rating,votes').eq('kind',kind).gte('votes',MIN_VOTES).order('avg_rating',{ascending:false}).order('votes',{ascending:false}).limit(50);
- return error?ranking(await loadAll(),kind):(data||[]).map(r=>({...r,avg_rating:+r.avg_rating}))}
+ /* tutti i titoli votati della categoria (anche con 1 voto, servono per la media generale C), ordinati qui */
+ const {data,error}=await A.sb.from('media_avg').select('kind,media_id,title,cover,year,avg_rating,votes').eq('kind',kind).limit(5000);
+ return error?ranking(await loadAll(),kind):weigh((data||[]).map(r=>({...r,avg_rating:+r.avg_rating,votes:+r.votes})))}
 
 
 /* ---------- minigiochi: record, posizioni, streak e PUNTI ---------- */
@@ -122,14 +136,20 @@ function demoGames(){/* partite finte, solo per la DEMO */
  return{lb,st}}
 let gcache=null;
 async function loadGames(){if(gcache)return gcache;
- let lb=[],st=[];
+ let lb=[],st=[];const rname={};
  if(A.DEMO)({lb,st}=demoGames());
- else if(A.sb){const [a,b]=await Promise.all([A.sb.from('leaderboard').select('game,user_id,discord_id,username,avatar_url,score').limit(5000),A.sb.from('streaks').select('*').limit(5000)]);lb=a.data||[];st=b.data||[]}
+ else if(A.sb){const [a,b]=await Promise.all([A.sb.from('leaderboard').select('game,user_id,discord_id,username,avatar_url,score').limit(5000),A.sb.from('streaks').select('*').limit(5000),A.loadMembers(),
+   /* avatar e nomi più recenti dai voti del catalogo (se non già caricati) */
+   cache?null:A.sb.from('media_ratings').select('discord_id,username,avatar_url,updated_at').order('updated_at',{ascending:false}).limit(5000).then(r=>{(r.data||[]).forEach(x=>{A.addAv(x.discord_id,x.avatar_url,2);const d=String(x.discord_id||'');if(d&&x.username&&!rname[d])rname[d]=x.username})},()=>{})]);
+  lb=a.data||[];st=b.data||[];if(cache)byUser(cache).forEach((L,d)=>rname[d]=lastName(L))}
  const byGame={};lb.forEach(r=>(byGame[r.game]=byGame[r.game]||[]).push(r));
  Object.entries(byGame).forEach(([g,L])=>L.sort((x,y)=>ASC.has(g)?x.score-y.score:y.score-x.score).forEach((r,i)=>r.rank=i+1));
  const users=new Map(),uid2did={};
  lb.forEach(r=>{const did=String(r.discord_id||'');if(!did)return;uid2did[r.user_id]=did;const u=users.get(did)||{did,uid:r.user_id,name:r.username,avatar:r.avatar_url,rec:[],streak:0,bestStreak:0};u.rec.push({game:r.game,score:r.score,rank:r.rank});users.set(did,u)});
  st.forEach(r=>{const did=uid2did[r.user_id];if(!did)return;const u=users.get(did);const d=(Date.now()-new Date(r.last_day+'T00:00:00'))/864e5;u.streak=d<2?(r.streak||0):0;u.bestStreak=Math.max(u.streak,+(r.best||r.best_streak||r.max_streak||0)||0,r.streak||0)});
+ /* streak (prio 3) e punteggi (prio 4): indirizzi salvati quando si è giocato, possono essere vecchi */
+ st.forEach(r=>A.addAv(uid2did[r.user_id],r.avatar_url,3));lb.forEach(r=>A.addAv(r.discord_id,r.avatar_url,4));
+ users.forEach(u=>{u.name=A.nameOf(u.did,rname[u.did]||u.name);u.avatar=A.avList(u.did)[0]});
  users.forEach(u=>{u.rec.sort((a,b)=>a.rank-b.rank);u.points=points(u.rec,u.streak);u.firsts=u.rec.filter(r=>r.rank===1).length;u.podiums=u.rec.filter(r=>r.rank<=3).length;u.best=Object.fromEntries(u.rec.map(r=>[r.game,r.score]))});
  const ranked=[...users.values()].sort((a,b)=>b.points-a.points||b.firsts-a.firsts);ranked.forEach((u,i)=>u.pos=i+1);
  return gcache={users,ranked,byGame}}
@@ -152,15 +172,15 @@ async function saveProfile(patch){const did=A.DEMO?'demo-demo':(A.user?A.profile
 
 /* ---------- cerca membri ---------- */
 /* tutti i membri conosciuti (server + chi ha votato/giocato), con compatibilità rispetto a chi guarda */
-async function members(all){const map=new Map();const add=(did,name,avatar)=>{did=String(did||'');if(!did)return;const o=map.get(did)||{did,name:'',avatar:''};o.name=o.name||A.clean(name||'');o.avatar=o.avatar||avatar||'';map.set(did,o)};
+async function members(all){const map=new Map();const add=(did,name,avatar)=>{did=String(did||'');if(!did)return;const o=map.get(did)||{did,name:'',avatar:''};o.name=o.name||A.clean(name||'');map.set(did,o)};
  if(!A.DEMO){const mem=await A.loadMembers();Object.entries(mem).forEach(([id,m])=>{if(m.in_server!==false&&m.nick)add(id,m.nick,m.avatar)})}
  all.forEach(r=>add(r.discord_id,r.username,r.avatar_url));
  const g=await loadGames();g.users.forEach(u=>add(u.did,u.name,u.avatar));
- return[...map.values()]}
+ map.forEach(o=>{o.avatar=A.avList(o.did)[0]});return[...map.values()]}
 function searchMembers(list,all,viewer,term,max=8){const t=String(term||'').trim().toLowerCase();if(!t)return[];const M=byUser(all),mine=M.get(viewer)||[];
  return list.filter(m=>m.did!==viewer&&m.name.toLowerCase().includes(t)).map(m=>{const c=viewer?compare(mine,M.get(m.did)||[]):{n:0,pct:null};return{...m,n:c.n,pct:c.pct,starts:m.name.toLowerCase().startsWith(t)}})
   .sort((a,b)=>b.starts-a.starts||(b.n?1:0)-(a.n?1:0)||(b.pct||0)-(a.pct||0)||a.name.localeCompare(b.name)).slice(0,max)}
 
-window.STASKYS_SOCIAL={MIN_VOTES,loadAll,reset:()=>{cache=null;pcache=null},top10,saveTop10,compare,label,similar,byUser,ranking,loadRanking,DEMO_ME:'demo-demo',
+window.STASKYS_SOCIAL={MIN_VOTES,WEIGHT_M,loadAll,reset:()=>{cache=null;pcache=null},top10,saveTop10,compare,label,similar,byUser,ranking,loadRanking,DEMO_ME:'demo-demo',
  ASC,GAME_NAMES,points,loadGames,loadProfiles,saveProfile,members,searchMembers};
 })();

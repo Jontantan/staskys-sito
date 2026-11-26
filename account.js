@@ -15,7 +15,24 @@ const A={sb,READY,E,LOCAL,user:null,
  ready:null,
  /* membri del server (members.json, aggiornato ogni 10 min dal bot) */
  members:null,
- loadMembers(){return this.members||(this.members=fetch('members.json',{cache:'no-store'}).then(r=>r.ok?r.json():{members:{}}).catch(()=>({members:{}})).then(d=>d.members||{}))},
+ loadMembers(){return this.members||(this.members=fetch('members.json',{cache:'no-store'}).then(r=>r.ok?r.json():{members:{}}).catch(()=>({members:{}})).then(d=>{const m=d.members||{};A.mem=m;Object.entries(m).forEach(([id,x])=>x&&A.addAv(id,x.avatar,1));return m}))},
+ /* AVATAR (patch 2.2): l'URL salvato coi punteggi scade quando uno cambia avatar su Discord (cambia il codice nell'indirizzo).
+    Per ogni membro teniamo più indirizzi in ordine di affidabilità e, se uno non carica, si passa al successivo:
+    0 = il tuo avatar attuale (dal login) · 1 = members.json (server, aggiornato dal bot) · 2 = ultimo voto nel catalogo
+    3 = streak dei minigiochi · 4 = punteggi in classifica · poi l'avatar standard di Discord e infine l'icona Staskys. */
+ mem:{},
+ /* nome da mostrare: nickname nel server (members.json) se c'è, altrimenti quello salvato */
+ nameOf(did,fb){const m=A.mem[String(did||'')];return A.clean((m&&m.in_server!==false&&m.nick)||fb||'')},
+ avReg:{},
+ addAv(did,url,prio){did=String(did||'');if(!did||!/^https?:\/\//.test(url||''))return;const L=A.avReg[did]||(A.avReg[did]=[]);if(!L.some(x=>x.u===url))L.push({u:url,p:prio,i:L.length})},
+ defAv(did){try{return`https://cdn.discordapp.com/embed/avatars/${Number((BigInt(did)>>22n)%6n)}.png`}catch(e){return''}},
+ avList(did,...extra){did=String(did||'');const out=[],add=u=>{if(u&&!out.includes(u))out.push(u)};
+  const me=A.user&&A.profile(A.user);if(me&&did&&me.discord===did)add(me.avatar);
+  (A.avReg[did]||[]).slice().sort((a,b)=>a.p-b.p||a.i-b.i).forEach(x=>add(x.u));
+  extra.forEach(u=>/^https?:\/\//.test(u||'')&&add(u));if(/^\d+$/.test(did))add(A.defAv(did));add('assets/icon.png');return out},
+ /* attributi per <img>: src = miglior avatar, gli altri in data-av come riserva */
+ avAttr(did,...extra){const L=A.avList(did,...extra);return`src="${E(L[0])}" data-av="${E(L.slice(1).join(' '))}" onerror="STASKYS.avNext(this)"`},
+ avNext(img){const L=(img.dataset.av||'').split(' ').filter(Boolean);if(!L.length){img.onerror=null;return}img.dataset.av=L.slice(1).join(' ');img.src=L[0]},
  KINDS:{anime:{t:'Anime',one:'anime',verb:'sta guardando',icon:'🎌',eps:true},game:{t:'Giochi',one:'gioco',verb:'sta giocando',icon:'🎮'},movie:{t:'Film',one:'film',verb:'sta guardando',icon:'🎬'},tv:{t:'Serie',one:'serie',verb:'sta guardando',icon:'📺',eps:true}},
  STATUS:{visto:'Visto',in_corso:'In corso',droppato:'Droppato',voglio:'Voglio vederlo'},
  statusLabel(kind,s){if(kind==='game')return{visto:'Giocato',in_corso:'Sto giocando',droppato:'Droppato',voglio:'Voglio giocarci'}[s]||s;return this.STATUS[s]||s},
@@ -34,6 +51,12 @@ const A={sb,READY,E,LOCAL,user:null,
  clean:n=>String(n||'').replace(/[\p{L}\d_]*(?:froc|ricchion|nigg|fag+ot|finocch|ritardat|mongoloid|puttan|zoccol)[\p{L}\d_]*|\bnegr[oiae]\b|\btroi[ae]\b/giu,'***').trim()
 };
 A.ready=sb?sb.auth.getSession().then(({data})=>{A.user=data.session?.user||null;return A.user}).catch(()=>null):Promise.resolve(null);
+/* al login: se hai cambiato avatar/nome su Discord, aggiorna quelli salvati sui TUOI voti del catalogo
+   (permesso già dato dalla regola "ognuno modifica i propri voti"; la data del voto non cambia). Al massimo una volta al giorno. */
+A.ready.then(u=>{if(!u||!sb||A.DEMO)return;const p=A.profile(u),k='staskys_avsync';if(!p.avatar)return;
+ const day=new Date().toISOString().slice(0,10),sig=day+'|'+p.avatar+'|'+p.name;try{if(localStorage[k]===sig)return}catch(e){}
+ sb.from('media_ratings').update({avatar_url:p.avatar,username:p.name}).eq('user_id',u.id)
+  .then(({error})=>{if(!error)try{localStorage[k]=sig}catch(e){}},()=>{})});
 if(sb)sb.auth.onAuthStateChange((_e,s)=>{const was=A.user?.id;A.user=s?.user||null;if(was!==A.user?.id)document.dispatchEvent(new CustomEvent('staskys-auth'))});
 window.STASKYS=A;
 })();
