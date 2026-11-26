@@ -80,6 +80,7 @@ function reset(){cache=null}
 
 /* ---------- Top 10 ---------- */
 /* ordine scelto dall'utente (top_pos), poi completata coi voti più alti */
+const top10f=(r,k)=>top10(r,k);
 function top10(rows,kind){const L=rows.filter(r=>r.kind===kind);
  const pinned=L.filter(r=>r.top_pos).sort((a,b)=>a.top_pos-b.top_pos);
  const custom=pinned.length>0;
@@ -173,13 +174,27 @@ const DEMO_PROFILES={'demo-demo':{bio:'Qui per gli anime, le serie e per battere
 let pcache=null;
 async function loadProfiles(){if(pcache)return pcache;const m=new Map();
  if(A.DEMO){Object.entries(DEMO_PROFILES).forEach(([k,v])=>m.set(k,v));try{const me=JSON.parse(localStorage.demo_profile||'null');if(me)m.set('demo-demo',me)}catch(e){}return pcache=m}
- if(A.sb){const {data,error}=await A.sb.from('site_profiles').select('user_id,discord_id,bio,theme,equipped').limit(5000);if(!error)(data||[]).forEach(r=>r.discord_id&&m.set(String(r.discord_id),r))}
+ if(A.sb){const {data,error}=await A.sb.from('site_profiles').select('*').limit(5000);if(!error)(data||[]).forEach(r=>r.discord_id&&m.set(String(r.discord_id),r))}
  return pcache=m}
 async function saveProfile(patch){const did=A.DEMO?'demo-demo':(A.user?A.profile(A.user).discord:'');const cur=(await loadProfiles()).get(did)||{};const row={bio:cur.bio||'',theme:cur.theme||{},equipped:cur.equipped||{},...patch};
- if(A.DEMO){localStorage.demo_profile=JSON.stringify(row);pcache.set(did,row);return null}
+ if(A.DEMO){const full={...cur,...row};localStorage.demo_profile=JSON.stringify(full);pcache.set(did,full);return null}
  if(!A.sb||!A.user)return{message:'login'};
  const {error}=await A.sb.from('site_profiles').upsert({bio:row.bio,theme:row.theme,equipped:row.equipped,updated_at:new Date().toISOString()},{onConflict:'user_id'});
  if(!error)pcache.set(did,{...cur,...row});return error}
+
+/* ---------- UPDATE 3: statistiche catalogo per i badge ---------- */
+function catStats(rows){const kind={};let voti=0;rows.forEach(r=>{kind[r.kind]=(kind[r.kind]||0)+1;if(has(r))voti++});
+ const top10=Object.keys(kind).filter(k=>top10f(rows,k).list.length>=10).length;return{voti,kind,cats:Object.keys(kind).length,top10}}
+/* ---------- UPDATE 3: copertine personalizzate (site_profiles.covers = {"kind:media_id": url}) ---------- */
+const COVER_OK=/^https:\/\/(image\.tmdb\.org|s4\.anilist\.co|media\.rawg\.io|covers\.openlibrary\.org|otxtpwojvuyxksrsfpdl\.supabase\.co\/storage\/v1\/object\/public\/covers\/)[^\s"'<>]{1,400}$/;
+function cleanCovers(c){const o={};if(c&&typeof c==='object')Object.entries(c).slice(0,300).forEach(([k,v])=>{if(/^(anime|game|movie|tv|manga|book):[\w.-]{1,40}$/.test(k)&&COVER_OK.test(String(v||'')))o[k]=String(v)});return o}
+async function saveCovers(map){const did=A.DEMO?'demo-demo':(A.user?A.profile(A.user).discord:'');const P=await loadProfiles(),cur=P.get(did)||{};map=cleanCovers(map);
+ if(A.DEMO){const row={...cur,covers:map};localStorage.demo_profile=JSON.stringify(row);P.set(did,row);return null}
+ if(!A.sb||!A.user)return{message:'login'};
+ const {error}=await A.sb.from('site_profiles').upsert({covers:map,updated_at:new Date().toISOString()},{onConflict:'user_id'});
+ if(!error)P.set(did,{...cur,covers:map});return error}
+let staffP=null;
+function isStaff(){if(A.DEMO||!A.sb||!A.user)return Promise.resolve(false);return staffP||(staffP=A.sb.rpc('is_staff').then(r=>!r.error&&r.data===true,()=>false))}
 
 /* ---------- cerca membri ---------- */
 /* tutti i membri conosciuti (server + chi ha votato/giocato), con compatibilità rispetto a chi guarda */
@@ -192,6 +207,6 @@ function searchMembers(list,all,viewer,term,max=8){const t=String(term||'').trim
  return list.filter(m=>m.did!==viewer&&m.name.toLowerCase().includes(t)).map(m=>{const c=viewer?compare(mine,M.get(m.did)||[]):{n:0,pct:null};return{...m,n:c.n,pct:c.pct,starts:m.name.toLowerCase().startsWith(t)}})
   .sort((a,b)=>b.starts-a.starts||(b.n?1:0)-(a.n?1:0)||(b.pct||0)-(a.pct||0)||a.name.localeCompare(b.name)).slice(0,max)}
 
-window.STASKYS_SOCIAL={MIN_VOTES,WEIGHT_M,loadAll,reset:()=>{cache=null;pcache=null},top10,saveTop10,compare,label,similar,byUser,ranking,loadRanking,DEMO_ME:'demo-demo',
- ASC,GAME_NAMES,points,loadGames,loadProfiles,saveProfile,members,searchMembers};
+window.STASKYS_SOCIAL={MIN_VOTES,WEIGHT_M,loadAll,reset:()=>{cache=null;pcache=null;staffP=null},top10,saveTop10,compare,label,similar,byUser,ranking,loadRanking,DEMO_ME:'demo-demo',
+ ASC,GAME_NAMES,points,loadGames,loadProfiles,saveProfile,members,searchMembers,catStats,cleanCovers,saveCovers,isStaff,COVER_OK};
 })();

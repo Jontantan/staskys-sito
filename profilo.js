@@ -16,9 +16,12 @@ function sanitizeEq(eq,unl){eq=eq||{};const ok=id=>id&&unl.includes(id)&&D.byId[
   badges:(Array.isArray(eq.badges)?eq.badges:[]).filter(id=>ok(id)&&D.byId[id].tipo==='badge').slice(0,D.MAX_BADGE)}}
 function cleanTheme(t){t=t&&typeof t==='object'?t:{};return{accent:/^#[0-9a-f]{6}$/i.test(t.accent||'')?t.accent:'',bg:D.SFONDI[t.bg]?t.bg:'grad',banner:t.banner==='none'&&!t.bp?'auto':t.banner==='discord'||D.BANNER[t.banner]?t.banner:'auto',bp:t.bp?1:0,frame:D.CORNICI[t.frame]?t.frame:'round',
  font:D.FONT[t.font]?t.font:'inter',order:Array.isArray(t.order)?[...new Set(t.order.filter(k=>ORDER.includes(k))),...ORDER].filter((k,i,a)=>a.indexOf(k)===i):ORDER.slice(),stars:t.stars!==false}}
+/* copertine scelte dal membro (update 3): le vedono tutti sul suo profilo, Top 10 e passaporto; il catalogo resta originale */
+function applyCovers(u,rows){u.ratings=rows.map(r=>{const c=u.covers[r.kind+':'+r.media_id];return c?{...r,ocover:r.cover,cover:c,custom:true}:r});return u}
 async function loadUser(did,all,games,profiles){
- const st=games.users.get(did)||{...NO_STATS},pf=profiles.get(did)||{},unl=D.unlocked(st);
- const base={did,stats:st,rec:st.rec,streak:st.streak,unlocked:unl,bio:String(pf.bio||'').slice(0,160),theme:cleanTheme(pf.theme),equipped:sanitizeEq(pf.equipped,unl),ratings:all.filter(r=>String(r.discord_id)===did)};
+ const mine=all.filter(r=>String(r.discord_id)===did);
+ const st={...(games.users.get(did)||NO_STATS),cat:S.catStats(mine)},pf=profiles.get(did)||{},unl=D.unlocked(st);
+ const base=applyCovers({did,stats:st,rec:st.rec,streak:st.streak,unlocked:unl,bio:String(pf.bio||'').slice(0,160),theme:cleanTheme(pf.theme),equipped:sanitizeEq(pf.equipped,unl),covers:S.cleanCovers(pf.covers),badgePts:D.badgePoints(unl)},mine);
  if(A.DEMO){const L=base.ratings,me=did===S.DEMO_ME;
   return{...base,nick:L[0]?.username||st.name||'Membro demo',username:me?'demo_staskys':'',avatar:L[0]?.avatar_url||st.avatar||'',joined:me?'2024-03-12':'',inServer:true,demo:true,isMe:me}}
  const mem=await A.loadMembers(),m=mem[did]||{};
@@ -31,11 +34,11 @@ const kindTabs=(cur,id)=>`<div class="seg mini" id="${id}">${KINDS.map(k=>`<butt
 function starsHTML(u,kind){const {list}=S.top10(u.ratings,kind),five=list.slice(0,5);
  if(!five.length)return`<p class="pass-empty">${u.isMe?`Vota i tuoi ${A.KINDS[kind].t.toLowerCase()} preferiti nel <a href="catalogo.html?${A.DEMO?'demo=1&':''}tipo=${kind}">catalogo</a>: i primi 5 della tua Top 10 finiscono qui.`:'Ancora nessun voto in questa categoria.'}</p>`;
  return`<div class="stars-row">${five.map((r,i)=>`<figure class="${i?'':'big'}">${cover(r)}<figcaption><span class="pos">${i+1}</span>${E(r.title)}</figcaption></figure>`).join('')}${Array.from({length:5-five.length},()=>'<figure class="empty"><span class="cv"></span></figure>').join('')}</div>`}
-const epTxt=r=>(r.status==='in_corso'||r.status==='droppato')&&r.episodes?` · ep ${r.episodes}${r.total_episodes?'/'+r.total_episodes:''}`:'';
+const epTxt=r=>A.progTxt(r);
 function topHTML(u,kind){const {list,custom}=S.top10(u.ratings,kind),dnd=u.isMe&&list.length>1;
  return`<div class="t10-head"><div><h3>Top 10 ${A.KINDS[kind].t}</h3><p class="muted small">${list.length?(custom?'Ordinata a mano':'Automatica: in ordine di voto')+(dnd?' · trascina ⋮⋮ per riordinare':''):'Ancora vuota'}</p></div>${u.isMe&&u.ratings.some(r=>r.kind===kind)?'<button class="btn ghost sm" id="t10edit">Modifica</button>':''}</div>
  ${list.length?`<ol class="t10${dnd?' dnd':''}" id="t10list">${t10Items(list,kind,dnd)}</ol><p class="t10msg muted small" id="t10msg" aria-live="polite"></p>`:''}`}
-const t10Items=(list,kind,dnd)=>list.map((r,i)=>`<li class="${i<3?'top':''}" data-id="${E(r.media_id)}">${dnd?'<span class="grip" aria-label="Trascina per spostare" title="Trascina per spostare">⋮⋮</span>':''}<span class="t10n">${i+1}</span>${cover(r,'xs')}<span class="t10t"><b>${E(r.title)}</b><small>${[r.year,A.statusLabel(kind,r.status)+epTxt(r)].filter(Boolean).map(E).join(' · ')}</small></span>${A.hasR(r)?`<span class="t10r">${A.fmtR(r.rating)}</span>`:''}</li>`).join('');
+const t10Items=(list,kind,dnd)=>list.map((r,i)=>`<li class="${i<3?'top':''}" data-id="${E(r.media_id)}">${dnd?'<span class="grip" aria-label="Trascina per spostare" title="Trascina per spostare">⋮⋮</span>':''}<span class="t10n">${i+1}</span>${cover(r,'xs')}<span class="t10t"><b>${E(r.title)}</b><small>${[r.year,A.statusLabel(kind,r.status)+epTxt(r)].filter(Boolean).map(E).join(' · ')}</small></span>${A.hasR(r)?`<span class="t10r">${A.fmtR(r.rating)}</span>`:''}${STAFF&&!dnd&&r.custom?`<button class="cvstaff" data-cvk="${E(kind+':'+r.media_id)}" title="Staff: rimuovi questa copertina personalizzata" aria-label="Rimuovi copertina (staff)">🛡</button>`:''}</li>`).join('');
 function compareHTML(u,viewer,c){
  if(!viewer)return`<div class="cmp card"><h3>Compatibilità</h3><p class="muted small">Accedi con Discord e vota qualche titolo per scoprire quanto sei compatibile con ${E(u.nick)}.</p>${A.READY?'<button class="btn sm" id="cmplogin">Accedi con Discord</button>':''}</div>`;
  if(!c.n)return`<div class="cmp card"><h3>Tu e ${E(u.nick)}</h3><p class="muted small">Non avete ancora titoli votati in comune. Vota qualcosa nel <a href="catalogo.html${dq}">catalogo</a>!</p></div>`;
@@ -76,6 +79,7 @@ function passHTML(u,ctx){
     ${now?`<span class="pill"><i class="live"></i>${E(A.KINDS[now.kind].verb)} <b>${E(now.title)}</b>${E(epTxt(now))}</span>`:''}</div>
     ${ctx.cmp&&ctx.cmp.n?`<div class="pass-match"><b>${ctx.cmp.pct}%</b><span>con te</span></div>`:''}
     ${u.isMe&&!u.demo?'<button class="btn ghost sm pass-out" id="logout">Esci</button>':''}
+    <button class="btn ghost sm pass-share" id="share" aria-label="Condividi il profilo come immagine" title="Condividi il profilo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5"/><path d="M8 10H6a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1h-2"/></svg><span>Condividi</span></button>
    </header>
    ${u.isMe?`<div class="pass-tools"><button class="ptool" id="customize">🎨 Personalizza</button><button class="ptool" id="decos">✨ Le mie decorazioni <b>${u.unlocked.length}/${D.DECO.length}</b></button></div>`:''}
    <dl class="pass-stats">
@@ -90,7 +94,7 @@ function catsHTML(u){return`<section class="cats sec" data-sec="cats">
    ${KINDS.map(k=>{const L=u.ratings.filter(r=>r.kind===k),c=s=>L.filter(r=>r.status===s).length,top=S.top10(u.ratings,k).list.slice(0,4);
     return`<a class="cat-card" href="catalogo.html?${A.DEMO?'demo=1&':''}tipo=${k}"><header><span class="cat-ico">${A.KINDS[k].icon}</span><h3>${A.KINDS[k].t}</h3><b class="cat-n">${L.length}</b></header>
     <div class="cat-strip">${top.length?top.map(r=>cover(r,'sm')).join(''):'<span class="muted small">Ancora vuoto</span>'}</div>
-    <div class="cat-foot"><span>${c('visto')} ${k==='game'?'giocati':'visti'}</span><span>${c('in_corso')} in corso</span>${c('droppato')?`<span>${c('droppato')} droppati</span>`:''}<span>${c('voglio')} da ${k==='game'?'giocare':'vedere'}</span></div></a>`}).join('')}
+    <div class="cat-foot"><span>${c('visto')} ${A.doneWord(k)[0]}</span><span>${c('in_corso')} in corso</span>${c('droppato')?`<span>${c('droppato')} droppati</span>`:''}<span>${c('voglio')} da ${A.doneWord(k)[1]}</span></div></a>`}).join('')}
   </section>`}
 const awardsCard=()=>`<section class="card myaw sec" data-sec="awards" id="myaw"><p class="muted small">Carico gli Awards…</p></section>`;
 function pageHTML(u,ctx){
@@ -161,7 +165,7 @@ function bindDrag(u,kind,done){const ol=q('#t10list');if(!ol||!ol.classList.cont
   addEventListener('pointermove',move,{passive:false});addEventListener('pointerup',up);addEventListener('pointercancel',up)}}
 
 /* ---------- personalizza il passaporto ---------- */
-function openCustomize(u,rerender){
+function openCustomize(u,rerender,openCovers){
  const orig={theme:JSON.parse(JSON.stringify(u.theme)),bio:u.bio};let t=JSON.parse(JSON.stringify(u.theme)),bio=u.bio,saved=false;
  const live=()=>{u.theme=t;u.bio=bio;ensureFont(t.font);rerender()};
  const sw=(group,map,cur,extra='')=>Object.entries(map).map(([k,v])=>`<button class="czo ${group}-${k}${cur===k?' on':''}" data-g="${group}" data-v="${k}" ${extra}><i${group==='ban'&&k!=='none'?` class="ban-${k}"`:''}></i><span>${E(Array.isArray(v)?v[0]:v)}</span></button>`).join('');
@@ -176,6 +180,7 @@ function openCustomize(u,rerender){
    <p class="label">Banner</p><div class="czgrid">${u.banner?`<button class="czo ban-discord${banOf({...u,theme:t})==='discord'?' on':''}" data-g="ban" data-v="discord"><i class="ban-discord" style="background-image:url('${E(u.banner)}')"></i><span>Discord</span></button>`:''}${sw('ban',D.BANNER,banOf({...u,theme:t}))}</div>
    <p class="label">Forma avatar</p><div class="czrow">${sw('shape',D.CORNICI,t.frame)}</div>
    <p class="label">Font del nome</p><div class="czrow fonts">${Object.entries(D.FONT).map(([k,v])=>`<button class="czo font-${k}${t.font===k?' on':''}" data-g="font" data-v="${k}"><b style="font-family:'${v[1]}',Inter,sans-serif">Aa</b><span>${E(v[0])}</span></button>`).join('')}</div>
+   <p class="label">Copertine</p><button class="czcov" id="czcov"><span class="czcov-st">${(()=>{const L=u.ratings.filter(r=>r.cover).slice(0,3);return L.map(r=>`<img src="${E(r.cover)}" alt="" loading="lazy">`).join('')})()}</span><span><b>Cambia le copertine dei tuoi titoli</b><small>Scegli tra quelle ufficiali o caricane una dal PC: la vedranno tutti sul tuo profilo${Object.keys(u.covers||{}).length?` · ${Object.keys(u.covers).length} cambiate`:''}</small></span><i>→</i></button>
    <p class="label">Sezioni</p><label class="cztog"><input type="checkbox" id="czstars" ${t.stars?'checked':''}> Mostra “Le mie stelle” nel passaporto</label>
    <ol class="czord">${t.order.map((k,i)=>`<li><span>${E(D.SEZIONI[k])}</span><button data-ou="${i}" ${i?'':'disabled'} aria-label="Su">↑</button><button data-od="${i}" ${i<t.order.length-1?'':'disabled'} aria-label="Giù">↓</button></li>`).join('')}</ol>
   </div>
@@ -187,6 +192,7 @@ function openCustomize(u,rerender){
   const pk=q('#czpick',box);pk.oninput=()=>{t.accent=pk.value;live();pk.parentElement.style.setProperty('--sw',pk.value)};pk.onchange=()=>draw();
   qa('.czo',box).forEach(b=>b.onclick=()=>{const g=b.dataset.g,v=b.dataset.v;if(g==='bg')t.bg=v;if(g==='ban'){t.banner=v;t.bp=1}if(g==='shape')t.frame=v;if(g==='font')t.font=v;live();draw()});
   q('#czstars',box).onchange=e=>{t.stars=e.target.checked;live()};
+  const cc=q('#czcov',box);cc&&(cc.onclick=()=>openCovers&&openCovers());
   qa('[data-ou]',box).forEach(b=>b.onclick=()=>{const i=+b.dataset.ou;[t.order[i-1],t.order[i]]=[t.order[i],t.order[i-1]];live();draw()});
   qa('[data-od]',box).forEach(b=>b.onclick=()=>{const i=+b.dataset.od;[t.order[i+1],t.order[i]]=[t.order[i],t.order[i+1]];live();draw()});
   q('#czreset',box).onclick=()=>{t=cleanTheme({});live();draw()};
@@ -249,10 +255,10 @@ function landing(members){const list=Object.entries(members).filter(([,m])=>m.in
  <div class="cta" style="justify-content:flex-start">${A.READY?'<button class="btn magnetic" id="login">Accedi con Discord</button>':''}<a class="btn ghost" href="profilo.html?demo=1">Guarda un profilo demo</a></div></section>
  ${list.length?`<section class="wrap tight"><p class="label">Profili dei membri</p><div class="mgrid">${list.map(([id,m])=>`<a class="mchip" href="profilo.html?u=${E(id)}"><img ${A.avAttr(id,m.avatar)} alt="" loading="lazy"><span>${E(A.clean(m.nick))}</span></a>`).join('')}</div></section>`:''}`}
 
-let VIEWER='';
+let VIEWER='',STAFF=false;
 async function show(){
  await A.ready;
- const viewerDid=VIEWER=A.DEMO?S.DEMO_ME:(A.user?A.profile(A.user).discord:'');
+ const viewerDid=VIEWER=A.DEMO?S.DEMO_ME:(A.user?A.profile(A.user).discord:'');STAFF=await S.isStaff();
  const did=P.get('u')||viewerDid;
  if(!did){const mem=await A.loadMembers();root.innerHTML=landing(mem);const b=q('#login');b&&(b.onclick=()=>A.login());return}
  const [all,games,profiles]=await Promise.all([S.loadAll(),S.loadGames(),S.loadProfiles()]);
@@ -263,12 +269,16 @@ async function show(){
  const ctx={kind:KINDS.includes(P.get('tipo'))?P.get('tipo'):firstKind,viewer:viewerDid,cmp,showCmp,similar:S.similar(all,did),avColor:''};
  ensureFont(u.theme.font);
  root.innerHTML=pageHTML(u,ctx);
- const reload=async()=>{const all2=await S.loadAll();u.ratings=all2.filter(r=>String(r.discord_id)===did);setKind(ctx.kind)};
+ const reload=async()=>{const all2=await S.loadAll();applyCovers(u,all2.filter(r=>String(r.discord_id)===did));setKind(ctx.kind)};
+ const coversChanged=()=>{applyCovers(u,u.ratings.map(r=>r.custom?{...r,cover:r.ocover,custom:false}:r));rerenderPass();setKind(ctx.kind);const c=q('.cats',root);c&&(c.outerHTML=catsHTML(u))};
  const setKind=k=>{ctx.kind=k;const s=q('#stars');s&&(s.innerHTML=starsHTML(u,k));const t=q('#t10');t&&(t.innerHTML=topHTML(u,k));qa('#skind button').forEach(b=>b.classList.toggle('active',b.dataset.k===k));bindT10()};
- const bindT10=()=>{const e=q('#t10edit');e&&(e.onclick=()=>editTop(u,ctx.kind,reload));bindDrag(u,ctx.kind,reload)};
+ const bindT10=()=>{const e=q('#t10edit');e&&(e.onclick=()=>editTop(u,ctx.kind,reload));bindDrag(u,ctx.kind,reload);
+  qa('.cvstaff',root).forEach(b=>b.onclick=async()=>{if(!confirm('Rimuovere questa copertina caricata da '+u.nick+'? Tornerà quella originale.'))return;b.disabled=true;
+   const err=await window.STASKYS_COVERS.staffRemove(u,b.dataset.cvk);if(err){alert('Non sono riuscito a rimuoverla: '+(err.message||err));b.disabled=false;return}delete u.covers[b.dataset.cvk];coversChanged()})};
  const bindPass=()=>{qa('#skind button').forEach(b=>b.onclick=()=>setKind(b.dataset.k));
   const lo=q('#logout');lo&&(lo.onclick=()=>A.logout());
-  const cz=q('#customize');cz&&(cz.onclick=()=>openCustomize(u,rerenderPass));
+  const cz=q('#customize');cz&&(cz.onclick=()=>openCustomize(u,rerenderPass,()=>window.STASKYS_COVERS.open(u,ctx.kind,coversChanged)));
+  const sh=q('#share');sh&&(sh.onclick=()=>window.STASKYS_SHARE&&window.STASKYS_SHARE.open(u,ctx));
   const ab=q('#addbio');ab&&(ab.onclick=()=>{openCustomize(u,rerenderPass);setTimeout(()=>{const b=q('#bio');b&&b.focus()},260)});
   const dc=q('#decos');dc&&(dc.onclick=()=>openDecos(u,rerenderPass))};
  /* ridisegna solo il passaporto + l'ordine delle sezioni (anteprima dal vivo) */

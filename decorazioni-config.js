@@ -11,6 +11,8 @@
      {tipo:'giochi', valore:N}           → aver giocato almeno N minigiochi diversi
      {tipo:'record', gioco:'snake', valore:N} → record in un gioco (per reaction/mines/wordle vale "N o meno")
      {tipo:'posizione', valore:N}        → essere tra i primi N della classifica punti
+   COME FISSARE I REQUISITI DEFINITIVI: cambia solo "valore" (o il tipo) nella riga della decorazione
+   e togli provvisorio:true. I BADGE (con requisiti anche dal catalogo) sono in badge-config.js.
    Rarità: comune · rara · epica · leggendaria
    Le grafiche sono disegni originali (CSS), ispirati allo stile delle decorazioni di Discord ma non copiati. */
 window.STASKYS_DECO={
@@ -39,23 +41,24 @@ window.STASKYS_DECO={
   {id:'bg_stars',tipo:'bg',nome:'Notte stellata',rarita:'rara',req:{tipo:'streak',valore:3},provvisorio:true},
   {id:'bg_petals',tipo:'bg',nome:'Pioggia di petali',rarita:'epica',req:{tipo:'record',gioco:'wordle',valore:3},provvisorio:true},
   {id:'bg_aurora',tipo:'bg',nome:'Aurora boreale',rarita:'leggendaria',req:{tipo:'primo',valore:3},provvisorio:true},
-  /* badge accanto al nome (se ne possono mettere fino a 3) */
-  {id:'b_first',tipo:'badge',nome:'Re di un gioco',icona:'👑',rarita:'epica',req:{tipo:'primo',valore:1},provvisorio:true},
-  {id:'b_streak7',tipo:'badge',nome:'Costante',icona:'🔥',rarita:'rara',req:{tipo:'streak',valore:7},provvisorio:true},
-  {id:'b_games5',tipo:'badge',nome:'Tuttofare',icona:'🎮',rarita:'comune',req:{tipo:'giochi',valore:5},provvisorio:true},
-  {id:'b_podium3',tipo:'badge',nome:'Da podio',icona:'🏅',rarita:'rara',req:{tipo:'podi',valore:3},provvisorio:true},
-  {id:'b_points500',tipo:'badge',nome:'Collezionista',icona:'💎',rarita:'epica',req:{tipo:'punti',valore:300},provvisorio:true},
-  {id:'b_top3',tipo:'badge',nome:'Leggenda',icona:'⭐',rarita:'leggendaria',req:{tipo:'posizione',valore:3},provvisorio:true}
+  /* i BADGE ora stanno in badge-config.js (update 3): vengono aggiunti qui sotto in automatico */
  ],
  MAX_BADGE:3
 };
 /* controllo sblocchi (stats = dati minigiochi di un membro) */
 (function(D){
  const ASC=new Set(['reaction','mines','wordle']);
+ /* badge da badge-config.js (se il file manca restano solo cornici, effetti e sfondi) */
+ const B=window.STASKYS_BADGES;if(B&&Array.isArray(B.LISTA))B.LISTA.forEach(b=>D.DECO.push({...b,tipo:'badge'}));
  D.byId=Object.fromEntries(D.DECO.map(d=>[d.id,d]));
  D.reqText=r=>({punti:`Raggiungi ${r.valore} punti`,primo:r.valore>1?`Primo posto in ${r.valore} minigiochi`:'Primo posto in un minigioco',podi:`Sul podio in ${r.valore} minigiochi`,streak:`Streak di ${r.valore} giorni`,giochi:r.valore>1?`Gioca ${r.valore} minigiochi diversi`:'Gioca un minigioco',
-  record:`Record di ${r.valore}${ASC.has(r.gioco)?' o meno':''} a ${({snake:'Snake',wordle:'Wordle',tetris:'Tetris',flappy:'Flappy',reaction:'Tempo di reazione (ms)',mines:'Prato fiorito (s)'})[r.gioco]||r.gioco}`,posizione:r.valore>1?`Entra nei primi ${r.valore} della classifica punti`:'Primo nella classifica punti'})[r.tipo]||'Requisito da definire';
+  record:`Record di ${r.valore}${ASC.has(r.gioco)?' o meno':''} a ${({snake:'Snake',wordle:'Wordle',tetris:'Tetris',flappy:'Flappy',reaction:'Tempo di reazione (ms)',mines:'Prato fiorito (s)'})[r.gioco]||r.gioco}`,posizione:r.valore>1?`Entra nei primi ${r.valore} della classifica punti`:'Primo nella classifica punti',
+  voti:`Vota ${r.valore} titoli nel catalogo`,categoria:`${r.valore} ${({anime:'anime',game:'giochi',movie:'film',tv:'serie',manga:'manga',book:'libri'})[r.kind]||r.kind} nel catalogo`,categorie:`Titoli in ${r.valore} categorie diverse del catalogo`,top10:r.valore>1?`Completa ${r.valore} Top 10`:'Completa una Top 10 (10 titoli)'})[r.tipo]||'Requisito da definire';
  D.has=(d,s)=>{if(!s)return false;const r=d.req||{};switch(r.tipo){case'punti':return s.points>=r.valore;case'primo':return s.firsts>=r.valore;case'podi':return s.podiums>=r.valore;case'streak':return Math.max(s.streak||0,s.bestStreak||0)>=r.valore;
-  case'giochi':return s.rec.length>=r.valore;case'record':{const v=s.best&&s.best[r.gioco];return v!=null&&(ASC.has(r.gioco)?v<=r.valore:v>=r.valore)}case'posizione':return!!s.pos&&s.pos<=r.valore&&s.points>0;default:return false}};
+  case'giochi':return s.rec.length>=r.valore;case'record':{const v=s.best&&s.best[r.gioco];return v!=null&&(ASC.has(r.gioco)?v<=r.valore:v>=r.valore)}case'posizione':return!!s.pos&&s.pos<=r.valore&&s.points>0;
+  /* catalogo: s.cat = {voti, kind:{anime:N…}, cats, top10} (vedi STASKYS_SOCIAL.catStats) */
+  case'voti':return!!s.cat&&s.cat.voti>=r.valore;case'categoria':return!!s.cat&&(s.cat.kind[r.kind]||0)>=r.valore;case'categorie':return!!s.cat&&s.cat.cats>=r.valore;case'top10':return!!s.cat&&s.cat.top10>=r.valore;default:return false}};
+ /* punti badge = somma dei punti dei badge sbloccati */
+ D.badgePoints=unl=>unl.reduce((a,id)=>a+(D.byId[id]&&D.byId[id].tipo==='badge'?+D.byId[id].punti||0:0),0);
  D.unlocked=s=>D.DECO.filter(d=>D.has(d,s)).map(d=>d.id);
 })(window.STASKYS_DECO);

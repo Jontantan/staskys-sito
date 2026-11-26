@@ -1,9 +1,9 @@
-/* Staskys — Catalogo (fase 3): Anime (AniList), Giochi (RAWG), Film e Serie (TMDB)
-   voti 0–10 con un decimale (slider), stato Visto / In corso / Droppato / Voglio, episodi visti, import da AniList */
+/* Staskys — Catalogo: Anime e Manga (AniList), Giochi (RAWG), Film e Serie (TMDB), Libri (Open Library)
+   voti 0–10 con un decimale (slider), stato Visto / In corso / Droppato / Voglio, episodi/capitoli/pagine, import da altri siti (importa.js) */
 (function(){
 const A=window.STASKYS,E=A.E,q=(s,r=document)=>r.querySelector(s),qa=(s,r=document)=>[...r.querySelectorAll(s)];
 let kind='anime',view='scopri',stFilter='',term='',mine={},seq=0,lastItems=[];
-const PH={anime:'Cerca un anime…',game:'Cerca un gioco…',movie:'Cerca un film…',tv:'Cerca una serie…'};
+const PH={anime:'Cerca un anime…',game:'Cerca un gioco…',movie:'Cerca un film…',tv:'Cerca una serie…',manga:'Cerca un manga…',book:'Cerca un libro o un autore…'};
 const ST=['visto','in_corso','droppato','voglio'];
 const key=(k,id)=>k+':'+id;
 const CFG=window.GIOCHI_CONFIG||{};
@@ -31,39 +31,49 @@ const DB={
  async remove(it){if(A.DEMO){delete mine[key(it.type,it.id)];localStorage.demo_ratings=JSON.stringify(mine);return null}
   const {error}=await A.sb.from('media_ratings').delete().eq('user_id',A.user.id).eq('kind',it.type).eq('media_id',it.id);if(!error)delete mine[key(it.type,it.id)];return error}
 };
-const errText=e=>/media_ratings|schema|relation/.test(e.message||'')&&!/check|integer/.test(e.message||'')?'Il catalogo si attiva appena il database è pronto.'
+const errText=e=>/kind_check/.test(e.message||'')?'Manga e Libri si attivano appena il database è aggiornato (update 3): riprova più tardi.'
+ :/media_ratings|schema|relation/.test(e.message||'')&&!/check|integer/.test(e.message||'')?'Il catalogo si attiva appena il database è pronto.'
  :/check|integer|invalid input/i.test(e.message||'')?'Voti con la virgola, “Droppato” e Serie si attivano appena il database è aggiornato (fase 3).':e.message==='login'?'Accedi con Discord per salvare.':'Non sono riuscito a salvare. Riprova.';
 
 /* ---------- ricerca ---------- */
-async function anilistDirect(t){/* riserva se la funzione Supabase non è ancora attiva: AniList non chiede chiavi */
- const query=`query${t?'($q:String)':''}{Page(perPage:20){media(${t?'search:$q,':''}type:ANIME,isAdult:false,sort:${t?'SEARCH_MATCH':'TRENDING_DESC'}){id title{romaji english} seasonYear episodes format coverImage{extraLarge large}}}}`;
- const j=await (await fetch('https://graphql.anilist.co',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({query,variables:t?{q:t}:{}})})).json();
- return (j?.data?.Page?.media||[]).map(m=>({id:'al'+m.id,type:'anime',title:m.title.english||m.title.romaji,year:m.seasonYear||null,cover:m.coverImage?.extraLarge||m.coverImage?.large||null,sub:[m.format,m.episodes?m.episodes+' ep':''].filter(Boolean).join(' · '),eps:m.episodes||null}))}
+const AL=(query,variables)=>fetch('https://graphql.anilist.co',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({query,variables})}).then(r=>r.json());
+async function anilistDirect(t,type='ANIME'){/* AniList non chiede chiavi: anime (riserva) e manga */
+ const query=`query${t?'($q:String)':''}{Page(perPage:20){media(${t?'search:$q,':''}type:${type},isAdult:false,sort:${t?'SEARCH_MATCH':'TRENDING_DESC'}){id title{romaji english} seasonYear startDate{year} episodes chapters volumes format coverImage{extraLarge large}}}}`;
+ const j=await AL(query,t?{q:t}:{});const man=type==='MANGA';
+ return (j?.data?.Page?.media||[]).map(m=>({id:'al'+m.id,type:man?'manga':'anime',title:m.title.english||m.title.romaji,year:(man?m.startDate?.year:m.seasonYear)||m.startDate?.year||null,cover:m.coverImage?.extraLarge||m.coverImage?.large||null,
+  sub:[({MANGA:'Manga',NOVEL:'Light novel',ONE_SHOT:'One shot'})[m.format]||m.format,man?(m.chapters?m.chapters+' cap':m.volumes?m.volumes+' vol':''):(m.episodes?m.episodes+' ep':'')].filter(Boolean).join(' · '),eps:(man?m.chapters:m.episodes)||null}))}
+/* libri: Open Library (gratis, senza chiavi); senza testo = di tendenza questa settimana */
+async function openLib(t){const u=t?`https://openlibrary.org/search.json?q=${encodeURIComponent(t)}&fields=key,title,author_name,first_publish_year,cover_i,number_of_pages_median&limit=24`:'https://openlibrary.org/trending/weekly.json?limit=24';
+ const r=await fetch(u);if(!r.ok)throw new Error('openlibrary');const j=await r.json();
+ return ((t?j.docs:j.works)||[]).filter(d=>d.key&&d.title).map(d=>({id:'ol'+d.key.replace('/works/',''),type:'book',title:d.title,year:d.first_publish_year||null,cover:d.cover_i?`https://covers.openlibrary.org/b/id/${d.cover_i}-L.jpg`:null,sub:(d.author_name||[]).slice(0,2).join(', '),eps:d.number_of_pages_median||null}))}
 async function search(k,t){
+ if(k==='manga')return anilistDirect(t,'MANGA');
+ if(k==='book')return openLib(t);
  const u=A.SEARCH_URL+'?type='+k+'&q='+encodeURIComponent(t);
  try{const r=await fetch(u,{headers:HDR});const j=await r.json();if(!r.ok)throw new Error(j.error||r.status);return j.items||[]}
  catch(e){if(k==='anime')return anilistDirect(t);throw e}}
-/* numero totale di episodi (serie TMDB: chiede i dettagli alla funzione; anime: AniList) */
+/* totale episodi / capitoli (serie TMDB: chiede alla funzione; anime e manga: AniList; libri: pagine dalla ricerca) */
 const epsCache={};
 async function totalEps(it){const ck=key(it.type,it.id);if(ck in epsCache)return epsCache[ck];let n=null;
  try{if(it.type==='tv'){const r=await fetch(A.SEARCH_URL+'?type=tv&id='+encodeURIComponent(it.id),{headers:HDR});const j=await r.json();n=j.items&&j.items[0]&&j.items[0].eps||null}
-  else if(it.type==='anime'){const j=await (await fetch('https://graphql.anilist.co',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({query:'query($id:Int){Media(id:$id){episodes nextAiringEpisode{episode}}}',variables:{id:+String(it.id).replace(/^al/,'')}})})).json();const m=j?.data?.Media;n=m?.episodes||null}}catch(e){}
+  else if(it.type==='anime'||it.type==='manga'){const j=await AL('query($id:Int){Media(id:$id){episodes chapters}}',{id:+String(it.id).replace(/^al/,'')});const m=j?.data?.Media;n=(it.type==='manga'?m?.chapters:m?.episodes)||null}}catch(e){}
  return epsCache[ck]=n}
 
 /* ---------- vista ---------- */
 const grid=q('#cgrid'),hint=q('#chint');
-function card(it){const m=mine[key(it.type,it.id)];const ep=m&&(m.status==='in_corso'||m.status==='droppato')&&m.episodes?` · ep ${m.episodes}${m.total_episodes?'/'+m.total_episodes:''}`:'';
+function card(it){const m=mine[key(it.type,it.id)];const ep=m?A.progTxt(m):'';
  return`<button class="citem${m?' saved':''}" data-id="${E(it.id)}"><span class="ccover">${it.cover?`<img src="${E(it.cover)}" alt="" loading="lazy">`:`<i>${A.KINDS[it.type].icon}</i>`}${m&&A.hasR(m)?`<b class="rbadge">${A.fmtR(m.rating)}</b>`:''}${m&&m.status?`<span class="sdot s-${m.status}">${E(A.statusLabel(it.type,m.status))}${E(ep)}</span>`:''}</span><span class="ct">${E(it.title)}</span><span class="cm">${[it.year,it.sub].filter(Boolean).map(E).join(' · ')}</span></button>`}
 function skeleton(){grid.innerHTML=Array.from({length:10},()=>'<div class="citem sk"><span class="ccover"></span><span class="ct"></span><span class="cm"></span></div>').join('')}
 function paint(items){lastItems=items;grid.innerHTML=items.length?items.map(card).join(''):`<div class="cempty"><p>${view==='mia'?'La tua lista è vuota qui. Cerca qualcosa in <b>Scopri</b> e dagli un voto.':'Nessun risultato. Prova con un altro titolo.'}</p></div>`;
  qa('.citem',grid).forEach(b=>b.onclick=()=>openSheet(lastItems.find(x=>x.id===b.dataset.id)))}
 function counts(){const n=Object.values(mine).filter(r=>r.kind===kind).length;q('#mycount').textContent=n||''}
-async function render(){counts();const my=++seq;q('#imp').hidden=kind!=='anime';
+function stLabels(){qa('[data-st]').forEach(b=>{if(b.dataset.st)b.textContent=A.statusLabel(kind,b.dataset.st)})}
+async function render(){counts();stLabels();const my=++seq;
  if(view==='mia'){const items=Object.values(mine).filter(r=>r.kind===kind&&(!stFilter||r.status===stFilter)).sort((a,b)=>(A.hasR(b)?+b.rating:-1)-(A.hasR(a)?+a.rating:-1)||String(b.updated_at).localeCompare(a.updated_at)).map(r=>({id:r.media_id,type:r.kind,title:r.title,year:r.year,cover:r.cover,sub:'',eps:r.total_episodes||null}));
   hint.textContent=A.DEMO||A.user?'':'Accedi con Discord per salvare la tua lista.';paint(items.filter(it=>!term||it.title.toLowerCase().includes(term.toLowerCase())));return}
  hint.textContent=term?`Risultati per “${term}”`:'Di tendenza adesso';skeleton();
  try{const items=await search(kind,term);if(my!==seq)return;paint(items)}
- catch(e){if(my!==seq)return;grid.innerHTML=`<div class="cempty"><p><b>Ricerca ${({game:'giochi',movie:'film',tv:'serie'})[kind]||''} non ancora attiva.</b><br><span class="muted">Si accende appena la funzione di ricerca aggiornata è pubblicata su Supabase.</span></p></div>`}}
+ catch(e){if(my!==seq)return;grid.innerHTML=`<div class="cempty"><p><b>Ricerca ${({game:'giochi',movie:'film',tv:'serie',book:'libri',manga:'manga'})[kind]||''} non disponibile adesso.</b><br><span class="muted">${kind==='book'||kind==='manga'?'Il sito dei dati non risponde: riprova tra poco.':'Si accende appena la funzione di ricerca aggiornata è pubblicata su Supabase.'}</span></p></div>`}}
 
 /* ---------- foglio a comparsa (riusato da voto e import) ---------- */
 const sheet=q('#csheet'),box=q('.csheet-in',sheet);
@@ -93,12 +103,13 @@ function openSheet(it){if(!it)return;const m=mine[key(it.type,it.id)]||{};
  const syncVote=()=>{if(!vr)return;const v=rating??+vr.value;vr.value=v;vr.style.setProperty('--p',(v*10)+'%');vr.style.setProperty('--h',hue(v));
   q('.vote',box).classList.toggle('off',rating==null);q('#vbig',box).classList.toggle('off',rating==null);q('#vbig',box).style.setProperty('--h',hue(v));q('#vnum',box).textContent=rating==null?'–':A.fmtR(rating);q('#novote',box).hidden=rating==null};
  const drawEps=async()=>{const el=q('#eps',box);if(!el)return;const show=K.eps&&(status==='in_corso'||status==='droppato');el.hidden=!show;if(!show)return;
-  if(!total&&!el.dataset.tried){el.dataset.tried=1;el.innerHTML='<p class="label">Episodi visti</p><p class="muted small">Cerco il numero di episodi…</p>';total=await totalEps(it)}
+  const U=K.unit||'Episodi',one=U==='Capitoli'?'Capitolo':U==='Pagine'?'Pagina':'Episodio',lab=`${U} ${K.read?'letti':'visti'}`.replace('Pagine letti','Pagine lette');
+  if(!total&&!el.dataset.tried&&it.type!=='book'){el.dataset.tried=1;el.innerHTML=`<p class="label">${lab}</p><p class="muted small">Cerco il numero di ${U.toLowerCase()}…</p>`;total=await totalEps(it)}
   if(episodes&&total&&episodes>total)episodes=total;
-  el.innerHTML=`<p class="label">Episodi visti${total?` <span class="muted">su ${total}</span>`:''}</p>`+(total
-   ?`<select id="epsel" class="epsel"><option value="">Scegli l'episodio…</option>${Array.from({length:total},(_,i)=>`<option value="${i+1}"${episodes===i+1?' selected':''}>Episodio ${i+1}${i+1===total?' (ultimo)':''}</option>`).join('')}</select>`
-   :`<div class="epman"><input id="epin" type="number" inputmode="numeric" min="1" max="5000" placeholder="Es. 12" value="${episodes||''}"><span class="muted small">Numero di episodi non disponibile: scrivilo tu.</span></div>`);
-  const s=q('#epsel',el),n=q('#epin',el);s&&(s.onchange=()=>episodes=+s.value||null);n&&(n.oninput=()=>{const v=Math.floor(+n.value);episodes=v>0?Math.min(v,5000):null})};
+  el.innerHTML=`<p class="label">${lab}${total?` <span class="muted">su ${total}</span>`:''}</p>`+(total&&total<=600&&it.type!=='book'
+   ?`<select id="epsel" class="epsel"><option value="">Scegli…</option>${Array.from({length:total},(_,i)=>`<option value="${i+1}"${episodes===i+1?' selected':''}>${one} ${i+1}${i+1===total?' (ultimo)':''}</option>`).join('')}</select>`
+   :`<div class="epman"><input id="epin" type="number" inputmode="numeric" min="1" max="${total||50000}" placeholder="Es. ${it.type==='book'?'120':'12'}" value="${episodes||''}"><span class="muted small">${total?`Scrivi a che ${one.toLowerCase()} sei arrivato.`:`Numero di ${U.toLowerCase()} non disponibile: scrivilo tu.`}</span></div>`);
+  const s=q('#epsel',el),n=q('#epin',el);s&&(s.onchange=()=>episodes=+s.value||null);n&&(n.oninput=()=>{const v=Math.floor(+n.value);episodes=v>0?Math.min(v,total||50000):null})};
  const syncSt=()=>{qa('#st button',box).forEach(b=>b.classList.toggle('active',b.dataset.s===status));drawEps()};
  if(vr){vr.oninput=()=>{rating=Math.round(+vr.value*10)/10;if(!status)status='visto',syncSt();syncVote()};
   qa('.vstep',box).forEach(b=>b.onclick=()=>{rating=Math.round(Math.max(0,Math.min(10,(rating??+vr.value)+ +b.dataset.d))*10)/10;if(!status)status='visto',syncSt();syncVote()});
@@ -111,43 +122,10 @@ function openSheet(it){if(!it)return;const m=mine[key(it.type,it.id)]||{};
  q('#cs-del',box)&&(q('#cs-del',box).onclick=async()=>{const err=await DB.remove(it);if(!err){close();render()}});
  openBox()}
 
-/* ---------- import da AniList ---------- */
-const MAP={COMPLETED:'visto',REPEATING:'visto',CURRENT:'in_corso',PAUSED:'in_corso',DROPPED:'droppato',PLANNING:'voglio'};
-async function fetchAniList(user){
- const query='query($u:String){MediaListCollection(userName:$u,type:ANIME){user{name avatar{medium}} lists{entries{status score(format:POINT_10_DECIMAL) progress updatedAt media{id title{romaji english} seasonYear episodes format isAdult coverImage{large}}}}}}';
- const r=await fetch('https://graphql.anilist.co',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({query,variables:{u:user}})});const j=await r.json();
- if(j.errors&&j.errors.length){const m=j.errors[0].message||'';throw new Error(/not found|private/i.test(m)?'Utente non trovato o lista privata.':m)}
- const C=j.data&&j.data.MediaListCollection;if(!C)throw new Error('Utente non trovato.');
- const seen=new Set(),rows=[];
- C.lists.forEach(l=>l.entries.forEach(e=>{const m=e.media;if(!m||m.isAdult||seen.has(m.id))return;seen.add(m.id);const st=MAP[e.status];if(!st)return;
-  const sc=e.score>0?Math.round(Math.min(10,e.score)*10)/10:null;
-  rows.push({kind:'anime',media_id:'al'+m.id,title:m.title.english||m.title.romaji,cover:m.coverImage&&m.coverImage.large||null,year:m.seasonYear||null,rating:sc,status:st,
-   episodes:(st==='in_corso'||st==='droppato')&&e.progress?e.progress:(st==='visto'&&m.episodes?m.episodes:null),total_episodes:m.episodes||null,updated_at:new Date((e.updatedAt||Date.now()/1000)*1000).toISOString()})}));
- return{user:C.user,rows}}
-function openImport(){const canSave=A.DEMO||A.user;
- box.innerHTML=`<button class="cx" aria-label="Chiudi">×</button><p class="label">Importa</p><h3 id="cs-title" style="font-size:1.35rem">La tua lista AniList</h3>
- <p class="muted small">Scrivi il tuo nome utente AniList: vedi un'anteprima e poi decidi se importare. Voti, stato ed episodi arrivano così come sono (voti convertiti da 0 a 10).</p>
- ${canSave?`<form class="impf" id="impf"><input id="impu" placeholder="Nome utente AniList" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="40" required><button class="btn" type="submit">Anteprima</button></form><div id="impv"></div>`
- :`<div class="cs-login"><p>Accedi con Discord per importare la tua lista.</p><button class="btn" id="cs-login">Accedi con Discord</button></div>`}`;
- q('.cx',box).onclick=close;q('#cs-login',box)&&(q('#cs-login',box).onclick=()=>A.login());openBox();setTimeout(()=>{const i=q('#impu',box);i&&i.focus()},250);
- const f=q('#impf',box);f&&(f.onsubmit=async ev=>{ev.preventDefault();const u=q('#impu',box).value.trim(),out=q('#impv',box);if(!/^[\w-]{2,40}$/.test(u)){out.innerHTML='<p class="muted small">Nome utente non valido.</p>';return}
-  out.innerHTML='<p class="muted small">Carico la lista di '+E(u)+'…</p>';
-  let data;try{data=await fetchAniList(u)}catch(e){out.innerHTML=`<p class="imperr">${E(e.message||'Errore')}</p>`;return}
-  const {rows}=data;if(!rows.length){out.innerHTML='<p class="muted small">La lista è vuota.</p>';return}
-  const c=s=>rows.filter(r=>r.status===s).length,voted=rows.filter(r=>r.rating!=null),already=rows.filter(r=>mine[key(r.kind,r.media_id)]).length;
-  const prev=rows.slice().sort((a,b)=>(b.rating??-1)-(a.rating??-1)).slice(0,12);
-  out.innerHTML=`<div class="impuser">${data.user.avatar?`<img src="${E(data.user.avatar.medium)}" alt="">`:''}<div><b>${E(data.user.name)}</b><small>${rows.length} anime · ${voted.length} con voto${voted.length?' · media '+A.fmtR(voted.reduce((s,r)=>s+r.rating,0)/voted.length):''}</small></div></div>
-  <div class="impstats">${ST.map(s=>`<span class="sdot s-${s}">${E(A.statusLabel('anime',s))} <b>${c(s)}</b></span>`).join('')}</div>
-  <ul class="implist">${prev.map(r=>`<li>${r.cover?`<img src="${E(r.cover)}" alt="" loading="lazy">`:'<i></i>'}<span><b>${E(r.title)}</b><small>${E(A.statusLabel('anime',r.status))}${r.episodes&&r.status!=='visto'?' · ep '+r.episodes+(r.total_episodes?'/'+r.total_episodes:''):''}</small></span><em>${r.rating!=null?A.fmtR(r.rating):'–'}</em></li>`).join('')}</ul>
-  ${rows.length>12?`<p class="muted tiny">…e altri ${rows.length-12}.</p>`:''}
-  ${already?`<label class="impover"><input type="checkbox" id="impo"> Sovrascrivi i ${already} anime che hai già nel catalogo</label>`:''}
-  <div class="cs-act"><button class="btn" id="impgo">Importa ${rows.length} anime</button><button class="btn ghost" id="impno">Annulla</button></div><p class="muted small" id="impmsg"></p>`;
-  q('#impno',out).onclick=close;
-  q('#impgo',out).onclick=async()=>{const over=q('#impo',out)&&q('#impo',out).checked;const todo=rows.filter(r=>over||!mine[key(r.kind,r.media_id)]);const msg=q('#impmsg',out);
-   if(!todo.length){msg.textContent='Niente da importare: hai già tutti questi anime.';return}
-   q('#impgo',out).disabled=true;
-   for(let i=0;i<todo.length;i+=200){msg.textContent=`Importo… ${Math.min(i+200,todo.length)}/${todo.length}`;const err=await DB.upsert(todo.slice(i,i+200));if(err){msg.textContent=errText(err);q('#impgo',out).disabled=false;return}}
-   msg.textContent=`Fatto! ${todo.length} anime importati.`;setTimeout(()=>{close();view='mia';qa('[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view==='mia'));q('#cstat').hidden=false;render()},700)}})}
+/* ---------- import da altri siti (importa.js) ---------- */
+function openImport(){const I=window.STASKYS_IMPORT;if(!I)return;
+ I.open({box,openBox,close,mine:()=>mine,key,DB,errText,kind,
+  done(){close();view='mia';qa('[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view==='mia'));q('#cstat').hidden=false;render()}})}
 
 /* ---------- controlli ---------- */
 qa('#ctabs button').forEach(b=>b.onclick=()=>{kind=b.dataset.kind;qa('#ctabs button').forEach(x=>x.classList.toggle('active',x===b));q('#q').placeholder=PH[kind];render()});
@@ -160,6 +138,6 @@ qa('#ctabs button').forEach(x=>x.classList.toggle('active',x.dataset.kind===kind
 if(A.DEMO){q('#torank').href='classifica.html?demo=1';q('main').insertAdjacentHTML('afterbegin','<div class="demo-ribbon">DEMO · anteprima con dati finti salvati solo in questo browser</div>');
  if(!localStorage.demo_ratings)localStorage.demo_ratings=JSON.stringify({'anime:al154587':{kind:'anime',media_id:'al154587',title:"Frieren: Beyond Journey's End",cover:'https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx154587-qQTzQnEJJ3oB.jpg',year:2023,rating:9.8,status:'visto',total_episodes:28,episodes:28,updated_at:'2026-11-20'},
   'anime:al151807':{kind:'anime',media_id:'al151807',title:'Solo Leveling',cover:'https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx151807-it355ZgzquUd.png',year:2024,rating:6.5,status:'droppato',episodes:4,total_episodes:12,updated_at:'2026-11-18'}})}
-DB.load().then(render);document.addEventListener('staskys-auth',()=>DB.load().then(render));
+stLabels();DB.load().then(render);document.addEventListener('staskys-auth',()=>DB.load().then(render));
 if(P.get('importa')!=null)openImport();
 })();

@@ -43,9 +43,23 @@ const A={sb,READY,E,LOCAL,user:null,
  /* attributi per <img>: src = miglior avatar, gli altri in data-av come riserva */
  avAttr(did,...extra){const L=A.avList(did,...extra);return`src="${E(L[0])}" data-av="${E(L.slice(1).join(' '))}" onerror="STASKYS.avNext(this)"`},
  avNext(img){const L=(img.dataset.av||'').split(' ').filter(Boolean);if(!L.length){img.onerror=null;return}img.dataset.av=L.slice(1).join(' ');img.src=L[0]},
- KINDS:{anime:{t:'Anime',one:'anime',verb:'sta guardando',icon:'🎌',eps:true},game:{t:'Giochi',one:'gioco',verb:'sta giocando',icon:'🎮'},movie:{t:'Film',one:'film',verb:'sta guardando',icon:'🎬'},tv:{t:'Serie',one:'serie',verb:'sta guardando',icon:'📺',eps:true}},
+ /* UPDATE 3: la funzione super-endpoint nuova è già pubblicata? (risponde v:3 a ?type=ping).
+    Finché non lo è, le parti che la usano mostrano "In arrivo tra poco ⏳" e si accendono da sole appena è online (controllo ogni 5 min). */
+ SOON:'In arrivo tra poco ⏳',
+ caps(){const ck='staskys_caps_v3',c=(()=>{try{return JSON.parse(sessionStorage[ck]||'null')}catch(e){return null}})();
+  if(c&&Date.now()-c.t<(c.v?36e5:3e5))return Promise.resolve(c);
+  return this._caps||(this._caps=fetch(this.SEARCH_URL+'?type=ping',{headers:this.LOCAL?{}:{apikey:CFG.SUPABASE_ANON_KEY,Authorization:'Bearer '+CFG.SUPABASE_ANON_KEY}}).then(r=>r.json()).catch(()=>({}))
+   .then(j=>{const o={t:Date.now(),v:j&&j.v>=3?j.v:0,trakt:!!(j&&j.trakt),mal:!!(j&&j.mal)};try{sessionStorage[ck]=JSON.stringify(o)}catch(e){}this._caps=null;return o}))},
+ /* categorie del catalogo (update 3: Manga e Libri). unit = cosa si conta (episodi, capitoli, pagine), u1 = abbreviazione */
+ KINDS:{anime:{t:'Anime',one:'anime',verb:'sta guardando',icon:'🎌',eps:true,unit:'Episodi',u1:'ep'},game:{t:'Giochi',one:'gioco',verb:'sta giocando',icon:'🎮'},movie:{t:'Film',one:'film',verb:'sta guardando',icon:'🎬'},tv:{t:'Serie',one:'serie',verb:'sta guardando',icon:'📺',eps:true,unit:'Episodi',u1:'ep'},
+  manga:{t:'Manga',one:'manga',verb:'sta leggendo',icon:'📚',eps:true,unit:'Capitoli',u1:'cap',read:true,neu:true},book:{t:'Libri',one:'libro',verb:'sta leggendo',icon:'📖',eps:true,unit:'Pagine',u1:'pag',read:true,neu:true}},
  STATUS:{visto:'Visto',in_corso:'In corso',droppato:'Droppato',voglio:'Voglio vederlo'},
- statusLabel(kind,s){if(kind==='game')return{visto:'Giocato',in_corso:'Sto giocando',droppato:'Droppato',voglio:'Voglio giocarci'}[s]||s;return this.STATUS[s]||s},
+ statusLabel(kind,s){if(kind==='game')return{visto:'Giocato',in_corso:'Sto giocando',droppato:'Droppato',voglio:'Voglio giocarci'}[s]||s;
+  if(this.KINDS[kind]&&this.KINDS[kind].read)return{visto:'Letto',in_corso:'Sto leggendo',droppato:'Droppato',voglio:kind==='book'?'Voglio leggerlo':'Voglio leggerlo'}[s]||s;return this.STATUS[s]||s},
+ /* " · ep 5/12" (o cap / pag) per chi è in corso o ha droppato */
+ progTxt(r){const K=this.KINDS[r.kind]||{};return(r.status==='in_corso'||r.status==='droppato')&&r.episodes?` · ${K.u1||'ep'} ${r.episodes}${r.total_episodes?'/'+r.total_episodes:''}`:''},
+ /* parole per "visti / da vedere" */
+ doneWord(kind){return kind==='game'?['giocati','giocare']:this.KINDS[kind]&&this.KINDS[kind].read?['letti','leggere']:['visti','vedere']},
  /* voti 0–10 con un decimale: 0 è un voto valido, null = nessun voto */
  hasR:r=>r&&r.rating!=null&&r.rating!==''&&!isNaN(+r.rating),
  fmtR:v=>v==null||v===''?'':(Math.round(+v*10)/10).toLocaleString('it-IT',{minimumFractionDigits:+v%1?1:0,maximumFractionDigits:1}),

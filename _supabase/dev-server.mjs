@@ -5,14 +5,14 @@ import http from "node:http"; import fs from "node:fs"; import path from "node:p
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
 const T = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".jpg": "image/jpeg", ".gif": "image/gif", ".ico": "image/x-icon", ".svg": "image/svg+xml" };
 globalThis.Deno = { env: { get: (k) => process.env[k] }, serve: (h) => (globalThis.__handler = h) };
-const src = fs.readFileSync(path.join(ROOT, "_supabase/functions/catalog-search/index.ts"), "utf8")
-  .replace(/type Item = [^\n]*\n/, "").replace(/: Promise<Item\[\]>/g, "").replace(/\((\w+): string\)/g, "($1)")
-  .replace(/: any/g, "").replace(/ as Error/g, "").replace(/\(e as Error\)/g, "e");
+import { stripTypeScriptTypes } from "node:module";
+const src = stripTypeScriptTypes(fs.readFileSync(path.join(ROOT, "_supabase/functions/catalog-search/index.ts"), "utf8"));
 await import("data:text/javascript;base64," + Buffer.from(src).toString("base64"));
 http.createServer(async (req, res) => {
   const u = new URL(req.url, "http://localhost");
   if (u.pathname === "/api/catalog-search") {
-    const r = await globalThis.__handler(new Request("http://x/" + u.search));
+    const body = req.method === "POST" ? await new Promise(ok => { let b = ""; req.on("data", c => b += c); req.on("end", () => ok(b)); }) : undefined;
+    const r = await globalThis.__handler(new Request("http://x/" + u.search, { method: req.method, body, headers: { "content-type": "application/json" } }));
     res.writeHead(r.status, Object.fromEntries(r.headers)); return res.end(await r.text());
   }
   let p = path.join(ROOT, decodeURIComponent(u.pathname === "/" ? "/index.html" : u.pathname));
