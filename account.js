@@ -8,7 +8,7 @@ const E=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt
 const LOCAL=/^(localhost|127\.0\.0\.1)$/.test(location.hostname);
 const A={sb,READY,E,LOCAL,user:null,
  /* ricerca catalogo: Edge Function su Supabase (le chiavi RAWG/TMDB restano lì); in locale usa il server di prova */
- SEARCH_URL:LOCAL?'/api/catalog-search':(CFG.SUPABASE_URL||'')+'/functions/v1/catalog-search',
+ SEARCH_URL:LOCAL?'/api/catalog-search':(CFG.SUPABASE_URL||'')+'/functions/v1/super-endpoint',
  profile(u){const m=(u||{}).user_metadata||{};return{name:(m.custom_claims&&m.custom_claims.global_name)||m.full_name||m.name||m.user_name||'Utente',avatar:m.avatar_url||m.picture||'',discord:String(m.provider_id||m.sub||'')}},
  login(){if(!sb)return;sb.auth.signInWithOAuth({provider:'discord',options:{redirectTo:location.origin+location.pathname+location.search}})},
  logout(){sb&&sb.auth.signOut().then(()=>location.reload())},
