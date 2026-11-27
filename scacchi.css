@@ -45,8 +45,8 @@
 .csq.last.l{background:#f5e88a}.csq.last.d{background:#d1b85c}.csq.sel{box-shadow:inset 0 0 0 4px rgba(255,255,255,.75)}
 .csq.mark.l{background:#f08080}.csq.mark.d{background:#d95858}
 .csq.chk{background:radial-gradient(circle,#ff3b3b 0 35%,rgba(255,59,59,.5) 60%,transparent 75%),var(--sq-d)!important}
-.csq.dot::after{content:"";position:absolute;width:30%;height:30%;border-radius:50%;background:rgba(40,20,60,.3)}
-.csq.cap::after{content:"";position:absolute;inset:4%;border-radius:50%;border:6px solid rgba(40,20,60,.3)}
+.csq.mvdot::after{content:"";position:absolute;width:30%;height:30%;border-radius:50%;background:rgba(40,20,60,.3)}
+.csq.mvcap::after{content:"";position:absolute;inset:4%;border-radius:50%;border:6px solid rgba(40,20,60,.3)}
 .csq svg.pc{width:92%;height:92%;position:relative;z-index:1;transition:transform .08s;pointer-events:none;filter:drop-shadow(0 2px 1px rgba(0,0,0,.25))}
 .cboard.mine .csq{cursor:pointer}
 .cf,.cr{position:absolute;font-style:normal;font-size:.68rem;font-weight:700;pointer-events:none}.cf{right:4px;bottom:2px}.cr{left:4px;top:2px}
@@ -127,3 +127,74 @@ body.cplaying .chero{display:none}body.cplaying main>.wrap{padding-top:1.2rem}
 /* staff: segnalazioni */
 .cflag-list{list-style:none;margin:.6rem 0 0;padding:0;display:grid;gap:.45rem}.cflag-list li{display:flex;align-items:center;gap:.6rem;padding:.5rem .6rem;border-radius:12px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25)}
 .cflag-list li>div{flex:1;min-width:0;font-size:.88rem}.cflag-list li.seen{opacity:.55;background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.08)}
+
+/* ===================== PATCH 5.1 ===================== */
+/* caselle possibili come chess.com: puntino trasparente, anello sulle catture (mai caselle nere).
+   Le classi vecchie "dot"/"cap" si scontravano con .dot di style.css (pallino di stato 8px): da qui le caselle nere. */
+.csq.mvdot::after{width:28%;height:28%;background:rgba(0,0,0,.14);border:0}
+.csq.mvcap::after{inset:0;border:0;border-radius:0;background:radial-gradient(circle,transparent 0 57%,rgba(0,0,0,.14) 58% 71%,transparent 72%)}
+.csq.sel{box-shadow:none}.csq.sel.l{background:#f3e27d}.csq.sel.d{background:#cdb455}
+.cboard.premode .csq.mvdot::after{background:rgba(70,110,220,.28)}
+.csq.pre.l{background:#9fb8e8!important}.csq.pre.d{background:#7d98cf!important}
+.cprew{display:block;margin-top:.3rem;color:#7d98cf;font-size:.85rem}.cprew small{color:var(--mut)}
+.cfirstw{display:block;margin-top:.3rem;font-size:.88rem;color:var(--mut)}.cfirstw b{color:var(--fg)}
+/* effetto cattura: piccolo scoppio, non blocca niente */
+.cburst{position:absolute;inset:0;pointer-events:none;z-index:3}
+.cburst b{position:absolute;left:50%;top:50%;width:14%;height:14%;margin:-7% 0 0 -7%;border-radius:50%;background:radial-gradient(circle,#fff,#ff5fa2 55%,transparent 70%);animation:cbst .45s ease-out forwards}
+.cburst b:nth-child(2){--a:60deg;background:radial-gradient(circle,#fff,#c86cf5 55%,transparent 70%)}.cburst b:nth-child(3){--a:120deg;background:radial-gradient(circle,#fff,#5fd3ea 55%,transparent 70%)}
+.cburst b:nth-child(4){--a:180deg}.cburst b:nth-child(5){--a:240deg;background:radial-gradient(circle,#fff,#c86cf5 55%,transparent 70%)}.cburst b:nth-child(6){--a:300deg;background:radial-gradient(circle,#fff,#5fd3ea 55%,transparent 70%)}
+.cburst::after{content:"";position:absolute;inset:10%;border-radius:50%;border:3px solid rgba(255,255,255,.8);animation:cring .4s ease-out forwards}
+@keyframes cbst{0%{transform:rotate(var(--a,0deg)) translateY(0) scale(1);opacity:1}100%{transform:rotate(var(--a,0deg)) translateY(-260%) scale(.3);opacity:0}}
+@keyframes cring{0%{transform:scale(.4);opacity:.9}100%{transform:scale(1.15);opacity:0}}
+/* tempo per mossa */
+.mv small.mt{margin-left:.35rem;font-size:.7rem;color:var(--mut);font-weight:500}
+/* giudizio mossa dentro al riquadro mosse */
+.cverd{margin:.2rem 0 .7rem;padding:.7rem .8rem;border-radius:12px;background:var(--soft);border:1px solid var(--line)}.cverd .cnow{margin:0;padding:0;border:0}.cverd[hidden]{display:none}
+/* disconnessione */
+.cdisc{font-size:.78rem;font-weight:700;color:#fff;background:#dc2626;border-radius:8px;padding:.25rem .5rem;white-space:nowrap;animation:clow 1s steps(2) infinite}.cdisc[hidden]{display:none}
+/* barre volume carine (colori del logo) */
+.cvolw{display:inline-flex;align-items:center;gap:.35rem;padding:.2rem .55rem .2rem .25rem;border-radius:999px;background:var(--soft);border:1px solid var(--line)}
+.cvico{border:0;background:none;font-size:1.05rem;cursor:pointer;padding:.15rem .25rem;line-height:1}
+.crange{-webkit-appearance:none;appearance:none;width:100px;height:8px;border-radius:999px;cursor:pointer;--v:70%;
+ background:linear-gradient(90deg,#ff5fa2,#c86cf5,#5fd3ea) 0 0/var(--v) 100% no-repeat,rgba(127,127,127,.28)}
+.crange::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#fff;border:3px solid #c86cf5;box-shadow:0 2px 6px rgba(0,0,0,.35);transition:transform .12s}
+.crange::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:#fff;border:3px solid #c86cf5;box-shadow:0 2px 6px rgba(0,0,0,.35)}
+.crange:hover::-webkit-slider-thumb,.crange:active::-webkit-slider-thumb{transform:scale(1.2)}
+.crange:focus-visible{outline:2px solid #c86cf5;outline-offset:3px}
+#cvol{width:100px;accent-color:auto}
+.csel{cursor:pointer;border:1px solid var(--line);background:var(--soft);color:var(--fg);font:inherit;font-size:.82rem;padding:.35rem .6rem;border-radius:999px}
+#cfast.on{background:rgba(250,204,21,.22);border-color:#facc15}
+/* lofi nostra (niente YouTube) */
+#clofip{background:linear-gradient(160deg,rgba(255,95,162,.18),rgba(95,211,234,.12)),var(--card,#14101c);padding:0 0 .6rem;width:290px;left:auto;right:1rem}
+@media(max-width:700px){#clofip{right:.6rem;bottom:4.8rem;width:min(290px,calc(100vw - 1.2rem))}}
+#clofip .ltrack{padding:.2rem .8rem .5rem;display:flex;flex-direction:column}#clofip .ltrack b{font-size:.95rem}#clofip .ltrack small{color:var(--mut);font-size:.75rem}
+#clofip .lctl{display:flex;align-items:center;gap:.4rem;padding:0 .8rem .4rem}#clofip .lctl>button{border:1px solid var(--line);background:var(--soft);color:var(--fg);border-radius:50%;width:2.2rem;height:2.2rem;cursor:pointer;font-size:.95rem}
+#clofip .crange{width:90px}#clofip>small{padding:0 .8rem;display:block}#clofip a{color:inherit}
+/* spettatori */
+.cwatch h4{margin:0 0 .6rem;display:flex;align-items:center;gap:.4rem}.cwn{background:var(--fg);color:var(--bg);border-radius:999px;padding:.05rem .5rem;font-size:.78rem}
+.cwl{display:flex;flex-direction:column;gap:.35rem}.cwr{display:flex;align-items:center;gap:.55rem}.cwr .cav{width:28px;height:28px}.cwr span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cwr .chip,.csubq .chip{cursor:pointer;border:1px solid var(--line);background:var(--soft);color:var(--fg);font:inherit;font-size:.75rem}
+.csubq{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.7rem;align-items:center}.csubq small{width:100%}.csub{margin-bottom:.6rem}
+.ctabs{display:flex;gap:.35rem;margin:.2rem 0 .5rem}.ctabs .chip{cursor:pointer;border:1px solid var(--line);background:var(--soft);color:var(--fg);font:inherit;font-size:.78rem}.ctabs .chip.on{background:var(--fg);color:var(--bg)}
+.ctabs[hidden]{display:none}#ctalk{margin-top:.5rem}#ctalk .chip{cursor:pointer;border:1px solid var(--line);background:var(--soft);color:var(--fg);font:inherit;font-size:.76rem}#ctalk .chip.on{border-color:#22c55e}
+.cmsgs p.spec b{color:#5fd3ea}
+.cchat[hidden]{display:none}
+/* lobby: partite in corso + guarda */
+.clivel{display:flex;flex-direction:column;gap:.15rem}.cvs{display:flex}.cvs .cav{width:30px;height:30px}.cvs .cav+.cav{margin-left:-9px;box-shadow:0 0 0 2px var(--bg)}
+#clive .crow .chip{margin-left:auto}
+.cwatchb{font-size:.75rem;cursor:pointer;text-decoration:none;color:var(--fg);border:1px solid var(--line);background:var(--soft);align-self:center}
+/* nuova sfida più grande */
+#cnew.cbig{grid-column:1/-1;padding:1.8rem 2rem}#cnew.cbig h3{font-size:1.5rem}
+#cnew.cbig .cseg{padding:.35rem;margin-top:1rem}#cnew.cbig .cseg button{padding:.75rem 1.4rem;font-size:1.05rem}
+#cnew.cbig input{font-size:1.05rem;padding:.8rem 1rem}#cnew.cbig .btn{font-size:1.05rem;padding:.8rem 1.6rem}#cnew.cbig #chint{font-size:.95rem}
+/* schermo intero */
+.cgame.cfs{position:fixed;inset:0;z-index:200;background:var(--bg);padding:1rem 1.2rem;margin:0;grid-template-columns:minmax(0,calc(100vh - 15rem)) minmax(260px,380px);justify-content:center;overflow:auto}
+.cgame:fullscreen{background:var(--bg);padding:1rem 1.2rem;grid-template-columns:minmax(0,calc(100vh - 15rem)) minmax(260px,380px);justify-content:center;overflow:auto}
+.cgame.cfs .ctools,.cgame.cfs #canal{display:none}.cgame.cfs .cmoves{max-height:40vh}
+@media(max-width:900px){.cgame.cfs,.cgame:fullscreen{grid-template-columns:1fr}}
+/* modalità veloce: via animazioni, effetti, sfocature, decorazioni */
+body.cfast *,body.cfast *::before,body.cfast *::after{animation:none!important;transition:none!important}
+body.cfast .cover,body.cfast .card,body.cfast header,body.cfast nav{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+body.cfast .cboard{box-shadow:none}body.cfast .csq svg.pc{filter:none}body.cfast .ccombo,body.cfast .cburst,body.cfast #clofip{display:none!important}
+body.cfast .bg-orbs,body.cfast .orbs,body.cfast .deco,body.cfast canvas.fx{display:none!important}
+body.cfast .nav{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}

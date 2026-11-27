@@ -9,7 +9,7 @@ const TCS=[['10+0','10 min','Classica veloce'],['10+4','10 | 4','10 minuti, +4 s
 const TB_GAMES={snake:['Snake','Chi muore per primo perde','🐍'],reaction:['Riflessi','Chi ha i riflessi più lenti perde','⚡'],flappy:['Flappy','Chi muore per primo perde','🐤'],
  quiz:['Quiz anime','5 domande: chi fa meno punti perde','🎌'],stack:['Stack','Chi crolla per primo perde','🧱'],typing:['Battitura','30 secondi: chi è più lento perde','⌨️']};
 const REASON={scaccomatto:'per scaccomatto',abbandono:'per abbandono',tempo:'per tempo',accordo:'patta d\'accordo',stallo:'per stallo','materiale insufficiente':'per materiale insufficiente',
- ripetizione:'per triplice ripetizione','50 mosse':'per la regola delle 50 mosse',timeout_insufficiente:'tempo scaduto, ma l\'altro non poteva dare matto',annullata:'partita annullata'};
+ ripetizione:'per triplice ripetizione','50 mosse':'per la regola delle 50 mosse',timeout_insufficiente:'tempo scaduto, ma l\'altro non poteva dare matto',disconnesso:'per abbandono (si è disconnesso)',annullata:'partita annullata'};
 const VAL={p:1,n:3,b:3,r:5,q:9,k:0};
 const fmtN=n=>Number(n).toLocaleString('it-IT');
 let mineChan=null,readySent='',me=null,myDid='',off=0,G=null,view=null,timer=0,chan=null,lobbyChan=null,presence=new Map(),ratingsCache=null;
@@ -32,13 +32,14 @@ const kingIco=()=>`<span class="sking" title="1° nella classifica scacchi">${PZ
 /* ================= LOBBY ================= */
 async function lobby(){view='lobby';document.body.classList.remove('cplaying');stopGame();document.title='Scacchi · Staskys';
  root.innerHTML=`<div class="clob">
-  <div class="card cbox" id="cnew"></div>
+  <div class="card cbox cbig" id="cnew"></div>
   <div class="card cbox" id="cmine"><h3>Le tue partite</h3><p class="muted small">Caricamento…</p></div>
   <div class="card cbox cwide" id="crank"></div>
+  <div class="card cbox" id="clive"><h3>👀 Partite in corso</h3><p class="muted small">Caricamento…</p></div>
   <div class="card cbox cwide" id="carch"></div>
   <div class="card cbox cwide" id="cflags" hidden></div></div>`;
- renderNew();renderRank('live');renderArchive(false);if(me){loadMine();joinLobby();loadFlags()}
- clearInterval(timer);timer=setInterval(()=>{if(view==='lobby'&&me)loadMine(true)},2500);
+ renderNew();renderRank('live');renderArchive(false);renderLive();if(me){loadMine();joinLobby();loadFlags()}
+ clearInterval(timer);let ln=0;timer=setInterval(()=>{if(view!=='lobby')return;if(me)loadMine(true);if(++ln%4===0)renderLive(true)},2500);
  if(me&&A.sb&&!mineChan)try{mineChan=A.sb.channel('mie-'+me.id).on('postgres_changes',{event:'*',schema:'public',table:'chess_games',filter:'opponent=eq.'+me.id},()=>view==='lobby'&&loadMine(true)).on('postgres_changes',{event:'*',schema:'public',table:'chess_games',filter:'challenger=eq.'+me.id},()=>view==='lobby'&&loadMine(true)).subscribe()}catch(e){}}
 /* staff: segnalazioni anti-cheat (solo un avviso da controllare, nessun ban automatico) */
 const FLAG_TXT={troppo_preciso:'Precisione troppo alta',salto_precisione:'Salto di precisione rispetto alla sua media',perde_apposta:'Possibile sconfitta apposta',sconfitte_ripetute:'Tante sconfitte di fila contro la stessa persona',abbandono_rapido:'Abbandono/tempo dopo poche mosse'};
@@ -55,7 +56,7 @@ function renderNew(){const b=q('#cnew');if(!b)return;
  b.innerHTML=`<h3>Nuova sfida</h3>
   <label class="clab">Chi sfidi?</label><div class="cpick"><input id="copp" placeholder="Cerca un membro…" autocomplete="off"><div class="csugg" id="csugg"></div></div>
   <div class="cseg" id="cmode"><button data-v="live" class="on">⏱️ Dal vivo</button><button data-v="corr">✉️ Per corrispondenza</button></div>
-  <div class="cseg" id="ctype"><button data-v="1" class="on">🏆 Ranked</button><button data-v="0">🤝 Amichevole</button></div>
+  <div class="cseg" id="ctype"><button data-v="0" class="on">🤝 Amichevole</button><button data-v="1">🏆 Ranked</button></div>
   <p class="muted tiny" id="chint"></p>
   <button class="btn sm" id="csend" disabled>Invia la sfida</button>
   <div class="conline"><h4>Online ora <span class="muted" id="cocount"></span></h4><div id="conl" class="conl"><span class="muted small">Nessuno sulla pagina scacchi.</span></div></div>`;
@@ -73,13 +74,23 @@ function renderNew(){const b=q('#cnew');if(!b)return;
    pingInvite(opp,g.id);setOpp('');if(g.mode==='live'){openGame(g.id);return}loadMine()}catch(e){toast(errMsg(e),true);btn.disabled=false}};
  renderOnline()}
 function renderOnline(){const b=q('#conl');if(!b)return;const L=[...presence.values()].filter(p=>p.did!==myDid);q('#cocount').textContent=L.length?'· '+L.length:'';
- b.innerHTML=L.length?L.map(p=>`<button class="conp" data-did="${E(p.did)}" title="Sfida ${E(nameOf(p.did,p.name))}">${av(p.did)}<span>${E(nameOf(p.did,p.name))}</span>${p.playing?'<small>sta giocando</small>':'<small>sfida →</small>'}</button>`).join(''):'<span class="muted small">Nessun altro sulla pagina scacchi in questo momento.</span>';
+ b.innerHTML=L.length?L.map(p=>`<button class="conp" data-did="${E(p.did)}" title="Sfida ${E(nameOf(p.did,p.name))}">${av(p.did)}<span>${E(nameOf(p.did,p.name))}</span>${p.playing?'<small>sta giocando</small>':'<small>sfida →</small>'}</button>${typeof p.playing==='string'?`<a class="chip cwatchb" href="?g=${E(p.playing)}" data-watch="${E(p.playing)}">👀 Guarda</a>`:''}`).join(''):'<span class="muted small">Nessun altro sulla pagina scacchi in questo momento.</span>';
+ qa('[data-watch]',b).forEach(x=>x.onclick=e=>{e.preventDefault();openGame(x.dataset.watch)});
  qa('.conp',b).forEach(x=>x.onclick=()=>{const i=q('#copp');i.value=nameOf(x.dataset.did);i.dispatchEvent(new Event('input'));setTimeout(()=>{const s=q(`#csugg [data-did="${x.dataset.did}"]`);s?s.click():null},300)})}
 async function joinLobby(){if(lobbyChan||!A.sb)return;try{lobbyChan=A.sb.channel('scacchi-lobby',{config:{presence:{key:myDid}}});
  lobbyChan.on('presence',{event:'sync'},()=>{presence.clear();Object.entries(lobbyChan.presenceState()).forEach(([k,v])=>presence.set(k,v[0]||{did:k}));renderOnline()})
  .on('broadcast',{event:'invite'},({payload})=>{if(payload&&payload.to===myDid){SND.notify();toast('♟️ '+nameOf(payload.from)+' ti ha sfidato!');loadMine()}})
- .subscribe(s=>{if(s==='SUBSCRIBED')lobbyChan.track({did:myDid,name:A.me().name,playing:view==='game'})})}catch(e){}}
+ .subscribe(s=>{if(s==='SUBSCRIBED')lobbyChan.track({did:myDid,name:A.me().name,playing:view==='game'&&G?G.id:false})})}catch(e){}}
 function pingInvite(to,id){try{lobbyChan&&lobbyChan.send({type:'broadcast',event:'invite',payload:{to,from:myDid,id}})}catch(e){}}
+/* PATCH 5.1: partite in corso da guardare */
+let lastLive='';
+async function renderLive(quiet){const b=q('#clive');if(!b||!A.sb)return;
+ const {data,error}=await A.sb.from('chess_games').select('id,mode,ranked,white_did,black_did,fen,moves,tc_base,tc_inc,started_at,updated_at').eq('status','active').order('updated_at',{ascending:false}).limit(30);
+ if(error){if(!quiet)b.innerHTML='<h3>👀 Partite in corso</h3><p class="muted small">Non riesco a caricarle.</p>';return}
+ const L=(data||[]).filter(g=>g.mode==='live'||Date.now()-Date.parse(g.updated_at)<3*864e5).sort((a,b)=>(a.mode==='live'?0:1)-(b.mode==='live'?0:1));
+ const sig=JSON.stringify(L.map(g=>[g.id,(g.moves||[]).length]));if(quiet&&sig===lastLive)return;lastLive=sig;
+ b.innerHTML=`<h3>👀 Partite in corso ${L.length?`<span class="muted small">· ${L.length}</span>`:''}</h3>${L.length?`<div class="clivel">${L.map(g=>`<a class="crow" href="?g=${g.id}" data-watch="${g.id}"><span class="cvs">${av(g.white_did)}${av(g.black_did)}</span><span><b>${E(nameOf(g.white_did))} – ${E(nameOf(g.black_did))}</b><small>${g.mode==='live'?'⏱️ Dal vivo'+(g.tc_base?` · ${g.tc_base/60}${g.tc_inc?' | '+g.tc_inc:' min'}`:''):'✉️ Corrispondenza'} · ${g.ranked?'Ranked':'Amichevole'} · mossa ${Math.floor((g.moves||[]).length/2)+1}</small></span><span class="chip">${(g.white_did===myDid||g.black_did===myDid)?'Gioca':'👀 Guarda'}</span></a>`).join('')}</div>`:'<p class="muted small">Nessuna partita in corso adesso.</p>'}`;
+ qa('[data-watch]',b).forEach(x=>x.onclick=e=>{e.preventDefault();openGame(x.dataset.watch)})}
 let lastMine='';
 async function loadMine(quiet){const b=q('#cmine');if(!b||!me)return;
  const {data,error}=await A.sb.from('chess_games').select('id,mode,ranked,status,challenger,opponent,challenger_did,opponent_did,white_did,black_did,fen,turn_since,created_at,updated_at,tc_base,tc_inc')
@@ -119,51 +130,72 @@ async function renderArchive(mine){const b=q('#carch');if(!b)return;
  qa('#cam button',b).forEach(x=>x.onclick=()=>renderArchive(x.dataset.v==='1'));qa('[data-open]',b).forEach(x=>x.onclick=e=>{e.preventDefault();openGame(x.dataset.open)})}
 
 /* ================= PARTITA ================= */
+let pre=null,anim=null,fast=localStorage.chess_fast==='1',chatRoom='p',lastRole='',ping=0;
 let ch=null,ply=0,flip=false,sel=null,marks=new Set(),arrows=[],rdown=null,drag=null,lastSig='',chat=[],chatMuted=localStorage.chess_chat_muted==='1',combo={w:0,b:0},lowWarned=false,startPlayed='',analysis=null,pvMode=null;
 const myColor=()=>!G||!me?null:G.white===me.id?'w':G.black===me.id?'b':null;
 const isPlayer=()=>!!(G&&me&&(G.challenger===me.id||G.opponent===me.id));
+const roleKey=()=>!G?'':(isPlayer()?'p'+myColor():'s')+(G.white||'');
+const specTalk=()=>!!G&&!G.ranked&&!Object.values(G.spec_talk_off||{}).some(v=>v===true);
 function rebuild(){ch=new Chess(G.start_fen);const H=[];for(const u of G.moves||[]){try{H.push(ch.move({from:u.slice(0,2),to:u.slice(2,4),promotion:u[4]}))}catch(e){break}}return H}
 let HIST=[];
 async function openGame(id){stopGame();view='game';document.body.classList.add('cplaying');scrollTo(0,0);history.replaceState(null,'','?g='+id);G=null;analysis=null;pvMode=null;combo={w:0,b:0};
  root.innerHTML='<p class="muted">Carico la partita…</p>';
  try{G=await rpc('chess_get',{p_id:id})}catch(e){root.innerHTML=`<p class="muted">${E(errMsg(e))}</p><a class="btn sm" href="scacchi.html">← Scacchi</a>`;return}
  await loadRatings();HIST=rebuild();ply=HIST.length;flip=myColor()==='b';buildGame();apply(G,true);
- if(isPlayer())loadChat();
+ lastRole=roleKey();if(me)loadChat();SND.simple=fast;document.body.classList.toggle('cfast',fast);
  try{chan=A.sb.channel('partita-'+id).on('postgres_changes',{event:'UPDATE',schema:'public',table:'chess_games',filter:'id=eq.'+id},p=>apply(p.new))
   .on('postgres_changes',{event:'INSERT',schema:'public',table:'chess_chat',filter:'game_id=eq.'+id},p=>addChat(p.new)).subscribe()}catch(e){}
- if(lobbyChan)try{lobbyChan.track({did:myDid,name:A.me().name,playing:true})}catch(e){}
+ if(lobbyChan)try{lobbyChan.track({did:myDid,name:A.me().name,playing:id})}catch(e){}
  clearInterval(timer);let n=0;timer=setInterval(()=>{n++;tickClock();const st=G&&G.status;
-  const fast=['voting','coin','tiebreak','invite'].includes(st)||(st==='active'&&G.mode==='live'&&now()<Date.parse(G.turn_since)+1500);
   const rt=chan&&chan.state==='joined',mine=G.fen&&myColor()===G.fen.split(' ')[1];
-  const every=fast?3:st==='active'?(G.mode==='live'?(rt?40:mine?10:4):(rt?240:60)):0;
+  const quick=['voting','coin','tiebreak','invite'].includes(st)||(st==='active'&&G.mode==='live'&&now()<Date.parse(G.turn_since)+1500);
+  /* PATCH 5.1: ogni 5 secondi al massimo (serve anche a dire al server "ci sono": chi sparisce per 75 s perde) */
+  const every=quick?3:st==='active'?(G.mode==='live'?(rt?20:mine?10:4):40):0;
   if(every&&n%every===0)poll()},250)}
 function stopGame(){clearInterval(timer);if(chan){try{A.sb.removeChannel(chan)}catch(e){}chan=null}hideLofi(true)}
-let polling=false,pollN=0;async function poll(){if(polling||!G)return;polling=true;try{apply(await rpc('chess_get',{p_id:G.id}));if(isPlayer()&&!(chan&&chan.state==='joined')&&++pollN%2===0)loadChat(true)}catch(e){}polling=false}
-function buildGame(){const me_c=myColor()||'w';
- root.innerHTML=`<div class="cgame">
+let polling=false,pollN=0;async function poll(){if(polling||!G)return;polling=true;try{apply(await rpc('chess_get',{p_id:G.id}));if(me&&!(chan&&chan.state==='joined')&&++pollN%2===0)loadChat(true)}catch(e){}polling=false}
+function buildGame(){const pl=isPlayer();
+ root.innerHTML=`<div class="cgame" id="cgame">
   <div class="cboard-col">
    <div class="cbar top" id="pbTop"></div>
    <div class="cbwrap"><div class="cevalbar" id="ceval" hidden><i></i><b></b></div><div class="cboard" id="cb"></div><svg class="carrows" id="carr" viewBox="0 0 8 8" preserveAspectRatio="none"></svg><div class="cover" id="cover" hidden></div></div>
    <div class="cbar bot" id="pbBot"></div>
-   <div class="cnav"><button data-nav="first" title="Inizio">⏮</button><button data-nav="prev" title="Indietro">◀</button><button data-nav="next" title="Avanti">▶</button><button data-nav="last" title="Ultima mossa">⏭</button><button data-nav="flip" title="Gira la scacchiera">⇅</button></div>
+   <div class="cnav"><button data-nav="first" title="Inizio">⏮</button><button data-nav="prev" title="Indietro">◀</button><button data-nav="next" title="Avanti">▶</button><button data-nav="last" title="Ultima mossa">⏭</button><button data-nav="flip" title="Gira la scacchiera">⇅</button><button data-nav="full" id="cfull" title="Schermo intero (F)">⛶</button></div>
   </div>
   <aside class="cside">
-   <div class="card cpanel"><div class="cstatus" id="cstat"></div><div class="cmoves" id="cmv"></div><div class="cacts" id="cact"></div></div>
+   <div class="card cpanel"><div class="cstatus" id="cstat"></div><div class="cmoves" id="cmv"></div><div class="cverd" id="cverd" hidden></div><div class="cacts" id="cact"></div></div>
    <div class="card cpanel" id="canal" hidden></div>
-   <div class="card cpanel cchat" id="cchat" ${isPlayer()?'':'hidden'}><div class="chead"><h4>Chat della partita</h4><button class="chip" id="cmute"></button></div><div class="cmsgs" id="cmsgs"></div><form id="cform"><input id="cin" maxlength="300" placeholder="Scrivi all'avversario…" autocomplete="off"><button class="btn sm">Invia</button></form></div>
-   <div class="ctools"><button class="chip" id="csnd"></button><input type="range" id="cvol" min="0" max="1" step=".05" value="${SND.vol}" title="Volume"><button class="chip" id="clofi">🎧 Lofi</button><a class="chip" href="scacchi.html" id="cback">← Lobby</a></div>
+   <div class="card cpanel cwatch" id="cwatch" hidden></div>
+   <div class="card cpanel cchat" id="cchat" ${me?'':'hidden'}><div class="chead"><h4 id="cchath">Chat della partita</h4><button class="chip" id="cmute"></button></div><div class="ctabs" id="ctabs" hidden></div><div class="cmsgs" id="cmsgs"></div><form id="cform"><input id="cin" maxlength="300" placeholder="${pl?'Scrivi all\'avversario…':'Scrivi…'}" autocomplete="off"><button class="btn sm">Invia</button></form><div id="ctalk"></div></div>
+   <div class="ctools">
+    <div class="cvolw"><button class="cvico" id="csnd" title="Suoni"></button><input type="range" class="crange" id="cvol" min="0" max="1" step=".05" value="${SND.vol}" aria-label="Volume suoni"></div>
+    <select class="chip csel" id="cpack" title="Tipo di suoni">${Object.entries(SND.PACKS).map(([k,n])=>`<option value="${k}" ${SND.pack===k?'selected':''}>🔊 ${n}</option>`).join('')}</select>
+    <button class="chip" id="clofi">🎧 Lofi</button><button class="chip${fast?' on':''}" id="cfast" title="Toglie animazioni, effetti, sfocature, lofi e combo">⚡ Modalità veloce</button><a class="chip" href="scacchi.html" id="cback">← Lobby</a></div>
   </aside></div>`;
- q('#cback').onclick=e=>{e.preventDefault();history.replaceState(null,'','scacchi.html');lobby()};
+ q('#cback').onclick=e=>{e.preventDefault();exitFull();history.replaceState(null,'','scacchi.html');lobby()};
  qa('.cnav button').forEach(b=>b.onclick=()=>nav(b.dataset.nav));
- const sndL=()=>q('#csnd').textContent=SND.muted?'🔇 Suoni spenti':'🔊 Suoni';sndL();q('#csnd').onclick=()=>{SND.muted=!SND.muted;sndL();SND.unlock()};q('#cvol').oninput=e=>{SND.vol=e.target.value;SND.unlock()};
- q('#clofi').onclick=toggleLofi;
+ const sndL=()=>{const v=SND.muted?0:SND.vol;q('#csnd').textContent=SND.muted?'🔇':v<.34?'🔈':v<.67?'🔉':'🔊';paintRange(q('#cvol'),SND.muted?0:SND.vol)};sndL();
+ q('#csnd').onclick=()=>{SND.muted=!SND.muted;sndL();SND.unlock()};q('#cvol').oninput=e=>{SND.vol=e.target.value;if(SND.muted&&+e.target.value>0)SND.muted=false;sndL();SND.unlock()};
+ q('#cvol').onchange=()=>SND.move();
+ q('#cpack').onchange=e=>{SND.pack=e.target.value;SND.unlock();SND.capture(3)};
+ q('#clofi').onclick=toggleLofi;if(!fast&&localStorage.chess_lofi==='1')showLofi(false);
+ q('#cfast').onclick=()=>{fast=!fast;localStorage.chess_fast=fast?'1':'0';SND.simple=fast;document.body.classList.toggle('cfast',fast);q('#cfast').classList.toggle('on',fast);if(fast)hideLofi(true);toast(fast?'⚡ Modalità veloce: niente animazioni, effetti, lofi e combo':'Modalità veloce spenta')};
  const muteL=()=>{q('#cmute').textContent=chatMuted?'🔕 Chat silenziata':'🔔 Silenzia';q('#cchat').classList.toggle('muted-chat',chatMuted)};muteL();
  q('#cmute').onclick=()=>{chatMuted=!chatMuted;localStorage.chess_chat_muted=chatMuted?'1':'0';muteL();renderChat()};
- q('#cform').onsubmit=async e=>{e.preventDefault();const i=q('#cin'),t=i.value.trim();if(!t)return;i.value='';try{await rpc('chess_chat_send',{p_id:G.id,p_body:t});loadChat()}catch(er){toast(errMsg(er),true)}};
+ q('#cform').onsubmit=async e=>{e.preventDefault();const i=q('#cin'),t=i.value.trim();if(!t)return;i.value='';try{await rpc('chess_chat_send',{p_id:G.id,p_body:t,p_room:isPlayer()?'p':chatRoom});loadChat()}catch(er){toast(errMsg(er),true)}};
  boardEvents();
- addEventListener('keydown',navKey)}
-function navKey(e){if(view!=='game'||/INPUT|TEXTAREA/.test(document.activeElement&&document.activeElement.tagName||''))return;if(e.key==='ArrowLeft'){nav('prev');e.preventDefault()}if(e.key==='ArrowRight'){nav('next');e.preventDefault()}}
-function nav(k){if(k==='flip'){flip=!flip;drawBoard();drawBars();return}pvMode=null;const n=HIST.length;ply=k==='first'?0:k==='prev'?Math.max(0,ply-1):k==='next'?Math.min(n,ply+1):n;sel=null;drawBoard();drawMoves();drawAnal();
+ document.onfullscreenchange=()=>{const g=q('#cgame');if(g)g.classList.toggle('cfs',!!document.fullscreenElement||g.classList.contains('cfs-fb'))};
+ if(!buildGame.k){buildGame.k=1;addEventListener('keydown',navKey)}}
+/* PATCH 5.1: barre del volume colorate */
+function paintRange(el,v){if(el)el.style.setProperty('--v',Math.round((+v)*100)+'%')}
+/* PATCH 5.1: schermo intero (tasto ⛶ o F, Esc per uscire) */
+function toggleFull(){const g=q('#cgame');if(!g)return;if(document.fullscreenElement||g.classList.contains('cfs-fb')){exitFull();return}
+ if(g.requestFullscreen)g.requestFullscreen().catch(()=>{g.classList.add('cfs','cfs-fb')});else g.classList.add('cfs','cfs-fb')}
+function exitFull(){const g=q('#cgame');if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});if(g)g.classList.remove('cfs','cfs-fb')}
+function navKey(e){if(view!=='game'||/INPUT|TEXTAREA|SELECT/.test(document.activeElement&&document.activeElement.tagName||''))return;
+ if(e.key==='Escape'){if(pre){pre=null;sel=null;drawBoard()}const g=q('#cgame');if(g&&g.classList.contains('cfs-fb'))exitFull()}
+ if((e.key==='f'||e.key==='F')&&!e.ctrlKey&&!e.metaKey&&!e.altKey){toggleFull();e.preventDefault();return}if(e.key==='ArrowLeft'){nav('prev');e.preventDefault()}if(e.key==='ArrowRight'){nav('next');e.preventDefault()}}
+function nav(k){if(k==='full'){toggleFull();return}if(k==='flip'){flip=!flip;drawBoard();drawBars();return}pvMode=null;const n=HIST.length;const was=ply;ply=k==='first'?0:k==='prev'?Math.max(0,ply-1):k==='next'?Math.min(n,ply+1):n;sel=null;if(k==='next'&&ply===was+1&&HIST[ply-1])anim=HIST[ply-1];drawBoard();drawMoves();drawAnal();
  if(k==='next'&&ply>0){const m=HIST[ply-1];m.captured?SND.capture(1):SND.move()}}
 
 /* applica lo stato del server */
@@ -175,28 +207,51 @@ function apply(g,first){if(!g||!G||g.id!==G.id)return;
   if(!first&&n>prevMoves)afterMoveFx(HIST[n-1],n-1)}
  if(!first&&prevStatus!=='over'&&G.status==='over'){const mc=myColor(),win=G.result==='1/2-1/2'?null:(G.result==='1-0')===(mc==='w');SND.end(mc?win:null);loadRatings(true).then(drawBars)}
  if(G.status==='active'&&startPlayed!==G.id&&now()>=Date.parse(G.turn_since)-200&&prevStatus!=='active'&&!first){startPlayed=G.id;SND.start()}
- drawAll()}
-function afterMoveFx(m,i){if(!m)return;const side=m.color;
+ /* PATCH 5.1: sostituzione giocatore ⇄ spettatore: se il mio ruolo cambia ricostruisco la pagina */
+ const rk=roleKey();if(!first&&rk!==lastRole){const was=lastRole;lastRole=rk;sel=null;pre=null;if(myColor())flip=myColor()==='b';buildGame();if(me)loadChat();
+  if(was.startsWith('s')&&isPlayer()){SND.notify();toast('🔄 Ora giochi tu!')}else if(was.startsWith('p')&&!isPlayer())toast('🔄 Ora guardi la partita da spettatore')}
+ if(G.status!=='active')pre=null;
+ drawAll();
+ /* PATCH 5.1: pre-mossa: parte appena tocca a te, se è ancora valida */
+ if(pre&&G.status==='active'&&myColor()===G.fen.split(' ')[1]&&ply===HIST.length&&now()>=Date.parse(G.turn_since)){const pm=pre;pre=null;
+  const c=posAt(HIST.length),ok=c.moves({square:pm.from,verbose:true}).find(m=>m.to===pm.to);if(ok)send(pm.from+pm.to+(ok.promotion?(pm.promo||'q'):''));else drawBoard()}}
+function afterMoveFx(m,i,noAnim){if(!m)return;const side=m.color;if(!noAnim)anim=m;
  if(m.captured){combo[side]=(combo[side]||0)+1;SND.capture(combo[side]);if(combo[side]>=2)comboFx(combo[side],m.to)}else{combo[side]=0;m.flags.includes('k')||m.flags.includes('q')?SND.castle():SND.move()}
  if(m.san.includes('+'))setTimeout(SND.check,120)}
-function comboFx(n,sq){const b=q('#cb');if(!b)return;const el=document.createElement('div');el.className='ccombo l'+Math.min(n,5);el.textContent=['','','DOPPIA!','TRIPLA!','QUADRUPLA!','MASSACRO!'][Math.min(n,5)]+(n>5?' ×'+n:'');
+function comboFx(n,sq){const b=q('#cb');if(!b||fast)return;const el=document.createElement('div');el.className='ccombo l'+Math.min(n,5);el.textContent=['','','DOPPIA!','TRIPLA!','QUADRUPLA!','MASSACRO!'][Math.min(n,5)]+(n>5?' ×'+n:'');
  const [x,y]=sqXY(sq);el.style.left=(x+.5)*12.5+'%';el.style.top=(y+.5)*12.5+'%';b.appendChild(el);setTimeout(()=>el.remove(),1400)}
-function drawAll(){drawBars();drawBoard();drawMoves();drawStatus();drawActs();drawOverlay();drawAnal()}
+function drawAll(){drawBars();drawBoard();drawMoves();drawStatus();drawActs();drawOverlay();drawAnal();drawWatch();if(me&&G){const t=JSON.stringify([G.spec_talk_off||{},G.status,G.white]);if(t!==drawAll.t){drawAll.t=t;renderChat()}}}
 
 /* ---------- scacchiera ---------- */
 const FILES='abcdefgh';
 const sqXY=sq=>{let x=FILES.indexOf(sq[0]),y=8-+sq[1];if(flip){x=7-x;y=7-y}return[x,y]};
 const xySq=(x,y)=>{if(flip){x=7-x;y=7-y}return FILES[x]+(8-y)};
 function posAt(n){const c=new Chess(G.start_fen);for(let i=0;i<n&&i<HIST.length;i++)c.move(HIST[i].san);return c}
+/* PATCH 5.1: pre-mosse (solo dal vivo, quando tocca all'altro) */
+const preOn=c=>!pvMode&&G.mode==='live'&&G.status==='active'&&ply===HIST.length&&!!myColor()&&myColor()!==c.turn();
+function preLegal(sq){const mc=myColor(),f=G.fen.split(' ');f[1]=mc;f[3]='-';let L=[];
+ try{const c=new Chess(f.join(' '));L=c.moves({square:sq,verbose:true}).map(m=>({from:m.from,to:m.to,promotion:m.promotion}));
+  const p=c.get(sq);if(p&&p.type==='p'){const dir=mc==='w'?1:-1,r=+sq[1]+dir,fi=FILES.indexOf(sq[0]);[fi-1,fi+1].forEach(x=>{if(x<0||x>7||r<1||r>8)return;const t=FILES[x]+r,o=c.get(t);if(!o&&!L.some(m=>m.to===t))L.push({from:sq,to:t,promotion:(r===8||r===1)?'q':undefined})})}}catch(e){}
+ return L}
+let animDone='';
+function playAnim(b,m){if(fast||!m)return;const k=m.from+m.to+'@'+ply;if(animDone===k)return;animDone=k;
+ const mv=(from,to)=>{const el=q(`[data-sq="${to}"] svg`,b);if(!el||!el.animate)return;const [fx,fy]=sqXY(from),[tx,ty]=sqXY(to);
+  const W=b.clientWidth/8;el.animate([{transform:`translate(${(fx-tx)*W}px,${(fy-ty)*W}px)`},{transform:'translate(0,0)'}],{duration:110,easing:'cubic-bezier(.2,.7,.3,1)'})};
+ mv(m.from,m.to);
+ if(m.flags&&(m.flags.includes('k')||m.flags.includes('q'))){const r=m.from[1];m.flags.includes('k')?mv('h'+r,'f'+r):mv('a'+r,'d'+r)}
+ if(m.captured){const sqEl=q(`[data-sq="${m.to}"]`,b);if(sqEl){const fx=document.createElement('i');fx.className='cburst';fx.innerHTML='<b></b><b></b><b></b><b></b><b></b><b></b>';sqEl.appendChild(fx);setTimeout(()=>fx.remove(),520)}}}
 function drawBoard(){const b=q('#cb');if(!b)return;const c=pvMode?pvMode.c:posAt(ply),last=pvMode?pvMode.last:HIST[ply-1],inCheck=c.inCheck(),turn=c.turn();
  const live=!pvMode&&ply===HIST.length&&G.status==='active'&&myColor()===turn&&now()>=Date.parse(G.turn_since);
- const legal=sel&&live?c.moves({square:sel,verbose:true}):[];
+ const pm=preOn(c);if(!pm&&!live&&pre&&G.status!=='active')pre=null;
+ const legal=sel&&live?c.moves({square:sel,verbose:true}):sel&&pm?preLegal(sel):[];
  const topDid=isTop(G.white_did,G.mode)?'w':isTop(G.black_did,G.mode)?'b':'';
  let h='';for(let y=0;y<8;y++)for(let x=0;x<8;x++){const sq=xySq(x,y),p=c.get(sq),dark=(x+y)%2===1;
-  const cls=['csq',dark?'d':'l'];if(last&&(sq===last.from||sq===last.to))cls.push('last');if(sel===sq)cls.push('sel');if(marks.has(sq))cls.push('mark');
-  if(inCheck&&p&&p.type==='k'&&p.color===turn)cls.push('chk');const mv=legal.find(m=>m.to===sq);if(mv)cls.push(p?'cap':'dot');
+  const cls=['csq',dark?'d':'l'];if(last&&(sq===last.from||sq===last.to))cls.push('last');if(sel===sq)cls.push('sel');if(marks.has(sq))cls.push('mark');if(pre&&(sq===pre.from||sq===pre.to))cls.push('pre');
+  if(inCheck&&p&&p.type==='k'&&p.color===turn)cls.push('chk');const mv=legal.find(m=>m.to===sq);if(mv)cls.push(p?'mvcap':'mvdot');
   h+=`<div class="${cls.join(' ')}" data-sq="${sq}">${y===7?`<i class="cf">${sq[0]}</i>`:''}${x===0?`<i class="cr">${sq[1]}</i>`:''}${p?PZ.svg(p.color,p.type,{staskys:p.type==='k'&&p.color===topDid}):''}</div>`}
- b.innerHTML=h;b.classList.toggle('mine',live);drawArrows()}
+ b.innerHTML=h;b.classList.toggle('mine',live||pm);if(q('#cstat')&&G.status==='active')drawStatus();b.classList.toggle('premode',pm);
+ if(anim&&!pvMode){const a=anim;anim=null;if(last&&a.from===last.from&&a.to===last.to)playAnim(b,a)}
+ drawArrows()}
 function drawArrows(){const s=q('#carr');if(!s)return;let h='<defs><marker id="ah" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="3.2" markerHeight="3.2" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="rgba(255,120,40,.85)"/></marker><marker id="ahg" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="3.2" markerHeight="3.2" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="rgba(34,197,94,.9)"/></marker></defs>';
  const line=(a,b,g)=>{const [x1,y1]=sqXY(a),[x2,y2]=sqXY(b),dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy),ex=x2+.5-dx/L*.38,ey=y2+.5-dy/L*.38;
   return`<line x1="${x1+.5}" y1="${y1+.5}" x2="${ex}" y2="${ey}" stroke="${g?'rgba(34,197,94,.85)':'rgba(255,120,40,.8)'}" stroke-width=".17" stroke-linecap="round" marker-end="url(#${g?'ahg':'ah'})"/>`};
@@ -206,9 +261,13 @@ function drawArrows(){const s=q('#carr');if(!s)return;let h='<defs><marker id="a
 function sqFromEvent(e){const b=q('#cb').getBoundingClientRect(),x=Math.floor((e.clientX-b.left)/b.width*8),y=Math.floor((e.clientY-b.top)/b.height*8);return x<0||y<0||x>7||y>7?null:xySq(x,y)}
 function boardEvents(){const b=q('#cb'),w=q('.cbwrap');w.addEventListener('contextmenu',e=>e.preventDefault());
  b.addEventListener('pointerdown',e=>{const sq=sqFromEvent(e);if(!sq)return;SND.unlock();
-  if(e.button===2){rdown=sq;return}
+  if(e.button===2){if(pre||(sel&&preOn(posAt(ply)))){pre=null;sel=null;drawBoard();rdown=null;return}rdown=sq;return}
   if(e.button!==0)return;if(marks.size||arrows.length){marks.clear();arrows=[];drawArrows();qa('.csq.mark',b).forEach(x=>x.classList.remove('mark'))}
   const c=posAt(ply),p=c.get(sq),mc=myColor(),live=ply===HIST.length&&G.status==='active'&&mc===c.turn()&&!pvMode;
+  if(!live&&preOn(c)){/* pre-mossa */
+   if(sel&&sel!==sq){const t=preLegal(sel).find(m=>m.to===sq);if(t){pre={from:sel,to:sq,promo:t.promotion?'q':''};sel=null;drawBoard();return}}
+   if(p&&p.color===mc){pre=null;sel=sq;drawBoard();const el=q(`[data-sq="${sq}"] svg`,b);if(el){drag={sq,el,x0:e.clientX,y0:e.clientY,moved:false,pre:true};b.setPointerCapture&&b.setPointerCapture(e.pointerId)}}
+   else{sel=null;drawBoard()}return}
   if(!live)return;
   if(sel&&sel!==sq&&tryMove(sel,sq))return;
   if(p&&p.color===mc){sel=sq;drawBoard();const el=q(`[data-sq="${sq}"] svg`,b);if(el){drag={sq,el,x0:e.clientX,y0:e.clientY,moved:false};el.setPointerCapture&&b.setPointerCapture(e.pointerId)}}
@@ -217,14 +276,17 @@ function boardEvents(){const b=q('#cb'),w=q('.cbwrap');w.addEventListener('conte
   const el=q(`[data-sq="${drag.sq}"] svg`,b);if(el){el.style.transform=`translate(${dx}px,${dy}px) scale(1.12)`;el.style.zIndex=9}});
  b.addEventListener('pointerup',e=>{if(e.button===2&&rdown){const sq=sqFromEvent(e);if(sq){if(sq===rdown){marks.has(sq)?marks.delete(sq):marks.add(sq);q(`[data-sq="${sq}"]`,b).classList.toggle('mark')}
    else{const i=arrows.findIndex(a=>a[0]===rdown&&a[1]===sq);i>=0?arrows.splice(i,1):arrows.push([rdown,sq]);drawArrows()}}rdown=null;return}
-  if(!drag)return;const d=drag;drag=null;const sq=sqFromEvent(e);if(d.moved&&sq&&sq!==d.sq){if(!tryMove(d.sq,sq))drawBoard()}else{const el=q(`[data-sq="${d.sq}"] svg`,b);if(el)el.style.transform=''}})}
+  if(!drag)return;const d=drag;drag=null;const sq=sqFromEvent(e);
+  if(d.pre){if(d.moved&&sq&&sq!==d.sq){const t=preLegal(d.sq).find(m=>m.to===sq);if(t)pre={from:d.sq,to:sq,promo:t.promotion?'q':''};sel=null}drawBoard();return}
+  if(d.moved&&sq&&sq!==d.sq){dragDrop=true;const ok=tryMove(d.sq,sq);dragDrop=false;if(!ok)drawBoard()}else{const el=q(`[data-sq="${d.sq}"] svg`,b);if(el)el.style.transform=''}})}
 function tryMove(from,to){const c=posAt(ply);const L=c.moves({square:from,verbose:true}).filter(m=>m.to===to);if(!L.length)return false;
  if(L.length>1||L[0].promotion){promo(from,to);return true}send(from+to);return true}
 function promo(from,to){const o=q('#cover'),mc=myColor();o.hidden=false;o.innerHTML=`<div class="cpromo"><p>Promuovi a</p>${['q','r','b','n'].map(t=>`<button data-p="${t}">${PZ.svg(mc,t)}</button>`).join('')}<button class="chip" data-p="">Annulla</button></div>`;
  qa('[data-p]',o).forEach(b=>b.onclick=()=>{o.hidden=true;o.innerHTML='';if(b.dataset.p)send(from+to+b.dataset.p);else{sel=null;drawBoard()}})}
-async function send(uci){sel=null;const c=posAt(HIST.length);let m;try{m=c.move({from:uci.slice(0,2),to:uci.slice(2,4),promotion:uci[4]})}catch(e){return}
+let dragDrop=false;
+async function send(uci){sel=null;const nd=dragDrop;const c=posAt(HIST.length);let m;try{m=c.move({from:uci.slice(0,2),to:uci.slice(2,4),promotion:uci[4]})}catch(e){return}
  /* subito sulla scacchiera, poi conferma del server */
- const keep=G;G={...G,moves:[...G.moves,uci],fen:c.fen(),turn_since:new Date(now()).toISOString()};HIST.push(m);ply=HIST.length;afterMoveFx(m);drawAll();
+ const keep=G;G={...G,moves:[...G.moves,uci],fen:c.fen(),turn_since:new Date(now()).toISOString()};HIST.push(m);ply=HIST.length;afterMoveFx(m,0,nd);if(nd)animDone=m.from+m.to+'@'+ply;drawAll();
  try{const r=await rpc('chess_move',{p_id:keep.id,p_uci:uci});G=keep;apply(r,false);HIST=rebuild();ply=HIST.length;drawAll()}
  catch(e){toast(errMsg(e),true);G=keep;HIST=rebuild();ply=HIST.length;drawAll();poll()}}
 
@@ -232,7 +294,12 @@ async function send(uci){sel=null;const c=posAt(HIST.length);let m;try{m=c.move(
 function material(c){const cnt={w:{},b:{}};let s=0;c.board().flat().forEach(p=>{if(!p)return;cnt[p.color][p.type]=(cnt[p.color][p.type]||0)+1;s+=(p.color==='w'?1:-1)*VAL[p.type]});
  const START={p:8,n:2,b:2,r:2,q:1};const lost=col=>Object.entries(START).flatMap(([t,n])=>Array(Math.max(0,n-(cnt[col][t]||0))).fill(t));return{diff:s,lostW:lost('w'),lostB:lost('b')}}
 function clockMs(side){if(G.mode!=='live'||G.wms==null)return null;let ms=side==='w'?G.wms:G.bms;const turn=G.fen.split(' ')[1];
- if(G.status==='active'&&turn===side)ms-=Math.max(0,now()-Date.parse(G.turn_since));return Math.max(0,ms)}
+ if(G.status==='active'&&turn===side&&(G.moves||[]).length>=2)ms-=Math.max(0,now()-Date.parse(G.turn_since));return Math.max(0,ms)}
+/* PATCH 5.1: tempo per la prima mossa (30 s, poi la partita si annulla) e avversario disconnesso (perde dopo 75 s senza segnale) */
+const firstLeft=()=>G&&G.mode==='live'&&G.status==='active'&&(G.moves||[]).length<2?Date.parse(G.turn_since)+30000-now():null;
+function discLeft(side){if(!G||G.mode!=='live'||G.status!=='active'||(G.moves||[]).length<2)return null;const uid=side==='w'?G.white:G.black;if(!uid||(me&&uid===me.id))return null;
+ const st=Date.parse(G.started_at||G.turn_since),seen=Math.max(Date.parse((G.seen||{})[uid]||0)||0,st);if(now()-seen<15000)return null;return Math.max(0,seen+75000-now())}
+const fmtMs=ms=>{if(ms==null)return'';const s=ms/1000;if(s<60)return s.toFixed(1).replace('.',',')+' s';const m=Math.floor(s/60);return m+':'+String(Math.floor(s%60)).padStart(2,'0')};
 const fmtClock=ms=>{if(ms==null)return'';const s=ms/1000;if(s<10)return s.toFixed(1);const m=Math.floor(s/60),r=Math.floor(s%60);return m+':'+String(r).padStart(2,'0')};
 function corrLeft(){const left=Date.parse(G.turn_since)+3*864e5-now();if(left<=0)return'scaduto';const d=Math.floor(left/864e5),h=Math.floor(left%864e5/36e5),m=Math.floor(left%36e5/6e4);return d?`${d}g ${h}h`:h?`${h}h ${m}m`:`${m}m`}
 function drawBars(){if(!q('#pbTop'))return;const bottom=flip?'b':'w',top=bottom==='w'?'b':'w',c=posAt(ply),mat=material(c);
@@ -240,23 +307,27 @@ function drawBars(){if(!q('#pbTop'))return;const bottom=flip?'b':'w',top=bottom=
   const lost=side==='w'?mat.lostB:mat.lostW,adv=side==='w'?mat.diff:-mat.diff,d=G.elo&&G.elo[side];
   el.innerHTML=`${av(did)}<span class="cpn"><b>${E(nameOf(did))}${isTop(did,G.mode)?' '+kingIco():''}</b><small>${G.ranked?E(String(eloOf(did,G.mode))):'Amichevole'}${d&&d.delta!=null?` <em class="${d.delta>=0?'up':'down'}">${d.delta>=0?'+':''}${d.delta}</em>`:''}</small>
    <span class="ccap">${lost.map(t=>`<i>${PZ.svg(side==='w'?'b':'w',t)}</i>`).join('')}${adv>0?`<em>+${adv}</em>`:''}</span></span>
-   <span class="cclock${turn?' on':''}" data-side="${side}">${G.mode==='live'?fmtClock(clockMs(side)):turn?'⏳ '+corrLeft():''}</span>`;
+   <span class="cdisc" data-disc="${side}" hidden></span><span class="cclock${turn?' on':''}" data-side="${side}">${G.mode==='live'?fmtClock(clockMs(side)):turn?'⏳ '+corrLeft():''}</span>`;
   el.classList.toggle('turn',turn)};
- bar(top,q('#pbTop'));bar(bottom,q('#pbBot'))}
-function tickClock(){if(!G||view!=='game')return;qa('.cclock').forEach(el=>{const s=el.dataset.side;if(G.mode==='live'){const ms=clockMs(s);el.textContent=fmtClock(ms);el.classList.toggle('low',ms!=null&&ms<20000);
+ bar(top,q('#pbTop'));bar(bottom,q('#pbBot'));tickExtra()}
+function tickExtra(){qa('[data-disc]').forEach(el=>{const l=discLeft(el.dataset.disc);el.hidden=l==null;if(l!=null)el.textContent=`⚠️ Disconnesso · perde tra ${Math.ceil(l/1000)}s`});
+ const f=q('#cfirst');if(f){const l=firstLeft();if(l==null)f.remove();else f.textContent=Math.max(0,Math.ceil(l/1000))+'s'}}
+function tickClock(){if(!G||view!=='game')return;if(++ping%4===0){tickExtra();const fl=firstLeft();if(fl!=null&&fl<-1500&&ping%8===0)poll();const dl=[discLeft('w'),discLeft('b')].filter(x=>x!=null);if(dl.some(x=>x===0)&&ping%8===0)poll()}qa('.cclock').forEach(el=>{const s=el.dataset.side;if(G.mode==='live'){const ms=clockMs(s);el.textContent=fmtClock(ms);el.classList.toggle('low',ms!=null&&ms<20000);
   if(G.status==='active'&&ms===0)poll();if(s===myColor()&&ms!=null&&ms<20000&&!lowWarned&&G.status==='active'&&G.fen.split(' ')[1]===s){lowWarned=true;SND.low()}}});
  const ov=q('#cover');if(ov&&!ov.hidden){const bar=q('.cdl i',ov);if(bar){const dl=+bar.dataset.dl,tot=+bar.dataset.tot;const left=Math.max(0,dl-now());bar.style.width=(left/tot*100)+'%';const t=q('.cdl b',ov);if(t)t.textContent=Math.ceil(left/1000)+'s'}
   if(G.coin&&G.coin.res&&ovSig==='coinres'+G.coin.res&&now()>=Date.parse(G.coin.at)+3800)drawOverlay();const cd=q('[data-start]',ov);if(cd){const left=Date.parse(G.turn_since)-now();if(left<=0)drawOverlay();else cd.textContent=Math.ceil(left/1000)}}}
 
 /* ---------- mosse, stato, pulsanti ---------- */
-function drawMoves(){const b=q('#cmv');if(!b)return;let h='';for(let i=0;i<HIST.length;i+=2){h+=`<span class="mn">${i/2+1}.</span>${[i,i+1].map(j=>HIST[j]?`<button class="mv${ply===j+1?' cur':''}" data-ply="${j+1}">${clsIco(j)}${E(HIST[j].san)}</button>`:'<span></span>').join('')}`}
+function drawMoves(){const b=q('#cmv');if(!b)return;let h='';for(let i=0;i<HIST.length;i+=2){h+=`<span class="mn">${i/2+1}.</span>${[i,i+1].map(j=>HIST[j]?`<button class="mv${ply===j+1?' cur':''}" data-ply="${j+1}">${clsIco(j)}${E(HIST[j].san)}${G.move_ms&&G.move_ms[j]!=null?`<small class="mt">${fmtMs(G.move_ms[j])}</small>`:''}</button>`:'<span></span>').join('')}`}
  b.innerHTML=h||'<span class="muted small">Ancora nessuna mossa.</span>';qa('[data-ply]',b).forEach(x=>x.onclick=()=>{pvMode=null;ply=+x.dataset.ply;drawBoard();drawMoves();drawAnal()});const c=q('.mv.cur',b);if(c){const t=c.offsetTop-b.offsetTop;if(t<b.scrollTop||t>b.scrollTop+b.clientHeight-30)b.scrollTop=t-b.clientHeight/2}}
 function drawStatus(){const b=q('#cstat');if(!b)return;const mc=myColor(),turn=G.fen.split(' ')[1],W=nameOf(G.white_did),B=nameOf(G.black_did);let t='';
  const kind=`${G.mode==='live'?'⏱️ Dal vivo'+(G.tc_base?` · ${G.tc_base/60}${G.tc_inc?' | '+G.tc_inc:' min'}`:''):'✉️ Per corrispondenza · 3 giorni a mossa'} · ${G.ranked?'🏆 Ranked':'🤝 Amichevole'}`;
- if(G.status==='over'||G.status==='aborted'){const r=G.result;t=G.status==='aborted'?'Partita annullata':r==='1/2-1/2'?`Patta ${E(REASON[G.reason]||'')}`:`Vince <b>${E(r==='1-0'?W:B)}</b> ${E(REASON[G.reason]||'')}`}
+ if(G.status==='over'||G.status==='aborted'){const r=G.result;t=G.status==='aborted'?(G.reason==='prima mossa'?'Partita annullata · nessuna prima mossa in 30 secondi':'Partita annullata'):r==='1/2-1/2'?`Patta ${E(REASON[G.reason]||'')}`:`Vince <b>${E(r==='1-0'?W:B)}</b> ${E(REASON[G.reason]||'')}`}
  else if(G.status==='active')t=mc?(turn===mc?'<b>Tocca a te</b>':`Tocca a ${E(turn==='w'?W:B)}`):`Tocca al ${turn==='w'?'bianco':'nero'}`;
  else if(G.status==='invite')t='In attesa che la sfida venga accettata';else if(['voting','coin','tiebreak'].includes(G.status))t='Si sceglie il tempo…';else t=E(G.status);
  if(G.status==='active'&&posAt(HIST.length).inCheck())t+=' · <em class="cchk">Scacco!</em>';
+ const fl=firstLeft();if(fl!=null&&now()>=Date.parse(G.turn_since))t+=` <span class="cfirstw">${turn===mc?'Fai la prima mossa':'Prima mossa'} entro <b id="cfirst">${Math.max(0,Math.ceil(fl/1000))}s</b> · il tempo parte dopo</span>`;
+ if(pre)t+=` <span class="cprew">Pre-mossa pronta ${pre.from}→${pre.to} <small>(Esc o tasto destro per annullare)</small></span>`;
  b.innerHTML=`<small class="muted">${kind}</small><p>${t}</p>${G.status==='over'&&G.ranked&&G.elo&&G.elo.w?`<small class="muted">ELO: ${E(W)} ${G.elo.w.delta>=0?'+':''}${G.elo.w.delta} · ${E(B)} ${G.elo.b.delta>=0?'+':''}${G.elo.b.delta}${G.elo.repeat?` · vittoria n° ${G.elo.repeat+1} di fila contro la stessa persona (×${G.elo.factor})`:''}</small>`:''}`}
 function drawActs(){const b=q('#cact');if(!b)return;const mc=myColor();if(!mc){b.innerHTML=G.status==='over'?'<button class="btn sm" id="cana">🔎 Analizza con Stockfish</button>':'';bindAna();return}
  const n=HIST.length,c=posAt(n),mat=material(c).diff*(mc==='w'?1:-1),turn=c.turn();
@@ -327,17 +398,64 @@ const tcName=k=>(TCS.find(t=>t[0]===k)||[0,k||'—'])[1];
 function coinFace(s){return s==='testa'?'<span class="cface t"><img src="assets/icon.png" alt=""></span>':`<span class="cface c">${PZ.svg('w','k')}</span>`}
 
 /* ---------- chat ---------- */
-async function loadChat(quiet){const {data}=await A.sb.from('chess_chat').select('*').eq('game_id',G.id).order('id').limit(200);const L=data||[];if(quiet&&L.length===chat.length)return;
- if(quiet&&L.length>chat.length&&!chatMuted&&L[L.length-1].user_id!==me.id)SND.tick();chat=L;renderChat()}
-function addChat(m){if(chat.some(x=>x.id===m.id))return;chat.push(m);renderChat();if(!chatMuted&&m.user_id!==me.id)SND.tick()}
-function renderChat(){const b=q('#cmsgs');if(!b)return;if(chatMuted){b.innerHTML='<p class="muted small">Chat silenziata: non vedi i messaggi dell\'avversario.</p>';return}
- b.innerHTML=chat.map(m=>`<p class="${m.user_id===me.id?'mine':''}"><b>${E(m.user_id===me.id?'Tu':nameOf(m.discord_id))}</b> ${E(m.body)}</p>`).join('')||'<p class="muted small">Scrivi qualcosa al tuo avversario 👋</p>';b.scrollTop=b.scrollHeight}
+async function loadChat(quiet){if(!me||!G)return;const {data}=await A.sb.from('chess_chat').select('*').eq('game_id',G.id).order('id').limit(300);const L=data||[];if(quiet&&L.length===chat.length)return;
+ const roomNow=myRoom();if(quiet&&L.length>chat.length&&!chatMuted){const nw=L.slice(chat.length);if(nw.some(m=>m.user_id!==me.id&&(m.room||'p')===roomNow))SND.tick()}chat=L;renderChat()}
+function addChat(m){if(chat.some(x=>x.id===m.id))return;chat.push(m);renderChat();if(!chatMuted&&m.user_id!==me.id&&(m.room||'p')===myRoom())SND.tick()}
+/* PATCH 5.1: stanze della chat. 'p' = con i giocatori, 's' = solo spettatori */
+function myRoom(){if(isPlayer())return'p';if(!specTalk())return's';return chatRoom}
+function renderChat(){const b=q('#cmsgs');if(!b||!me||!G)return;const pl=isPlayer(),room=myRoom(),talk=specTalk();
+ const h=q('#cchath');if(h)h.textContent=pl?'Chat della partita':room==='s'?'Chat degli spettatori':'Chat con i giocatori';
+ const tb=q('#ctabs');if(tb){tb.hidden=pl||!talk;if(!pl&&talk){tb.innerHTML=`<button class="chip${room==='p'?' on':''}" data-room="p">💬 Con i giocatori</button><button class="chip${room==='s'?' on':''}" data-room="s">👀 Spettatori</button>`;qa('[data-room]',tb).forEach(x=>x.onclick=()=>{chatRoom=x.dataset.room;renderChat()})}}
+ const tk=q('#ctalk');if(tk){if(pl&&!G.ranked&&['active','voting','coin','tiebreak'].includes(G.status)){const off=!!(G.spec_talk_off||{})[me.id];
+   tk.innerHTML=`<button class="chip${off?'':' on'}" id="cstalk" title="Puoi decidere da solo: se lo spegni gli spettatori scrivono solo nella loro chat">${off?'🔇 Gli spettatori non possono scriverci':'👀 Gli spettatori possono scriverci'}</button>${!off&&!talk?'<small class="muted tiny"> (l\'avversario li ha già silenziati)</small>':''}`;
+   q('#cstalk').onclick=async()=>{try{apply(await rpc('chess_spec_talk',{p_id:G.id,p_off:!off}))}catch(e){toast(errMsg(e),true)}}}
+  else if(pl&&G.ranked)tk.innerHTML='<small class="muted tiny">Ranked: gli spettatori hanno una chat tutta loro.</small>';
+  else if(!pl&&G.ranked)tk.innerHTML='<small class="muted tiny">Nelle ranked gli spettatori non scrivono ai giocatori.</small>';else tk.innerHTML=''}
+ const inp=q('#cin');if(inp)inp.placeholder=pl?'Scrivi…':room==='s'?'Scrivi agli altri spettatori…':'Scrivi ai giocatori…';
+ if(chatMuted){b.innerHTML='<p class="muted small">Chat silenziata: non vedi i messaggi.</p>';return}
+ const players=[G.challenger,G.opponent];
+ b.innerHTML=chat.filter(m=>(m.room||'p')===room).map(m=>`<p class="${m.user_id===me.id?'mine':''}${players.includes(m.user_id)?'':' spec'}"><b>${players.includes(m.user_id)?'':'👀 '}${E(m.user_id===me.id?'Tu':nameOf(m.discord_id))}</b> ${E(m.body)}</p>`).join('')||`<p class="muted small">${pl?'Scrivi qualcosa al tuo avversario 👋':'Nessun messaggio ancora.'}</p>`;b.scrollTop=b.scrollHeight}
 
-/* ---------- musica lofi (radio gratuita, si accende e spegne) ---------- */
-const LOFI='https://www.youtube-nocookie.com/embed/jfKfPfyJRdk?autoplay=1&controls=1&modestbranding=1&rel=0';
-function toggleLofi(){const ex=q('#clofip');if(ex){hideLofi();return}const d=document.createElement('div');d.id='clofip';d.innerHTML=`<div class="lhead"><span>🎧 Lofi · musica infinita</span><button aria-label="Chiudi">×</button></div><iframe src="${LOFI}" allow="autoplay; encrypted-media" title="Radio lofi"></iframe>`;document.body.appendChild(d);
- q('button',d).onclick=()=>hideLofi();const b=q('#clofi');if(b)b.classList.add('on');localStorage.chess_lofi='1'}
-function hideLofi(keepPref){const d=q('#clofip');if(d)d.remove();const b=q('#clofi');if(b)b.classList.remove('on');if(!keepPref)localStorage.chess_lofi='0'}
+/* ---------- PATCH 5.1: chi sta guardando + sostituzioni (amichevoli) ---------- */
+function drawWatch(){const b=q('#cwatch');if(!b)return;const W=(G.watchers||[]).filter(Boolean),pl=isPlayer(),act=G.status==='active';
+ const subs=G.subs||[],used=+((G.subs_used||{})[myDid]||0),canSub=act&&!G.ranked&&me;
+ const name=d=>E(nameOf(d));let h='';
+ /* richieste in sospeso */
+ subs.forEach(r=>{if(r.by_spec&&r.player===myDid&&pl)h+=`<div class="coffer csub">🔄 <b>${name(r.spec)}</b> vuole giocare al tuo posto <button class="btn sm" data-sa="${r.id}">Accetta</button><button class="btn ghost sm" data-sd="${r.id}">No</button></div>`;
+  else if(!r.by_spec&&r.spec===myDid)h+=`<div class="coffer csub">🔄 <b>${name(r.player)}</b> ti offre il suo posto in partita <button class="btn sm" data-sa="${r.id}">Gioca</button><button class="btn ghost sm" data-sd="${r.id}">No</button></div>`;
+  else if((r.by_spec&&r.spec===myDid)||(!r.by_spec&&r.player===myDid))h+=`<p class="muted small">⏳ Richiesta di sostituzione inviata a ${name(r.by_spec?r.player:r.spec)}…</p>`});
+ if(!W.length&&!h){b.hidden=true;b.innerHTML='';return}b.hidden=false;
+ const pend=d=>subs.some(r=>(r.spec===myDid&&r.player===d)||(r.player===myDid&&r.spec===d));
+ b.innerHTML=`<h4>👀 Stanno guardando <span class="cwn">${W.length}</span></h4>${h}<div class="cwl">${W.map(d=>`<div class="cwr">${av(d)}<span>${name(d)}${d===myDid?' <small class="muted">(tu)</small>':''}</span>${canSub&&pl&&d!==myDid&&!pend(d)?`<button class="chip" data-offer="${E(d)}" title="La partita continua dalla stessa posizione con lo stesso tempo">Fai giocare al mio posto</button>`:''}</div>`).join('')||'<p class="muted small">Nessuno</p>'}</div>
+  ${canSub&&!pl&&W.includes(myDid)?`<div class="csubq"><small class="muted">Sostituisci un giocatore (te ne restano ${Math.max(0,2-used)} su 2):</small>${[G.white_did,G.black_did].map(d=>`<button class="chip" data-ask="${E(d)}" ${used>=2||subs.some(r=>r.spec===myDid)?'disabled':''}>Chiedi di sostituire ${name(d)}</button>`).join('')}</div>`:''}`;
+ const go=(fn)=>async x=>{try{const r=await fn();if(r&&r.id)apply(r);else poll()}catch(e){toast(errMsg(e),true)}};
+ qa('[data-offer]',b).forEach(x=>x.onclick=()=>go(()=>rpc('chess_sub_request',{p_id:G.id,p_did:x.dataset.offer}))().then(()=>toast('Proposta inviata')));
+ qa('[data-ask]',b).forEach(x=>x.onclick=()=>go(()=>rpc('chess_sub_request',{p_id:G.id,p_did:x.dataset.ask}))().then(()=>toast('Richiesta inviata')));
+ qa('[data-sa]',b).forEach(x=>x.onclick=()=>go(()=>rpc('chess_sub_answer',{p_req:+x.dataset.sa,p_accept:true}))());
+ qa('[data-sd]',b).forEach(x=>x.onclick=()=>go(()=>rpc('chess_sub_answer',{p_req:+x.dataset.sd,p_accept:false}))())}
+
+/* ---------- PATCH 5.1: musica lofi senza YouTube (brani CC0 nel sito, in ordine casuale, infinita) ---------- */
+const LOFI=[['autumn','Autumn','HoliznaCC0'],['clouds','Clouds','HoliznaCC0'],['creature-comforts','Creature Comforts','HoliznaCC0'],['foggy-headed','Foggy Headed','HoliznaCC0'],['glad-to-be-stuck-inside','Glad To Be Stuck Inside','HoliznaCC0'],['morning-coffee','Morning Coffee','HoliznaCC0'],['new-shoes','New Shoes','HoliznaCC0'],['plants','Plants','HoliznaCC0'],['ramen','Ramen','HoliznaCC0'],['vintage','Vintage','HoliznaCC0'],['wifi-trasherino','WiFi Trasherino','Sudocolon']];
+let lofiA=null,lofiQ=[],lofiCur=null;
+const lofiVol=()=>{const v=parseFloat(localStorage.chess_lofi_vol);return isNaN(v)?.5:v};
+function lofiNext(){if(!lofiQ.length){lofiQ=LOFI.map((_,i)=>i).sort(()=>Math.random()-.5);if(lofiCur!=null&&lofiQ[0]===lofiCur)lofiQ.push(lofiQ.shift())}
+ lofiCur=lofiQ.shift();const t=LOFI[lofiCur];if(!lofiA){lofiA=new Audio();lofiA.preload='none';lofiA.onended=lofiNext;lofiA.onerror=()=>setTimeout(lofiNext,800)}
+ lofiA.src='assets/lofi/'+t[0]+'.mp3';lofiA.volume=lofiVol();lofiA.play().catch(()=>{});lofiUI()}
+function lofiUI(){const d=q('#clofip');if(!d)return;const t=lofiCur!=null?LOFI[lofiCur]:null;q('.ltrack',d).innerHTML=t?`<b>${E(t[1])}</b><small>${E(t[2])} · CC0</small>`:'';
+ q('[data-l="pp"]',d).textContent=lofiA&&!lofiA.paused?'⏸':'▶';const v=lofiVol();q('.cvico',d).textContent=v===0?'🔇':v<.34?'🔈':v<.67?'🔉':'🔊';paintRange(q('.crange',d),v)}
+function showLofi(play){if(fast){toast('Spegni la modalità veloce per la lofi');return}let d=q('#clofip');
+ if(!d){d=document.createElement('div');d.id='clofip';d.innerHTML=`<div class="lhead"><span>🎧 Lofi · musica infinita</span><button aria-label="Chiudi" data-l="x">×</button></div>
+  <div class="ltrack"></div><div class="lctl"><button data-l="pp" title="Play / pausa">▶</button><button data-l="nx" title="Prossimo brano">⏭</button>
+  <div class="cvolw"><button class="cvico" data-l="mu" title="Muto"></button><input type="range" class="crange" min="0" max="1" step=".05" value="${lofiVol()}" aria-label="Volume lofi"></div></div>
+  <small class="muted tiny">Brani CC0 (pubblico dominio) · <a href="assets/lofi/LICENZE.md" target="_blank" rel="noopener">licenze</a></small>`;document.body.appendChild(d);
+  q('[data-l="x"]',d).onclick=()=>hideLofi();q('[data-l="nx"]',d).onclick=()=>lofiNext();
+  q('[data-l="pp"]',d).onclick=()=>{if(!lofiA||lofiCur==null){lofiNext();return}lofiA.paused?lofiA.play().catch(()=>{}):lofiA.pause();setTimeout(lofiUI,50)};
+  let lastV=lofiVol()||.5;q('[data-l="mu"]',d).onclick=()=>{const v=lofiVol();if(v>0)lastV=v;const nv=v>0?0:lastV;localStorage.chess_lofi_vol=nv;q('.crange',d).value=nv;if(lofiA)lofiA.volume=nv;lofiUI()};
+  q('.crange',d).oninput=e=>{localStorage.chess_lofi_vol=e.target.value;if(lofiA)lofiA.volume=+e.target.value;lofiUI()}}
+ const b=q('#clofi');if(b)b.classList.add('on');localStorage.chess_lofi='1';
+ if(play!==false&&(!lofiA||lofiA.paused))lofiA&&lofiCur!=null?lofiA.play().catch(()=>{}):lofiNext();lofiUI()}
+function toggleLofi(){if(q('#clofip')){hideLofi();return}showLofi(true)}
+function hideLofi(keepPref){const d=q('#clofip');if(d)d.remove();if(lofiA)lofiA.pause();const b=q('#clofi');if(b)b.classList.remove('on');if(!keepPref)localStorage.chess_lofi='0'}
 
 /* ---------- ANALISI (Stockfish nel browser) ---------- */
 let SF=null;
@@ -386,18 +504,20 @@ async function runAnalysis(){const box=q('#canal');box.hidden=false;const b=q('#
  if(me&&(isPlayer()||true))A.sb.rpc('chess_save_analysis',{p_id:G.id,p_data:data,p_acc_w:analysis.acc_w,p_acc_b:analysis.acc_b,p_depth:depth}).then(()=>{},()=>{})}
 async function loadSavedAnalysis(){if(!G||G.status!=='over')return;const {data}=await A.sb.from('chess_analysis').select('*').eq('game_id',G.id).order('created_at',{ascending:false}).limit(1);
  if(data&&data[0]&&Array.isArray(data[0].data)){const d=data[0].data;analysis={data:d,acc_w:+data[0].acc_w,acc_b:+data[0].acc_b,ev:[0,...d.map(x=>x.e)]};q('#canal').hidden=false;drawMoves();drawBoard();drawAnal()}}
-function drawAnal(){const box=q('#canal'),bar=q('#ceval');if(!box||!analysis){if(bar)bar.hidden=true;return}box.hidden=false;bar.hidden=false;
+function drawAnal(){const box=q('#canal'),bar=q('#ceval'),vb=q('#cverd');if(!box||!analysis){if(bar)bar.hidden=true;if(vb)vb.hidden=true;return}box.hidden=false;bar.hidden=false;
  const e=pvMode?pvMode.e:(analysis.ev[ply]||0),pct=Math.max(3,Math.min(97,winPct(e)));q('i',bar).style.height=(100-pct)+'%';
  q('b',bar).textContent=Math.abs(e)>=9000?'M':(e>0?'+':'')+(e/100).toFixed(1);bar.classList.toggle('flip',flip);
  const cnt=s=>{const o={};analysis.data.forEach((d,i)=>{if((i%2===0)===(s==='w'))o[d.c]=(o[d.c]||0)+1});return o},cw=cnt('w'),cb=cnt('b');
  const a=ply>0?analysis.data[ply-1]:null,m=HIST[ply-1];
  box.innerHTML=`<h4>Analisi di Stockfish</h4><div class="cacc"><div><b>${analysis.acc_w??'–'}%</b><small>${E(nameOf(G.white_did))}</small></div><span>Precisione</span><div><b>${analysis.acc_b??'–'}%</b><small>${E(nameOf(G.black_did))}</small></div></div>
-  <table class="ctab">${Object.entries(CLS).map(([k,[i,c,n]])=>`<tr><td>${cw[k]||0}</td><td><i class="mcls" style="background:${c}">${i}</i> ${n}</td><td>${cb[k]||0}</td></tr>`).join('')}</table>
-  ${a&&m?`<div class="cnow"><p><i class="mcls" style="background:${CLS[a.c][1]}">${CLS[a.c][0]}</i> <b>${E(m.san)}</b> è ${E(CLS[a.c][2].toLowerCase())}</p>
+  <table class="ctab">${Object.entries(CLS).map(([k,[i,c,n]])=>`<tr><td>${cw[k]||0}</td><td><i class="mcls" style="background:${c}">${i}</i> ${n}</td><td>${cb[k]||0}</td></tr>`).join('')}</table>`;
+ /* PATCH 5.1: il giudizio della mossa e "meglio era" stanno nel riquadro delle mosse, sotto la lista */
+ const vh=`${a&&m?`<div class="cnow"><p><i class="mcls" style="background:${CLS[a.c][1]}">${CLS[a.c][0]}</i> <b>${E(m.san)}</b> è ${E(CLS[a.c][2].toLowerCase())}</p>
    ${a.b&&!['migliore','geniale','grande','libro'].includes(a.c)?`<p class="small">Meglio era <b class="cbest">${E(sanOf(ply-1,a.b))}</b> (freccia verde).</p><button class="chip" id="cpv">${pvMode?'⏹ Torna alla partita':'▶ Guarda perché: continuazione di Stockfish'}</button>${pvMode?`<div class="cpvnav"><button data-pv="-1">◀</button><span>${pvMode.i}/${pvMode.L.length}</span><button data-pv="1">▶</button></div><p class="muted tiny">${E(pvMode.sans.slice(0,pvMode.i).join(' '))}</p>`:''}`:''}</div>`:'<p class="muted small">Scorri le mosse con ◀ ▶ (o le frecce della tastiera) per vedere il giudizio di ogni mossa.</p>'}`;
- const pv=q('#cpv',box);if(pv)pv.onclick=()=>{if(pvMode){pvMode=null}else{const L=(a.pv||a.b).split(' ').filter(Boolean),c=posAt(ply-1),sans=[];const t=new Chess(c.fen());for(const u of L){try{sans.push(t.move({from:u.slice(0,2),to:u.slice(2,4),promotion:u[4]}).san)}catch(e){break}}
+ if(vb){vb.hidden=false;vb.innerHTML=vh}else box.insertAdjacentHTML('beforeend',vh);const host=vb||box;
+ const pv=q('#cpv',host);if(pv)pv.onclick=()=>{if(pvMode){pvMode=null}else{const L=(a.pv||a.b).split(' ').filter(Boolean),c=posAt(ply-1),sans=[];const t=new Chess(c.fen());for(const u of L){try{sans.push(t.move({from:u.slice(0,2),to:u.slice(2,4),promotion:u[4]}).san)}catch(e){break}}
   pvMode={L:L.slice(0,sans.length),sans,i:0,base:ply-1,c,last:null,e:analysis.ev[ply-1]};stepPv(1)}drawBoard();drawAnal()};
- qa('[data-pv]',box).forEach(x=>x.onclick=()=>{stepPv(+x.dataset.pv);drawBoard();drawAnal()})}
+ qa('[data-pv]',host).forEach(x=>x.onclick=()=>{stepPv(+x.dataset.pv);drawBoard();drawAnal()})}
 function stepPv(d){const p=pvMode;p.i=Math.max(0,Math.min(p.L.length,p.i+d));const c=posAt(p.base);let last=null;for(let i=0;i<p.i;i++){const u=p.L[i];last=c.move({from:u.slice(0,2),to:u.slice(2,4),promotion:u[4]})}p.c=c;p.last=last;if(last)last.captured?SND.capture(1):SND.move()}
 function sanOf(i,u){try{return posAt(i).move({from:u.slice(0,2),to:u.slice(2,4),promotion:u[4]}).san}catch(e){return u}}
 

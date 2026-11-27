@@ -83,7 +83,14 @@ function duelBar(){if(!DUEL)return;let b=q('#duelbar');if(!b){b=document.createE
  const N={snake:'Snake: chi muore per primo perde',reaction:'Riflessi: chi è più lento perde',flappy:'Flappy: chi muore per primo perde',quiz:'Quiz anime da 5 domande: chi fa meno punti perde',stack:'Stack: chi crolla per primo perde',typing:'Battitura da 30 secondi: chi è più lento perde'};
  b.innerHTML=DUEL.done?`<b>♟️ Spareggio inviato ✓</b> <span class="muted">${E(DUEL.msg||'')}</span> <a class="btn sm" href="scacchi.html?g=${DUEL.id}">Torna alla partita →</a>`
   :`<b>♟️ Spareggio scacchi</b> <span>${N[DUEL.game]}. Conta la <b>prima</b> partita che finisci, e il punteggio va anche in classifica.</span> <a class="chip" href="scacchi.html?g=${DUEL.id}">Torna alla partita</a>`}
-function duelSent(r){DUEL.msg=r&&r.error?'Non sono riuscito a mandarlo: '+(r.error.message||'errore'):'Torna alla partita per vedere chi ha vinto.';duelBar()}
+function duelSent(r){DUEL.msg=r&&r.error?'Non sono riuscito a mandarlo: '+(r.error.message||'errore'):'Torna alla partita per vedere chi ha vinto.';duelBar();duelPanel()}
+/* PATCH 5.1: spareggio inviato = il riquadro del gioco sparisce (niente "Rigioca"), resta solo il messaggio e "Torna alla partita" */
+function duelPanel(){if(!DUEL||!DUEL.done)return;const card=q('.gcard');if(!card)return;
+ [...card.children].forEach(c=>{if(c.id!=='gduel')c.style.display='none'});
+ let d=q('#gduel',card);if(!d){d=document.createElement('div');d.id='gduel';card.appendChild(d)}
+ d.style.cssText='display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;text-align:center;min-height:340px;padding:2.5rem 1.5rem';
+ const err=/^Non sono riuscito/.test(DUEL.msg||'');
+ d.innerHTML=`<div style="font-size:3.2rem;line-height:1">${err?'⚠️':'♟️'}</div><h2 style="margin:0;font-size:1.9rem">${err?'Spareggio non inviato':'Spareggio inviato ✓'}</h2><p class="muted" style="margin:0;max-width:34ch">${E(DUEL.msg||'')}</p><a class="btn" id="gduelgo" href="scacchi.html?g=${encodeURIComponent(DUEL.id)}" style="font-size:1.1rem;padding:.95rem 2rem">Torna alla partita →</a>`}
 /* ---------- record personale + festa "NUOVO RECORD!" ---------- */
 const BEST={};
 async function loadBest(game){if(!READY||!user)return;const b=await myBest(game);const g=GAMES[game];
@@ -101,7 +108,7 @@ function celebrate(game,score,first){const g=GAMES[game],card=q('.gcard');if(!ca
  let n=0;(function f(){c.clearRect(0,0,cv.width,cv.height);P.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.35;p.vx*=.985;p.a+=p.va;c.save();c.translate(p.x,p.y);c.rotate(p.a);c.fillStyle=p.c;c.fillRect(-p.s/2,-p.s/4,p.s,p.s/2);c.restore()});
   if(++n<110)requestAnimationFrame(f);else cv.remove()})()}
 /* tasto R = Rigioca (quando il pulsante è visibile e non stai scrivendo) */
-addEventListener('keydown',e=>{if((e.key!=='r'&&e.key!=='R')||e.ctrlKey||e.metaKey||e.altKey||/INPUT|TEXTAREA/.test(e.target.tagName))return;
+addEventListener('keydown',e=>{if((e.key!=='r'&&e.key!=='R')||e.ctrlKey||e.metaKey||e.altKey||/INPUT|TEXTAREA/.test(e.target.tagName)||(DUEL&&DUEL.done))return;
  const b=q('#go',stage);if(b&&!b.hidden&&b.offsetParent&&!GAMES[cur].noR){e.preventDefault();b.click()}});
 /* ---------- avatar e nomi del SERVER (patch 2.2 + 2.3) ----------
    L'avatar/nome salvati col punteggio possono essere vecchi: si mostra il profilo del server Staskys
