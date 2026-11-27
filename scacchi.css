@@ -215,3 +215,14 @@ body.cfast .nav{backdrop-filter:none!important;-webkit-backdrop-filter:none!impo
 #csend:hover:not(:disabled){background:#2fdc6c}#csend:disabled{background:rgba(34,197,94,.28);color:rgba(255,255,255,.65);border-color:transparent;box-shadow:none;cursor:not-allowed}
 /* trascinamento fluido */
 .cboard.dragging .csq svg.pc{transition:none!important}.cboard.dragging{cursor:grabbing}
+/* patch 5.1.4: scelta della promozione (colori del logo) */
+#cpromo{position:absolute;inset:0;z-index:8;background:rgba(5,3,10,.45);border-radius:10px}
+#cpromo .cpcol{position:absolute;width:12.5%;display:flex;flex-direction:column;border-radius:12px;overflow:hidden;border:2px solid transparent;background:linear-gradient(#17111f,#17111f) padding-box,linear-gradient(180deg,#ff5fa2,#c86cf5,#5fd3ea) border-box;box-shadow:0 14px 40px -8px rgba(200,108,245,.55),0 4px 14px rgba(0,0,0,.6);animation:cpin .14s ease-out}
+#cpromo .cpcol.up{flex-direction:column-reverse}
+#cpromo button{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;justify-content:center;aspect-ratio:1;width:100%;padding:6%;transition:background .1s}
+#cpromo button svg{width:100%;height:100%;pointer-events:none}
+#cpromo button:hover,#cpromo button:focus-visible{background:linear-gradient(135deg,rgba(255,95,162,.35),rgba(200,108,245,.35),rgba(95,211,234,.35))}
+#cpromo button.x{aspect-ratio:auto;height:clamp(22px,4.5%,34px);padding:0;font-size:.95rem;color:#cbb8e8;background:rgba(255,255,255,.04)}
+#cpromo button.x:hover{color:#fff;background:rgba(255,95,162,.3)}
+@keyframes cpin{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:none}}
+body.cfast #cpromo .cpcol{animation:none}

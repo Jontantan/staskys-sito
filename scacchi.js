@@ -216,7 +216,7 @@ function apply(g,first){if(!g||!G||g.id!==G.id)return;
  drawAll();
  /* PATCH 5.1: pre-mossa: parte appena tocca a te, se è ancora valida */
  if(pre&&G.status==='active'&&myColor()===G.fen.split(' ')[1]&&ply===HIST.length&&now()>=Date.parse(G.turn_since)){const pm=pre;pre=null;
-  const c=posAt(HIST.length),ok=c.moves({square:pm.from,verbose:true}).find(m=>m.to===pm.to);if(ok)send(pm.from+pm.to+(ok.promotion?(pm.promo||'q'):''));else drawBoard()}}
+  const c=posAt(HIST.length),ok=c.moves({square:pm.from,verbose:true}).find(m=>m.to===pm.to);if(ok&&!(ok.promotion&&!pm.promo))send(pm.from+pm.to+(ok.promotion?pm.promo:''));else drawBoard()}}
 function afterMoveFx(m,i,noAnim){if(!m)return;const side=m.color;if(!noAnim)anim=m;
  if(m.captured){combo[side]=(combo[side]||0)+1;SND.capture(combo[side]);if(combo[side]>=2)comboFx(combo[side],m.to)}else{combo[side]=0;m.flags.includes('k')||m.flags.includes('q')?SND.castle():SND.move()}
  if(m.san.includes('+'))setTimeout(SND.check,120)}
@@ -269,12 +269,12 @@ function drawArrows(){const s=q('#carr');if(!s)return;let h='<defs><marker id="a
  s.innerHTML=h}
 function sqFromEvent(e){const b=q('#cb').getBoundingClientRect(),x=Math.floor((e.clientX-b.left)/b.width*8),y=Math.floor((e.clientY-b.top)/b.height*8);return x<0||y<0||x>7||y>7?null:xySq(x,y)}
 function boardEvents(){const b=q('#cb'),w=q('.cbwrap');w.addEventListener('contextmenu',e=>e.preventDefault());
- b.addEventListener('pointerdown',e=>{const sq=sqFromEvent(e);if(!sq)return;SND.unlock();
+ b.addEventListener('pointerdown',e=>{if(promoAsk||e.__promoClosed)return;const sq=sqFromEvent(e);if(!sq)return;SND.unlock();
   if(e.button===2){if(pre||(sel&&preOn(posAt(ply)))){pre=null;sel=null;drawBoard();rdown=null;return}rdown=sq;return}
   if(e.button!==0)return;if(marks.size||arrows.length){marks.clear();arrows=[];drawArrows();qa('.csq.mark',b).forEach(x=>x.classList.remove('mark'))}
   const c=posAt(ply),p=c.get(sq),mc=myColor(),live=ply===HIST.length&&G.status==='active'&&mc===c.turn()&&!pvMode;
   if(!live&&preOn(c)){/* pre-mossa */
-   if(sel&&sel!==sq){const t=preLegal(sel).find(m=>m.to===sq);if(t){pre={from:sel,to:sq,promo:t.promotion?'q':''};sel=null;drawBoard();return}}
+   if(sel&&sel!==sq){const t=preLegal(sel).find(m=>m.to===sq);if(t){const f=sel;if(t.promotion){askPromo(f,sq,pp=>pp?placePre(f,sq,pp):(sel=null,drawBoard()))}else placePre(f,sq,'');return}}
    if(p&&p.color===mc){pre=null;sel=sq;drawBoard();const el=q(`[data-sq="${sq}"] svg`,b);if(el){drag={sq,el,x0:e.clientX,y0:e.clientY,moved:false,pre:true};b.setPointerCapture&&b.setPointerCapture(e.pointerId)}}
    else{sel=null;drawBoard()}return}
   if(!live)return;
@@ -288,12 +288,26 @@ function boardEvents(){const b=q('#cb'),w=q('.cbwrap');w.addEventListener('conte
  b.addEventListener('pointerup',e=>{if(e.button===2&&rdown){const sq=sqFromEvent(e);if(sq){if(sq===rdown){marks.has(sq)?marks.delete(sq):marks.add(sq);q(`[data-sq="${sq}"]`,b).classList.toggle('mark')}
    else{const i=arrows.findIndex(a=>a[0]===rdown&&a[1]===sq);i>=0?arrows.splice(i,1):arrows.push([rdown,sq]);drawArrows()}}rdown=null;return}
   if(!drag)return;const d=drag;drag=null;if(d.raf)cancelAnimationFrame(d.raf);b.classList.remove('dragging');if(d.el&&d.el.parentNode)d.el.parentNode.style.zIndex='';const sq=sqFromEvent(e);if(drawLater)drawBoard();
-  if(d.pre){if(d.moved&&sq&&sq!==d.sq){const t=preLegal(d.sq).find(m=>m.to===sq);if(t)pre={from:d.sq,to:sq,promo:t.promotion?'q':''};sel=null}drawBoard();return}
+  if(d.pre){if(d.moved&&sq&&sq!==d.sq){const t=preLegal(d.sq).find(m=>m.to===sq);if(t){if(t.promotion){askPromo(d.sq,sq,pp=>pp?placePre(d.sq,sq,pp):(sel=null,drawBoard()));return}placePre(d.sq,sq,'');return}sel=null}drawBoard();return}
   if(d.moved&&sq&&sq!==d.sq){dragDrop=true;const ok=tryMove(d.sq,sq);dragDrop=false;if(!ok)drawBoard()}else{const el=q(`[data-sq="${d.sq}"] svg`,b);if(el)el.style.transform=''}})}
 function tryMove(from,to){const c=posAt(ply);const L=c.moves({square:from,verbose:true}).filter(m=>m.to===to);if(!L.length)return false;
- if(L.length>1||L[0].promotion){promo(from,to);return true}send(from+to);return true}
-function promo(from,to){const o=q('#cover'),mc=myColor();o.hidden=false;o.innerHTML=`<div class="cpromo"><p>Promuovi a</p>${['q','r','b','n'].map(t=>`<button data-p="${t}">${PZ.svg(mc,t)}</button>`).join('')}<button class="chip" data-p="">Annulla</button></div>`;
- qa('[data-p]',o).forEach(b=>b.onclick=()=>{o.hidden=true;o.innerHTML='';if(b.dataset.p)send(from+to+b.dataset.p);else{sel=null;drawBoard()}})}
+ if(L.length>1||L[0].promotion){askPromo(from,to,pp=>{if(pp)send(from+to+pp);else{sel=null;drawBoard()}});return true}send(from+to);return true}
+/* PATCH 5.1.4: promozione come chess.com: scegli tu il pezzo (niente più regina automatica), anche nelle pre-mosse.
+   Colonna sopra la casella d'arrivo; Esc, ✕ o un clic fuori annullano. Tasti: Q/D regina, R/T torre, B/A alfiere, N/C cavallo. */
+let promoAsk=null;
+function closePromo(v){const a=promoAsk;if(!a)return;promoAsk=null;const el=q('#cpromo');if(el)el.remove();removeEventListener('keydown',promoKey,true);document.removeEventListener('pointerdown',promoOut,true);a.cb(v||null)}
+function promoKey(e){if(!promoAsk)return;const k=e.key==='Escape'?'':{q:'q',d:'q',r:'r',t:'r',b:'b',a:'b',n:'n',c:'n'}[(e.key||'').toLowerCase()];if(k===undefined)return;e.preventDefault();e.stopPropagation();closePromo(k)}
+function promoOut(e){const el=q('#cpromo .cpcol');if(promoAsk&&el&&!el.contains(e.target)){e.__promoClosed=true;closePromo(null)}}
+function askPromo(from,to,cb){closePromo(null);const w=q('.cbwrap');if(!w){cb(null);return}const mc=myColor()||(to[1]==='8'?'w':'b'),[x,y]=sqXY(to),down=y<4;
+ const T={q:'Regina',r:'Torre',b:'Alfiere',n:'Cavallo'},el=document.createElement('div');el.id='cpromo';
+ el.innerHTML=`<div class="cpcol${down?'':' up'}" style="left:${x*12.5}%;${down?'top:'+y*12.5:'bottom:'+(7-y)*12.5}%">${['q','r','b','n'].map(t=>`<button type="button" data-pp="${t}" title="${T[t]}" aria-label="Promuovi a ${T[t]}">${PZ.svg(mc,t)}</button>`).join('')}<button type="button" class="x" data-pp="" title="Annulla (Esc)" aria-label="Annulla">✕</button></div>`;
+ w.appendChild(el);promoAsk={from,to,cb};qa('[data-pp]',el).forEach(b=>b.onclick=ev=>{ev.stopPropagation();closePromo(b.dataset.pp)});
+ addEventListener('keydown',promoKey,true);setTimeout(()=>{if(promoAsk)document.addEventListener('pointerdown',promoOut,true)},0)}
+function placePre(from,to,pp){sel=null;const c=posAt(ply);
+ if(preOn(c)){pre={from,to,promo:pp||''};drawBoard();return}
+ /* nel frattempo è toccato a te: se la mossa è valida la giochi subito */
+ const h=posAt(HIST.length);if(ply===HIST.length&&G.status==='active'&&myColor()===h.turn()&&now()>=Date.parse(G.turn_since)){const ok=h.moves({square:from,verbose:true}).find(m=>m.to===to);if(ok&&!(ok.promotion&&!pp)){send(from+to+(ok.promotion?pp:''));return}}
+ drawBoard()}
 let dragDrop=false;
 async function send(uci){sel=null;const nd=dragDrop;const c=posAt(HIST.length);let m;try{m=c.move({from:uci.slice(0,2),to:uci.slice(2,4),promotion:uci[4]})}catch(e){return}
  /* subito sulla scacchiera, poi conferma del server */
