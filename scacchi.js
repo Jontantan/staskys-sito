@@ -16,7 +16,7 @@ let mineChan=null,readySent='',me=null,myDid='',off=0,G=null,view=null,timer=0,c
 const nameOf=(did,fb)=>A.nameOf(did,fb)||fb||'Membro';
 const av=(did)=>`<img class="cav" ${A.avAttr(did,'')} alt="">`;
 const now=()=>Date.now()+off;
-const toast=(t,bad)=>{let el=q('#ctoast');if(!el){el=document.createElement('div');el.id='ctoast';document.body.appendChild(el)}el.textContent=t;el.className=bad?'bad on':'on';clearTimeout(toast.t);toast.t=setTimeout(()=>el.className='',3800)};
+const toast=(t,bad)=>{let el=q('#ctoast');if(!el){el=document.createElement('div');el.id='ctoast';document.body.appendChild(el)}el.textContent=t;el.className=bad?'bad on':'on';clearTimeout(toast.t);toast.t=setTimeout(()=>el.className='',bad?Math.max(6000,t.length*70):3800)};
 const errMsg=e=>{const m=String(e&&e.message||e||'');return/fetch|network|Failed/i.test(m)?'Connessione assente, riprova.':m.replace(/^.*?ERROR:\s*/,'')||'Qualcosa è andato storto.'};
 async function rpc(fn,args){const t0=Date.now();const r=await A.sb.rpc(fn,args);if(r.error)throw r.error;const d=r.data;
  if(d&&d.now){const t1=Date.now();off=Date.parse(d.now)-(t0+t1)/2}return d}
@@ -58,12 +58,12 @@ function renderNew(){const b=q('#cnew');if(!b)return;
   <div class="cseg" id="cmode"><button data-v="live" class="on">⏱️ Dal vivo</button><button data-v="corr">✉️ Per corrispondenza</button></div>
   <div class="cseg" id="ctype"><button data-v="0" class="on">🤝 Amichevole</button><button data-v="1">🏆 Ranked</button></div>
   <p class="muted tiny" id="chint"></p>
-  <button class="btn sm" id="csend" disabled>Invia la sfida</button>
+  <button class="btn sm" id="csend" disabled>Invia la sfida</button><p class="cerr" id="cerr" role="alert" hidden></p>
   <div class="conline"><h4>Online ora <span class="muted" id="cocount"></span></h4><div id="conl" class="conl"><span class="muted small">Nessuno sulla pagina scacchi.</span></div></div>`;
  let opp=pre;const inp=q('#copp'),sug=q('#csugg');
  const hint=()=>{const m=q('#cmode .on').dataset.v,r=q('#ctype .on').dataset.v==='1';q('#chint').textContent=(m==='live'?'Prima di iniziare votate il tempo: 10 min, 10|4, 15 min o 15|4. ':'Niente orologio: hai 3 giorni per ogni mossa. ')+(r?'Conta per la classifica ELO '+(m==='live'?'dal vivo':'per corrispondenza')+'.':'Amichevole: l\'ELO non cambia'+(m==='live'?'; se non siete d\'accordo sul tempo potete fare testa o croce o uno spareggio a un minigioco.':'.'))};
  qa('.cseg button',b).forEach(x=>x.onclick=()=>{qa('button',x.parentNode).forEach(y=>y.classList.toggle('on',y===x));hint()});hint();
- const setOpp=did=>{opp=did;inp.value=did?nameOf(did):'';sug.innerHTML='';q('#csend').disabled=!did};
+ const setOpp=(did,fb)=>{opp=did;inp.value=did?nameOf(did,fb):'';sug.innerHTML='';q('#csend').disabled=!did;const er=q('#cerr');if(er)er.hidden=true};pickOpp=setOpp;
  if(pre)A.loadMembers().then(()=>setOpp(pre));
  inp.oninput=async()=>{opp='';q('#csend').disabled=true;const t=inp.value.trim().toLowerCase();if(t.length<1){sug.innerHTML='';return}
   const M=await A.loadMembers();const L=Object.entries(M||{}).filter(([d,m])=>d!==myDid&&m&&m.in_server!==false&&((m.nick||'')+' '+(m.username||'')).toLowerCase().includes(t)).slice(0,6);
@@ -71,19 +71,19 @@ function renderNew(){const b=q('#cnew');if(!b)return;
   qa('button',sug).forEach(x=>x.onclick=()=>setOpp(x.dataset.did))};
  q('#csend').onclick=async()=>{const btn=q('#csend');btn.disabled=true;
   try{const g=await rpc('chess_challenge',{p_did:opp,p_mode:q('#cmode .on').dataset.v,p_ranked:q('#ctype .on').dataset.v==='1'});toast('Sfida inviata a '+nameOf(opp)+' ✓');
-   pingInvite(opp,g.id);setOpp('');if(g.mode==='live'){openGame(g.id);return}loadMine()}catch(e){toast(errMsg(e),true);btn.disabled=false}};
+   pingInvite(opp,g.id);setOpp('');if(g.mode==='live'){openGame(g.id);return}loadMine()}catch(e){console.error('chess_challenge',opp,e);const m=errMsg(e);toast(m,true);const er=q('#cerr');if(er){er.textContent='⚠️ '+m;er.hidden=false}btn.disabled=false}};
  renderOnline()}
 function renderOnline(){const b=q('#conl');if(!b)return;const L=[...presence.values()].filter(p=>p.did!==myDid);q('#cocount').textContent=L.length?'· '+L.length:'';
  b.innerHTML=L.length?L.map(p=>`<button class="conp" data-did="${E(p.did)}" title="Sfida ${E(nameOf(p.did,p.name))}">${av(p.did)}<span>${E(nameOf(p.did,p.name))}</span>${p.playing?'<small class="cplay">sta giocando</small>':'<small>sfida →</small>'}</button>${typeof p.playing==='string'?`<a class="chip cwatchb" href="?g=${E(p.playing)}" data-watch="${E(p.playing)}">👀 Guarda</a>`:''}`).join(''):'<span class="muted small">Nessun altro sulla pagina scacchi in questo momento.</span>';
  qa('[data-watch]',b).forEach(x=>x.onclick=e=>{e.preventDefault();openGame(x.dataset.watch)});
- qa('.conp',b).forEach(x=>x.onclick=()=>{const i=q('#copp');i.value=nameOf(x.dataset.did);i.dispatchEvent(new Event('input'));setTimeout(()=>{const s=q(`#csugg [data-did="${x.dataset.did}"]`);s?s.click():null},300)})}
+ qa('.conp',b).forEach(x=>x.onclick=()=>{const d=x.dataset.did,p=presence.get(d)||{};if(pickOpp){pickOpp(d,p.name);const s=q('#csend');if(s){s.scrollIntoView({block:'nearest',behavior:'smooth'});s.focus({preventScroll:true})}}})}
 async function joinLobby(){if(lobbyChan||!A.sb)return;try{lobbyChan=A.sb.channel('scacchi-lobby',{config:{presence:{key:myDid}}});
  lobbyChan.on('presence',{event:'sync'},()=>{presence.clear();Object.entries(lobbyChan.presenceState()).forEach(([k,v])=>presence.set(k,v[0]||{did:k}));renderOnline()})
  .on('broadcast',{event:'invite'},({payload})=>{if(payload&&payload.to===myDid){SND.notify();toast('♟️ '+nameOf(payload.from)+' ti ha sfidato!');loadMine()}})
  .subscribe(s=>{if(s==='SUBSCRIBED')lobbyChan.track({did:myDid,name:A.me().name,playing:view==='game'&&G?G.id:false})})}catch(e){}}
 function pingInvite(to,id){try{lobbyChan&&lobbyChan.send({type:'broadcast',event:'invite',payload:{to,from:myDid,id}})}catch(e){}}
 /* PATCH 5.1: partite in corso da guardare */
-let lastLive='';
+let lastLive='',pickOpp=null;
 async function renderLive(quiet){const b=q('#clive');if(!b||!A.sb)return;
  const {data,error}=await A.sb.from('chess_games').select('id,mode,ranked,white_did,black_did,fen,moves,tc_base,tc_inc,started_at,updated_at').eq('status','active').order('updated_at',{ascending:false}).limit(30);
  if(error){if(!quiet)b.innerHTML='<h3>👀 Partite in corso</h3><p class="muted small">Non riesco a caricarle.</p>';return}

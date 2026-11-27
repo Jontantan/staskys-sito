@@ -209,3 +209,4 @@ body.cfast .nav{backdrop-filter:none!important;-webkit-backdrop-filter:none!impo
 @media(max-width:860px){.clob{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:600px){#cnew.cnewbig{padding:1.3rem 1.1rem}#cnew.cnewbig h3{font-size:1.3rem}#cnew.cnewbig .cseg{max-width:100%}
  #cnew.cnewbig .cseg button{padding:.6rem .75rem;font-size:.88rem;white-space:nowrap}#cnew .conp span{max-width:11ch}}
+#cnew .cerr{margin:.6rem 0 0;padding:.6rem .85rem;border-radius:12px;background:rgba(220,38,38,.14);border:1px solid rgba(220,38,38,.45);color:#fca5a5;font-size:.9rem;font-weight:600}#cnew .cerr[hidden]{display:none}
