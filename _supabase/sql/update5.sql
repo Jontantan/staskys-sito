@@ -505,7 +505,7 @@ revoke all on function public.chess_begin(uuid, text, numeric) from public, anon
 -- lancio della moneta: il vincitore decide (il tempo che aveva votato, o il minigioco nello spareggio)
 create or replace function public.chess_coin_flip(p_id uuid) returns void
 language plpgsql security definer set search_path = public as $$
-declare g public.chess_games; c jsonb; res text; winner text; a text; b text; pa text;
+declare g public.chess_games; c jsonb; res text; w_uid text; a text; b text; pa text;
 begin
   select * into g from public.chess_games where id = p_id for update;
   c := g.coin; a := g.challenger::text; b := g.opponent::text;
@@ -514,16 +514,16 @@ begin
     c := c || jsonb_build_object('picks', jsonb_build_object(a, pa, b, case when pa = 'testa' then 'croce' else 'testa' end), 'auto', true);
   end if;
   res := case when random() < 0.5 then 'testa' else 'croce' end;
-  winner := case when c->'picks'->>a = res then a else b end;
-  c := c || jsonb_build_object('res', res, 'winner', winner, 'at', now());
+  w_uid := case when c->'picks'->>a = res then a else b end;
+  c := c || jsonb_build_object('res', res, 'winner', w_uid, 'at', now());
   update public.chess_games set coin = c, updated_at = now() where id = p_id;
   if c->>'for' = 'minigame' then
     -- la moneta sceglie il minigioco dello spareggio (quello votato da chi vince il lancio)
     update public.chess_games set status = 'tiebreak',
-      tiebreak = tiebreak || jsonb_build_object('stage', 'play', 'game', tiebreak->'games'->>winner, 'dl', now() + interval '4 seconds' + interval '10 minutes', 'from', now() + interval '4 seconds')
+      tiebreak = tiebreak || jsonb_build_object('stage', 'play', 'game', tiebreak->'games'->>w_uid, 'dl', now() + interval '4 seconds' + interval '10 minutes', 'from', now() + interval '4 seconds', 'res', '{}'::jsonb)
      where id = p_id;
   else
-    perform public.chess_begin(p_id, coalesce(g.vote->'last'->>winner, '10+0'), 4.5);   -- 4,5 s per vedere l'animazione
+    perform public.chess_begin(p_id, coalesce(g.vote->'last'->>w_uid, '10+0'), 4.5);   -- 4,5 s per vedere l'animazione
   end if;
 end $$;
 revoke all on function public.chess_coin_flip(uuid) from public, anon, authenticated;
@@ -991,7 +991,7 @@ begin
   end if;
   if s.game = 'quiz' and coalesce(s.extra->>'n','') <> '5' then raise exception 'Nello spareggio il quiz è da 5 domande'; end if;
   if s.game = 'typing' and coalesce(s.extra->>'secs','') <> '30' then raise exception 'Nello spareggio la battitura dura 30 secondi'; end if;
-  update public.chess_games set tiebreak = jsonb_set(tiebreak, array['res', me],
+  update public.chess_games set tiebreak = jsonb_set(tiebreak || jsonb_build_object('res', coalesce(tiebreak->'res', '{}'::jsonb)), array['res', me],
       jsonb_build_object('s', s.score, 'd', (extract(epoch from (s.used_at - s.started_at)) * 1000)::bigint)), updated_at = now()
    where id = p_id;
   perform public.chess_advance(p_id);
