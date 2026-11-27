@@ -16,6 +16,19 @@ function cover(x,i,X,Y,w,h){const r=Math.max(w/i.width,h/i.height),sw=w/r,sh=h/r
 function rr(x,X,Y,w,h,r){x.beginPath();x.moveTo(X+r,Y);x.arcTo(X+w,Y,X+w,Y+h,r);x.arcTo(X+w,Y+h,X,Y+h,r);x.arcTo(X,Y+h,X,Y,r);x.arcTo(X,Y,X+w,Y,r);x.closePath()}
 function fit(x,t,max,size,weight='800',fam='Inter'){let s=size;do{x.font=`${weight} ${s}px ${fam},Inter,system-ui,sans-serif`;s-=2}while(x.measureText(t).width>max&&s>20);return t}
 function ell(x,t,max){if(x.measureText(t).width<=max)return t;while(t.length>1&&x.measureText(t+'…').width>max)t=t.slice(0,-1);return t+'…'}
+/* UPDATE 5: trono e mantello del Re di Staskys (stessi disegni originali di deco-fx.js) */
+function gold(x,a,b,c,d){const g=x.createLinearGradient(a,b,c,d);g.addColorStop(0,'#fff3b0');g.addColorStop(.5,'#f5b82e');g.addColorStop(1,'#9a5b0c');return g}
+function throne(x,cx,cy,R){const k=2*R*1.52/120,ox=cx-R-.52*R,oy=cy-R-.94*R;x.save();x.translate(ox,oy);x.scale(k,k);x.shadowColor='rgba(255,45,61,.7)';x.shadowBlur=30/k;
+ const v=x.createLinearGradient(0,0,0,140);v.addColorStop(0,'#b91c3c');v.addColorStop(.55,'#7f1028');v.addColorStop(1,'#3b0614');const G=gold(x,0,0,120,140);
+ const back=new Path2D('M20 138V62Q20 20 60 12Q100 20 100 62V138Z');x.fillStyle=v;x.fill(back);x.shadowBlur=0;x.strokeStyle=G;x.lineWidth=3.2;x.stroke(back);
+ x.fillStyle=G;[[6,46],[103,46]].forEach(([a,b])=>{x.beginPath();x.roundRect?x.roundRect(a,b,11,92,4):x.rect(a,b,11,92);x.fill()});
+ [[11.5,40],[108.5,40]].forEach(([a,b])=>{x.beginPath();x.arc(a,b,7,0,7);x.fill()});x.fill(new Path2D('M48 12Q54 2 60 1Q66 2 72 12Q66 9 60 10Q54 9 48 12Z'));
+ x.fillStyle='#ff5fa2';const gem=new Path2D('M60 -6L66 3L60 12L54 3Z');x.fill(gem);x.strokeStyle='#fff3b0';x.lineWidth=1.2;x.stroke(gem);x.restore()}
+function mantle(x,cx,cy,R){const k=2*R*1.44/120,ox=cx-R-.44*R,oy=cy+R+.62*R-56*k;x.save();x.translate(ox,oy);x.scale(k,k);
+ const v=x.createLinearGradient(0,0,0,56);v.addColorStop(0,'#c8174a');v.addColorStop(1,'#4a0718');x.fillStyle=v;x.fill(new Path2D('M0 56Q4 22 30 12Q46 24 60 26Q74 24 90 12Q116 22 120 56Z'));
+ x.lineCap='round';x.strokeStyle='#fbf7ef';x.lineWidth=7.5;x.stroke(new Path2D('M3 50Q8 22 30 14Q46 26 60 28Q74 26 90 14Q112 22 117 50'));
+ x.fillStyle='#18181b';[[9,36],[17,24],[28,16.5],[41,22.5],[52,26],[68,26],[79,22.5],[92,16.5],[103,24],[111,36]].forEach(([a,b])=>x.fill(new Path2D(`M${a} ${b}l1.4 3.4h-2.8z`)));
+ x.fillStyle=gold(x,54,25,66,37);x.beginPath();x.arc(60,31,5.2,0,7);x.fill();x.fillStyle='#c86cf5';x.beginPath();x.arc(60,31,2.6,0,7);x.fill();x.restore()}
 function crown(x,cx,cy,s){const g=x.createLinearGradient(cx,cy-s,cx,cy+s*.5);g.addColorStop(0,'#fff7c2');g.addColorStop(.45,'#fbbf24');g.addColorStop(1,'#b45309');
  x.save();x.shadowColor='rgba(251,191,36,.8)';x.shadowBlur=30;x.fillStyle=g;x.beginPath();x.moveTo(cx-s,cy+s*.45);x.lineTo(cx-s,cy-s*.35);x.lineTo(cx-s*.5,cy+s*.05);x.lineTo(cx,cy-s*.7);x.lineTo(cx+s*.5,cy+s*.05);x.lineTo(cx+s,cy-s*.35);x.lineTo(cx+s,cy+s*.45);x.closePath();x.fill();x.restore();
  x.fillStyle='#ef4444';x.beginPath();x.arc(cx,cy+s*.12,s*.13,0,7);x.fill();x.fillStyle='#38bdf8';[-.58,.58].forEach(o=>{x.beginPath();x.arc(cx+s*o,cy+s*.2,s*.09,0,7);x.fill()})}
@@ -44,11 +57,13 @@ async function draw(u,ctx,opts){
  const logo=await img('assets/icon.png');x.globalAlpha=.9;if(logo)x.drawImage(logo,48,44,64,64);x.font='800 34px Inter,system-ui,sans-serif';x.fillStyle='#fff';x.textBaseline='middle';x.fillText('Passaporto Staskys',128,77);x.globalAlpha=1;
  /* avatar + cornice */
  const cx=W/2,cy=BH-30,R=170,fr=u.equipped.frame,ring=FRAME[fr]||acc;
+ if(fr==='fr_king')throne(x,cx,cy,R);
  x.save();x.shadowColor=ring;x.shadowBlur=fr?60:30;x.fillStyle=ring;x.beginPath();x.arc(cx,cy,R+16,0,7);x.fill();x.restore();
  if(fr==='fr_orbit'||fr==='fr_neon'){x.strokeStyle='rgba(255,255,255,.7)';x.lineWidth=4;x.setLineDash([18,14]);x.beginPath();x.arc(cx,cy,R+34,0,7);x.stroke();x.setLineDash([])}
  x.fillStyle='#09090c';x.beginPath();x.arc(cx,cy,R+4,0,7);x.fill();
  const av=await firstImg(A.avList(u.did,u.avatar));x.save();x.beginPath();x.arc(cx,cy,R,0,7);x.clip();if(av)cover(x,av,cx-R,cy-R,R*2,R*2);else{x.fillStyle='#333';x.fill()}x.restore();
- if(fr==='fr_crown'||fr==='fr_king'||(u.stats.pos===1&&u.stats.points>0))crown(x,cx,cy-R-30,62);
+ if(fr==='fr_king')mantle(x,cx,cy,R);
+ else if(fr==='fr_crown'||(u.stats.pos===1&&u.stats.points>0))crown(x,cx,cy-R-30,62);
  /* nome */
  let y=cy+R+92;x.textAlign='center';const nick=fit(x,u.nick,W-120,84,'900');
  const eff=u.equipped.effect;if(eff==='fx_gold'){g=x.createLinearGradient(cx-300,0,cx+300,0);g.addColorStop(0,'#fde68a');g.addColorStop(.5,'#f59e0b');g.addColorStop(1,'#fde68a');x.fillStyle=g}

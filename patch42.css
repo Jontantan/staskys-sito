@@ -85,3 +85,6 @@
 .holc:disabled{cursor:default}
 @media(max-width:520px){.holc img{width:58px;height:58px}.holrow{gap:.4rem}.holc{padding:.8rem .4rem}}
 @media(prefers-reduced-motion:reduce){.netwait-dot,.pcm{animation:none!important}}
+/* UPDATE 5: barra dello spareggio scacchi nei minigiochi */
+.duelbar{display:flex;flex-wrap:wrap;align-items:center;gap:.6rem;padding:.9rem 1.1rem;margin:0 0 1rem;border-radius:16px;border:1px solid rgba(200,108,245,.55);background:linear-gradient(90deg,rgba(255,95,162,.12),rgba(200,108,245,.12),rgba(95,211,234,.12))}
+.duelbar span{flex:1;min-width:220px}.gtab:disabled{opacity:.35;cursor:not-allowed}

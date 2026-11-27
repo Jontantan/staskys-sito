@@ -1,6 +1,6 @@
 /* Staskys — Gara di battitura: 60 secondi, frasi sempre più lunghe. Punteggio = parole al minuto × precisione. */
 (function(){
-const DUR=60;
+const DUR=(()=>{const p=new URLSearchParams(location.search);return p.get('duello')&&p.get('gioco')==='typing'?30:60})(); /* 30 secondi nello spareggio scacchi */
 const P=[ // livello 0: corte · 1: medie · 2: lunghe
  ['ciao a tutti','benvenuto su Staskys','gioca con noi','ci vediamo in chat','buona serata','pizza e anime','il server è online','entra in vocale','un caffè al volo','che bella giornata','forza e coraggio','ramen per cena','ti aspetto stasera','gg ben giocato','andiamo avanti'],
  ['stasera guardiamo un anime tutti insieme','il bot di Staskys ha sempre ragione','non dimenticare di leggere le regole','chi vince la classifica oggi?','la pizza margherita è un capolavoro','Luffy vuole diventare il re dei pirati','Goku si allena ogni giorno di più','scrivi nel canale giusto per favore','il gelato al pistacchio è il migliore','facciamo una partita a Minecraft','Naruto non si arrende mai','la mia waifu è meglio della tua','domani esce il nuovo episodio','il tramonto sul mare di Sicilia','ho finito tutti gli episodi in una notte'],
@@ -41,7 +41,7 @@ function make(A){
   ph.innerHTML=`<b class="big">${s.score}</b> <span class="tidle">punti</span><span class="res">${Math.round(s.wpm)} WPM · ${Math.round(s.acc*100)}% di precisione · ${done} frasi</span>`;
   const g=q('#go');g.textContent='Rigioca';g.hidden=false;
   if(s.score>(+localStorage.typing_best||0)){localStorage.typing_best=s.score;q('#rec').textContent=s.score}
-  msg(`Fine! ${s.score} punti.`);if(s.score>0&&s.score<=250)A.save('typing',s.score,{chars:good});else if(s.score>250)msg('Troppo veloce per essere vero: punteggio non salvato.')}
+  msg(`Fine! ${s.score} punti.`);if(s.score>0&&s.score<=250)A.save('typing',s.score,{chars:good,secs:DUR});else if(s.score>250)msg('Troppo veloce per essere vero: punteggio non salvato.')}
  q('#go').onclick=e=>{e.currentTarget.blur();start()};
  const kd=e=>{if(A.cur==='typing'&&st!=='run'&&e.key==='Enter'&&!q('#go').hidden&&document.activeElement!==inp){e.preventDefault();start()}};addEventListener('keydown',kd);
  return()=>{cancelAnimationFrame(raf);removeEventListener('keydown',kd);st='idle'}}

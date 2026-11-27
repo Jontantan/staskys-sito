@@ -7,6 +7,7 @@
      minigiochi
      {tipo:'punti', valore:N}            almeno N punti nella classifica generale (Wordle, Clicker e Higher or Lower non contano)
      {tipo:'posizione', valore:N}        tra i primi N della classifica generale (1 = primo)
+     {tipo:'regno', ore:N}               primo in classifica generale per N ore di fila (contate dal server; resta sbloccato)
      {tipo:'primo', valore:N}            primo posto in almeno N minigiochi
      {tipo:'podi', valore:N}             sul podio in almeno N minigiochi
      {tipo:'streak', valore:N}           streak di almeno N giorni (vale anche la migliore di sempre)
@@ -46,7 +47,7 @@ window.STASKYS_DECO={
   {id:'fr_orbit',tipo:'frame',nome:'Orbita',rarita:'epica',req:{tipo:'like',valore:25}},
   {id:'fr_flame',tipo:'frame',nome:'Fiamma',rarita:'epica',req:{tipo:'streak',valore:30}},
   {id:'fr_crown',tipo:'frame',nome:'Corona',rarita:'leggendaria',req:{tipo:'posizione',valore:1}},
-  {id:'fr_king',tipo:'frame',nome:'Re di Staskys',rarita:'mitico',req:{tipo:'posizione',valore:1}},
+  {id:'fr_king',tipo:'frame',nome:'Re di Staskys',rarita:'mitico',req:{tipo:'regno',ore:30}},
   /* effetti sul nome */
   {id:'fx_glow',tipo:'effect',nome:'Bagliore',rarita:'comune',req:{tipo:'punti',valore:100}},
   {id:'fx_rainbow',tipo:'effect',nome:'Arcobaleno',rarita:'rara',req:{tipo:'podi',valore:3}},
@@ -87,7 +88,7 @@ window.STASKYS_DECO={
  D.GN=GN;
  /* scritta corta: cosa fare per sbloccarla */
  D.reqText=(r,d)=>{if(d&&d.testo)return d.testo;r=r||{};const v=r.valore;switch(r.tipo){
-  case'punti':return`${n(v)} punti in classifica`;case'posizione':return v>1?`Top ${v} classifica generale`:'Primo in classifica generale';
+  case'punti':return`${n(v)} punti in classifica`;case'posizione':return v>1?`Top ${v} classifica generale`:'Primo in classifica generale';case'regno':return`Primo in classifica generale per ${r.ore} ore di fila`;
   case'primo':return v>1?`Primo in ${v} minigiochi`:'Primo in un minigioco';case'podi':return`Podio in ${v} minigiochi`;
   case'streak':return`Streak di ${v} giorni`;case'giochi':return`Gioca ${v} minigiochi diversi`;case'notte':return'Gioca tra le 2 e le 5 di notte';
   case'record':{const g=GN[r.gioco]||[r.gioco,''];if(r.gioco==='mines')return`Vinci a ${g[0]} in ${v%60?n(v)+' s':v/60+' minuti'} o meno`;if(r.gioco==='reaction')return`Media di ${v} ms o meno a Riflessi`;return`${n(v)} ${g[1]} a ${g[0]}`}
@@ -102,6 +103,7 @@ window.STASKYS_DECO={
   case'streak':return{cur:Math.max(s.streak||0,s.bestStreak||0),max:v};case'giochi':return{cur:(s.rec||[]).length,max:v};
   case'record':{const b=s.best&&s.best[r.gioco];return{cur:b==null?null:b,max:v,asc:ASC.has(r.gioco)}}
   case'posizione':return{cur:s.points>0&&s.pos?s.pos:null,max:v,asc:true};
+  case'regno':return{cur:Math.floor(s.kingHours||0),max:r.ore,regno:true};
   case'voti':return{cur:c.voti||0,max:v};case'categoria':return{cur:(c.rated||{})[r.kind]||0,max:v};case'categorie':return{cur:c.cats||0,max:v};case'top10':return{cur:c.top10||0,max:v};
   case'bassi':return{cur:c.low||0,max:v};case'dieci':return{cur:c.tens||0,max:v};case'like':return{cur:s.likes||0,max:v};case'giorni':return{cur:days(s),max:v};case'badge':return{cur:s.nBadges||0,max:v};
   default:return null}};

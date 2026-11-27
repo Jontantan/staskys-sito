@@ -142,6 +142,7 @@ const GAME_NAMES={snake:'Snake',reaction:'Riflessi',clicker:'Clicker veloce',fla
 /* UPDATE 4: Wordle e Clicker veloce (4.2: anche Higher or Lower) non danno più punti né primi posti/podi (si possono ancora giocare, con la loro classifica) */
 const NO_POINTS=new Set(['wordle','clicker','hol']);
 const counts=r=>!NO_POINTS.has(r.game);
+function chessPoints(c){return c?Object.values(c).reduce((s,r)=>s+10+(r.rank===1?50:r.rank===2?30:r.rank===3?20:r.rank<=10?5:0),0):0}
 function points(rec,streak){return rec.filter(counts).reduce((s,r)=>s+10+(r.rank===1?50:r.rank===2?30:r.rank===3?20:r.rank<=10?5:0),0)+(streak||0)*5}
 function demoGames(){/* partite finte, solo per la DEMO */
  const P=[['demo-demo','Membro demo',2,{snake:41,wordle:3,tetris:2210,flappy:27,2048:1388},7,12],['demo-aki','Demo Aki',1,{snake:55,tetris:3100,quiz:9,typing:88,suika:2400,stack:31},12,20],['demo-rin','Demo Rin',3,{wordle:2,reaction:212,mines:48,flappy:19},3,5],
@@ -151,9 +152,13 @@ function demoGames(){/* partite finte, solo per la DEMO */
  return{lb,st}}
 let gcache=null;
 async function loadGames(){if(gcache)return gcache;
- let lb=[],st=[];const rname={};
+ let lb=[],st=[],chess=[],reigns=[];const rname={};
  if(A.DEMO)({lb,st}=demoGames());
- else if(A.sb){const [a,b]=await Promise.all([paged(()=>A.sb.from('leaderboard').select('game,user_id,discord_id,username,avatar_url,score').order('game').order('user_id')),paged(()=>A.sb.from('streaks').select('*').order('user_id')),A.loadMembers(),
+ else if(A.sb){const opt=q=>q.then(r=>r&&!r.error?r.data||[]:[],()=>[]);
+  /* UPDATE 5: Elo scacchi (conta come due minigiochi: dal vivo e per corrispondenza) e regni del Re di Staskys */
+  const cp=Promise.all([opt(A.sb.from('chess_ratings').select('discord_id,mode,elo,games').gte('games',5).limit(5000)),opt(A.sb.from('king_reigns').select('discord_id,started_at,ended_at').order('started_at',{ascending:false}).limit(2000))]).then(([c,k])=>{chess=c;reigns=k});
+  if(A.user&&Math.random()<.34)A.sb.rpc('king_tick').then(()=>{},()=>{});
+  const [,a,b]=await Promise.all([cp,paged(()=>A.sb.from('leaderboard').select('game,user_id,discord_id,username,avatar_url,score').order('game').order('user_id')),paged(()=>A.sb.from('streaks').select('*').order('user_id')),A.loadMembers(),
    /* avatar e nomi più recenti dai voti del catalogo (se non già caricati) */
    cache?null:paged(()=>A.sb.from('media_ratings').select('discord_id,username,avatar_url,updated_at').order('updated_at',{ascending:false}).order('id')).then(r=>{(r.data||[]).forEach(x=>{A.addAv(x.discord_id,x.avatar_url,2);const d=String(x.discord_id||'');if(d&&x.username&&!rname[d])rname[d]=x.username})},()=>{})]);
   lb=a.data||[];st=b.data||[];if(cache)byUser(cache).forEach((L,d)=>rname[d]=lastName(L))}
@@ -165,9 +170,17 @@ async function loadGames(){if(gcache)return gcache;
  /* streak (prio 3) e punteggi (prio 4): indirizzi salvati quando si è giocato, possono essere vecchi */
  st.forEach(r=>A.addAv(uid2did[r.user_id],r.avatar_url,3));lb.forEach(r=>A.addAv(r.discord_id,r.avatar_url,4));
  users.forEach(u=>{u.name=A.nameOf(u.did,rname[u.did]||u.name);u.avatar=A.avList(u.did)[0]});
- users.forEach(u=>{u.rec.sort((a,b)=>a.rank-b.rank);u.points=points(u.rec,u.streak);u.firsts=u.rec.filter(r=>counts(r)&&r.rank===1).length;u.podiums=u.rec.filter(r=>counts(r)&&r.rank<=3).length;u.best=Object.fromEntries(u.rec.map(r=>[r.game,r.score]))});
+ /* scacchi: classifica Elo per modalità (solo chi ha finito le 5 partite di piazzamento), stessi punti di un minigioco */
+ ['live','corr'].forEach(m=>{const L=chess.filter(r=>r.mode===m).sort((x,y)=>y.elo-x.elo||(y.games||0)-(x.games||0)||String(x.discord_id).localeCompare(String(y.discord_id)));
+  L.forEach((r,i)=>{const did=String(r.discord_id||'');if(!did)return;let u=users.get(did);if(!u){u={did,uid:null,name:'',avatar:'',rec:[],streak:0,bestStreak:0};users.set(did,u)}
+   u.chess=u.chess||{};u.chess[m]={elo:r.elo,rank:i+1,games:r.games}})});
+ /* Re di Staskys: ore del regno più lungo da primo in classifica generale (tenute dal server) */
+ const now=Date.now(),king=reigns.find(r=>!r.ended_at)||null;
+ reigns.forEach(r=>{const u=users.get(String(r.discord_id));if(!u)return;const h=((r.ended_at?new Date(r.ended_at):now)-new Date(r.started_at))/36e5;u.kingHours=Math.max(u.kingHours||0,h);if(!r.ended_at)u.kingSince=r.started_at});
+ users.forEach(u=>{if(!u.name)u.name=A.nameOf(u.did,'');if(!u.avatar)u.avatar=A.avList(u.did)[0]});
+ users.forEach(u=>{u.rec.sort((a,b)=>a.rank-b.rank);u.points=points(u.rec,u.streak)+chessPoints(u.chess);u.firsts=u.rec.filter(r=>counts(r)&&r.rank===1).length;u.podiums=u.rec.filter(r=>counts(r)&&r.rank<=3).length;u.best=Object.fromEntries(u.rec.map(r=>[r.game,r.score]))});
  const ranked=[...users.values()].sort((a,b)=>b.points-a.points||b.firsts-a.firsts);ranked.forEach((u,i)=>u.pos=i+1);
- return gcache={users,ranked,byGame}}
+ return gcache={users,ranked,byGame,king:king?{did:String(king.discord_id),since:king.started_at}:null}}
 
 /* ---------- profilo personalizzato (bio, tema, decorazioni equipaggiate) ---------- */
 const DEMO_PROFILES={'demo-demo':{bio:'Qui per gli anime, le serie e per battere tutti a Snake. Frieren > tutto.',theme:{banner:'galaxy'},equipped:{frame:'fr_neon',effect:'fx_rainbow',badges:['b_streak7','b_games5']}},
@@ -277,5 +290,5 @@ async function setCommentsOff(off){const did=A.DEMO?'demo-demo':(A.user?A.profil
  const {error}=await A.sb.from('site_profiles').upsert({comments_off:!!off},{onConflict:'user_id'});
  if(!error&&pcache){const cur=pcache.get(did)||{};pcache.set(did,{...cur,comments_off:!!off})}return error}
 window.STASKYS_SOCIAL={MIN_VOTES,WEIGHT_M,loadAll,reset:()=>{cache=null;pcache=null;staffP=null;xcache=null;gcache=null;rolesP=null;modP=null},top10,saveTop10,compare,label,similar,byUser,ranking,loadRanking,DEMO_ME:'demo-demo',
- ASC,GAME_NAMES,points,loadGames,loadProfiles,saveProfile,members,searchMembers,catStats,cleanCovers,saveCovers,isStaff,COVER_OK,NO_POINTS,loadExtra,toggleLike,statsFor,saveMeta,styled,siteRoles,canModerate,loadComments,addComment,deleteComment,setCommentsOff};
+ ASC,GAME_NAMES,points,chessPoints,loadGames,loadProfiles,saveProfile,members,searchMembers,catStats,cleanCovers,saveCovers,isStaff,COVER_OK,NO_POINTS,loadExtra,toggleLike,statsFor,saveMeta,styled,siteRoles,canModerate,loadComments,addComment,deleteComment,setCommentsOff};
 })();

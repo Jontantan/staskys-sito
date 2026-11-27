@@ -13,7 +13,7 @@ window.STASKYS_BADGES={
  PUNTI:{comune:5,rara:15,epica:30,leggendaria:60,mitico:120},
  LISTA:[
   /* classifica generale (punti dei minigiochi) */
-  {id:'b_king',nome:'Re di Staskys',icona:'🫅',rarita:'mitico',req:{tipo:'posizione',valore:1}},
+  {id:'b_king',nome:'Re di Staskys',icona:'🫅',rarita:'mitico',req:{tipo:'regno',ore:30}},
   {id:'b_top3',nome:'Podio',icona:'🏆',rarita:'epica',req:{tipo:'posizione',valore:3}},
   {id:'b_climber',nome:'Scalatore',icona:'🧗',rarita:'rara',req:{tipo:'posizione',valore:10}},
   /* minigiochi */

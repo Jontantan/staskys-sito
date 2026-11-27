@@ -2,7 +2,7 @@
    15 tipi di domanda + ~300 domande scritte a mano; ogni domanda ha un id e quelle già viste non tornano
    (memoria in localStorage + per account Discord nella tabella Supabase quiz_seen). */
 (function(){
-const API_URL='https://api.jikan.moe/v4',CACHE_H=24,PER_Q=15,ROUND=10,PAGES=100,SEEN_MAX=1500,SEENQ_MAX=4000,BANK_PER_ROUND=2;
+const API_URL='https://api.jikan.moe/v4',CACHE_H=24,PER_Q=15,ROUND=(()=>{const p=new URLSearchParams(location.search);return p.get('duello')&&p.get('gioco')==='quiz'?5:10})(),PAGES=100,SEEN_MAX=1500,SEENQ_MAX=4000,BANK_PER_ROUND=2;
 /* Domande di riserva (usate se l'API non risponde): [domanda, giusta, [3 sbagliate]] */
 const BANK=[
  ['Quale studio ha animato le prime tre stagioni de "L\'attacco dei giganti"?','Wit Studio',['MAPPA','Bones','Madhouse']],
@@ -432,7 +432,7 @@ function make(A){
  function end(){st='done';SFX.end();z.innerHTML=`<div class="qbox"><p class="big">${score}</p><p class="muted">${right}/${Q.length} risposte giuste</p></div>`;
   const g=q('#go');g.textContent='Rigioca';g.hidden=false;
   if(score>(+localStorage.quiz_best||0)){localStorage.quiz_best=score;q('#rec').textContent=score;msg(`Nuovo record! ${score} punti.`)}else msg(`Fine! ${score} punti.`);
-  if(score>0)A.save('quiz',score,{right})}
+  if(score>0)A.save('quiz',score,{right,n:Q.length})}
  const kd=e=>{if(A.cur!=='quiz'||st!=='run')return;if(/^[1-4]$/.test(e.key)&&!lock){e.preventDefault();answer(+e.key-1)}else if(e.key==='Enter'&&lock){e.preventDefault();next()}};
  addEventListener('keydown',kd);
  q('#go').onclick=e=>{e.currentTarget.blur();start()};

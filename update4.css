@@ -337,3 +337,22 @@
 /* bloccate: si vede bene com'è fatta, solo un po' spenta */
 .ditem.locked .dprev>*:not(.dlock){filter:saturate(.55) brightness(.72)!important}
 .ditem.locked .dlock{z-index:4;font-size:1.1rem;filter:drop-shadow(0 2px 4px rgba(0,0,0,.8))}
+
+/* UPDATE 5 · Re di Staskys (MITICO): trono di velluto con schienale ad arco, pilastri d'oro e gemma Staskys, mantello con bordo d'ermellino e fermaglio. Niente corona. */
+.fr-fr_king .thr{left:-26%;top:-47%;width:152%;z-index:0;filter:drop-shadow(0 0 12px rgba(255,45,61,.55)) drop-shadow(0 6px 10px rgba(0,0,0,.55));animation:thrG 3.2s ease-in-out infinite}
+.fr-fr_king .thr svg,.fr-fr_king .mnt svg{display:block;width:100%;height:auto;overflow:visible}
+.fr-fr_king .thr .tho{animation:gemT 2.4s ease-in-out infinite;transform-box:fill-box;transform-origin:center}.fr-fr_king .thr .t2{animation-delay:-1.2s}
+.fr-fr_king .thr .thgem{animation:thGem 2s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes thGem{50%{fill:#5fd3ea;transform:scale(1.18)}}
+@keyframes thrG{50%{filter:drop-shadow(0 0 20px rgba(255,80,120,.85)) drop-shadow(0 6px 10px rgba(0,0,0,.55))}}
+.fr-fr_king .mnt{left:-22%;bottom:-31%;width:144%;z-index:3;filter:drop-shadow(0 -2px 6px rgba(0,0,0,.45));transform-origin:50% 0;animation:mntS 4.2s ease-in-out infinite}
+.fr-fr_king .mnt .mngem{animation:gemT 1.8s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes mntS{0%,100%{transform:rotate(0)}50%{transform:rotate(1.2deg) translateY(1.5%)}}
+.fr-fr_king .rays{inset:-62%}.fr-fr_king .kring{inset:-6%}
+.fr-fr_king .emb{bottom:auto;top:20%}
+@media (prefers-reduced-motion:reduce){.fr-fr_king .thr,.fr-fr_king .mnt,.fr-fr_king .thgem{animation:none}}
+/* UPDATE 5 · scacchi nel profilo */
+.pf-chess .pfc-elo{display:flex;align-items:baseline;gap:.5rem;flex-wrap:wrap;padding:.35rem 0;border-bottom:1px solid rgba(255,255,255,.06)}.pf-chess .pfc-elo span{flex:1;font-size:.85rem}
+.pfc-games{list-style:none;margin:.5rem 0 .7rem;padding:0;display:grid;gap:.3rem}.pfc-games li{display:flex;align-items:center;gap:.5rem;font-size:.85rem}.pfc-games a{flex:1;color:inherit;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pfc-r{width:1.5rem;height:1.5rem;border-radius:6px;display:grid;place-items:center;font-weight:800;font-size:.75rem;background:#3f3f46}.pfc-r.win{background:#16a34a}.pfc-r.loss{background:#dc2626}
+.pf-chess .btn{margin-top:.5rem}

@@ -11,6 +11,8 @@ const GAMES={
  clicker:{t:'Clicker veloce',k:'King Clicker',d:'Quanti clic riesci a fare in 10 secondi? Il tempo parte al primo clic.',unit:'clic',asc:false}
 };
 let inited=false,user=null,cur='snake',stop=()=>{};
+/* UPDATE 5: SPAREGGIO SCACCHI (giochi.html?duello=ID&gioco=snake). La prima partita salvata vale per lo spareggio e anche per la classifica. */
+const DUEL=(()=>{const p=new URLSearchParams(location.search),id=p.get('duello'),g=p.get('gioco');return id&&/^[0-9a-f-]{36}$/i.test(id)&&['snake','reaction','flappy','quiz','stack','typing'].includes(g)?{id,game:g,done:false}:null})();
 const stage=q('#gstage'),lock=q('#glock'),msg=t=>{const m=q('.gmsg',stage);if(m)m.textContent=t};
 
 /* ---------- utente ---------- */
@@ -61,6 +63,7 @@ async function submit(game,score,extra){
  if(!NO_RPC){let s=SES[game];delete SES[game];if(!s){begin(game);s=SES[game];delete SES[game]}
   const r0=s?await s.p:{err:{message:'rete'}};
   if(r0.id){const r=await Promise.resolve(sb.rpc('submit_score',{p_session:r0.id,p_score:score,p_extra:extra||{}})).catch(()=>({error:{message:'rete'}}));
+   if(!r.error&&DUEL&&!DUEL.done&&game===DUEL.game&&r.data&&r.data.ok!==false){DUEL.done=true;duelSent(await Promise.resolve(sb.rpc('chess_tiebreak_submit',{p_id:DUEL.id,p_session:r0.id})).catch(e=>({error:e})))}
    if(!r.error)return r.data&&r.data.ok===false?{message:r.data.error||'Punteggio non valido: non è stato salvato.',show:1}:null;
    if(!missingFn(r.error))return r.error;NO_RPC=true}
   else if(!NO_RPC)return r0.err&&r0.err.code==='P0001'?r0.err:{message:'Connessione assente: punteggio non salvato. Controlla la rete e rigioca.',show:1}}
@@ -76,6 +79,11 @@ async function save(game,score,extra){
  if(!error&&g.onSaved)try{g.onSaved(score)}catch(e){}
  if(!error)loadStreak();
  if(game!==cur)return;msg((keep?keep+' · ':'')+(error?errText(error):'Salvato ✓'));if(!error)board(game)}
+function duelBar(){if(!DUEL)return;let b=q('#duelbar');if(!b){b=document.createElement('div');b.id='duelbar';b.className='duelbar';q('.gtabs').before(b)}
+ const N={snake:'Snake: chi muore per primo perde',reaction:'Riflessi: chi è più lento perde',flappy:'Flappy: chi muore per primo perde',quiz:'Quiz anime da 5 domande: chi fa meno punti perde',stack:'Stack: chi crolla per primo perde',typing:'Battitura da 30 secondi: chi è più lento perde'};
+ b.innerHTML=DUEL.done?`<b>♟️ Spareggio inviato ✓</b> <span class="muted">${E(DUEL.msg||'')}</span> <a class="btn sm" href="scacchi.html?g=${DUEL.id}">Torna alla partita →</a>`
+  :`<b>♟️ Spareggio scacchi</b> <span>${N[DUEL.game]}. Conta la <b>prima</b> partita che finisci, e il punteggio va anche in classifica.</span> <a class="chip" href="scacchi.html?g=${DUEL.id}">Torna alla partita</a>`}
+function duelSent(r){DUEL.msg=r&&r.error?'Non sono riuscito a mandarlo: '+(r.error.message||'errore'):'Torna alla partita per vedere chi ha vinto.';duelBar()}
 /* ---------- record personale + festa "NUOVO RECORD!" ---------- */
 const BEST={};
 async function loadBest(game){if(!READY||!user)return;const b=await myBest(game);const g=GAMES[game];
@@ -299,7 +307,7 @@ window.__clickCheck=clickCheck;
 /* ---------- giochi extra (giochi-*.js, caricati prima di questo file) ---------- */
 const MAKE={snake,reaction,clicker};
 const RM=()=>matchMedia('(prefers-reduced-motion: reduce)').matches||document.documentElement.classList.contains('still');
-const API={q,qa,E,stage,msg,save,begin,audio,beep,tone,noise,muted,RM,myBest,profile,get AC(){return AC},celebrate,best:g=>BEST[g],sb,get user(){return user},get cur(){return cur},
+const API={duel:DUEL,q,qa,E,stage,msg,save,begin,audio,beep,tone,noise,muted,RM,myBest,profile,get AC(){return AC},celebrate,best:g=>BEST[g],sb,get user(){return user},get cur(){return cur},
  muteBtn(el){const set=()=>{el.textContent=muted()?'🔇':'🔊';el.title=muted()?'Audio disattivato':'Audio attivo'};set();
   el.onclick=()=>{localStorage.snake_mute=muted()?'0':'1';set();if(!muted()){audio();beep(990,.05)}el.blur()};return set},
  pop(el){el.classList.remove('pop');void el.offsetWidth;el.classList.add('pop')},
@@ -312,7 +320,8 @@ function open(game){stop();cur=game;qa('.gtab').forEach(b=>b.classList.toggle('a
  if(inited)try{history.replaceState(null,'',location.pathname+'#'+game)}catch(e){}}
 qa('.gtab').forEach(b=>b.onclick=()=>open(b.dataset.game));
 let torna='';try{torna=sessionStorage.giochi_torna||'';sessionStorage.removeItem('giochi_torna')}catch(e){}
-const start=GAMES[location.hash.slice(1)]?location.hash.slice(1):GAMES[torna]?torna:'snake';
+const start=DUEL?DUEL.game:GAMES[location.hash.slice(1)]?location.hash.slice(1):GAMES[torna]?torna:'snake';duelBar();
+if(DUEL)qa('.gtab').forEach(b=>{if(b.dataset.game!==DUEL.game)b.disabled=true});
 if(sb){(SP&&SP.session?SP.session(sb):sb.auth.getSession().then(({data})=>data.session)).then(async session=>{const data={session};user=session?.user||null; /* patch 4.2: niente "Accedi" se manca solo la rete */
   /* subito dopo il login: salva il tuo profilo del server; poi tieni in memoria il tuo avatar/nickname del server */
   if(user){const k='staskys_fs_'+user.id;try{if(!sessionStorage[k]){sessionStorage[k]=1;sb.rpc('touch_first_seen').then(()=>{},()=>{})}}catch(e){}}

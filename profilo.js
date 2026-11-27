@@ -124,6 +124,15 @@ function catsHTML(u){return`<section class="cats sec" data-sec="cats">
     <div class="cat-foot"><span>${c('visto')} ${A.doneWord(k)[0]}</span><span>${c('in_corso')} in corso</span>${c('droppato')?`<span>${c('droppato')} droppati</span>`:''}<span>${c('voglio')} da ${A.doneWord(k)[1]}</span></div></a>`}).join('')}
   </section>`}
 const awardsCard=()=>`<section class="card myaw sec" data-sec="awards" id="myaw"><p class="muted small">Carico gli Awards…</p></section>`;
+/* UPDATE 5: scacchi nel profilo (Elo dal vivo e per corrispondenza, ultime partite con link al replay) */
+async function fillChess(u){const box=q('#pfchess .pfc-body');if(!box)return;const did=String(u.did);
+ if(A.DEMO||!A.sb){box.innerHTML='<p class="muted tiny">Nella demo non ci sono partite.</p>';return}
+ const [r,g]=await Promise.all([A.sb.from('chess_ratings').select('mode,elo,games,wins,losses,draws,peak').eq('discord_id',did),
+  A.sb.from('chess_games').select('id,mode,ranked,white_did,black_did,result,reason,ended_at').eq('status','over').or(`white_did.eq.${did},black_did.eq.${did}`).order('ended_at',{ascending:false}).limit(5)]).catch(()=>[{},{}]);
+ const R=Object.fromEntries((r&&r.data||[]).map(x=>[x.mode,x])),G=g&&g.data||[];
+ const elo=m=>{const x=R[m];return`<div class="pfc-elo"><span>${m==='live'?'⚡ Dal vivo':'✉️ Corrispondenza'}</span>${x?(x.games<5?`<b>Piazzamento ${x.games}/5</b>`:`<b>${fmt(x.elo)}</b><small class="muted tiny">${x.wins}V ${x.losses}S ${x.draws}P · max ${fmt(x.peak)}</small>`):'<b class="muted">—</b>'}</div>`};
+ const res=x=>{if(x.result==='1/2-1/2')return['½','pari'];const w=(x.result==='1-0')===(x.white_did===did);return w?['V','win']:['S','loss']};
+ box.innerHTML=elo('live')+elo('corr')+(G.length?`<ol class="pfc-games">${G.map(x=>{const o=x.white_did===did?x.black_did:x.white_did,[t,c]=res(x);return`<li><span class="pfc-r ${c}">${t}</span><a href="scacchi.html?g=${x.id}">vs ${E(A.nameOf(o,'')||'membro')}</a><small class="muted tiny">${x.ranked?'classificata':'amichevole'}</small></li>`}).join('')}</ol>`:`<p class="muted tiny">${u.isMe?'Non hai ancora giocato.':'Nessuna partita finita.'}</p>`)}
 function pageHTML(u,ctx){
  const secs={t10:`<section class="card t10card sec" data-sec="t10" id="t10">${topHTML(u,ctx.kind)}</section>`,cats:catsHTML(u),awards:u.isMe&&W?awardsCard():''};
  return`${u.demo?`<div class="demo-ribbon">DEMO · ${u.isMe?'profilo di esempio':'confronto di esempio'} con dati finti</div>`:''}
@@ -140,7 +149,9 @@ function pageHTML(u,ctx){
   ${searchHTML()}
   <div class="card side-card"><h3>Minigiochi</h3><p class="muted small">Record personali e posizione in classifica</p>
    ${u.rec.length?`<ol class="recs">${[...u.rec.filter(r=>!S.NO_POINTS.has(r.game)),...u.rec.filter(r=>S.NO_POINTS.has(r.game))].map(r=>`<li>${S.NO_POINTS.has(r.game)?'<span class="rk">·</span>':`<span class="rk${r.rank<=3?' top':''}">${r.rank===1?'👑':'#'+r.rank}</span>`}<span class="rg">${E(S.GAME_NAMES[r.game]||r.game)}</span><b>${fmt(r.score)}</b></li>`).join('')}</ol>`:`<p class="muted small">${u.isMe?'Non hai ancora giocato. <a href="giochi.html">Vai ai giochi</a>':'Non ha ancora giocato.'}</p>`}
-   <p class="muted tiny">Punti: 10 per gioco, bonus podio e top 10, +5 per giorno di streak. Wordle, Clicker veloce e Higher or Lower non danno punti.</p></div>
+   <p class="muted tiny">Punti: 10 per gioco, bonus podio e top 10, +5 per giorno di streak. Gli scacchi (Elo) contano come due giochi. Wordle, Clicker veloce e Higher or Lower non danno punti.</p></div>
+  <div class="card side-card pf-chess" id="pfchess"><h3>♟️ Scacchi</h3><p class="muted small">Elo e ultime partite</p><div class="pfc-body"><p class="muted tiny">Carico…</p></div>
+   ${!u.isMe&&!A.DEMO?`<a class="btn sm" href="scacchi.html?sfida=${encodeURIComponent(u.did)}">Sfida a scacchi</a>`:`<a class="btn sm ghost" href="scacchi.html">Vai agli scacchi</a>`}</div>
   <a class="card side-card side-link" href="classifica.html?${A.DEMO?'demo=1&':''}tab=punti"><h3>Classifica punti →</h3><p class="muted small">Chi ha più punti nei minigiochi, con podio e badge.</p></a>
   <a class="card side-card side-link" href="classifica.html${dq}"><h3>Classifica titoli →</h3><p class="muted small">I titoli più votati dalla community, in media.</p></a>
  </aside>
@@ -240,7 +251,13 @@ function decoPreview(d,u){
  return`<span class="dbadge big ${D.badgeCls(d)}">${d.icona||'★'}</span>`}
 /* progresso verso una decorazione: [testo, percentuale] (null se è sì/no) */
 function progOf(d,st){const p=D.prog(d,st);if(!p)return null;
- if(p.asc){if(p.cur==null)return[d.req.tipo==='posizione'?'non in classifica':'nessun record',0];const ok=p.cur<=p.max;return[(d.req.tipo==='posizione'?'#'+p.cur:fmt(p.cur)+(d.req.gioco==='reaction'?' ms':d.req.gioco==='mines'?' s':''))+' / '+(d.req.tipo==='posizione'?'#'+p.max:fmt(p.max)),ok?100:Math.max(5,Math.min(95,Math.round(p.max/p.cur*100)))]}
+ /* UPDATE 5: scritte chiare per posizione e regno (prima era "#2 / #1") */
+ if(d.req.tipo==='posizione'){const need=p.max===1?'serve il 1° posto':`serve la top ${p.max}`;if(p.cur==null)return[`Non sei in classifica, ${need}`,0];
+  return p.cur<=p.max?[`Sei ${p.cur}°`,100]:[`Sei ${p.cur}°, ${need}`,Math.max(5,Math.min(95,Math.round(p.max/p.cur*100)))]}
+ if(p.regno){const h=Math.min(p.cur,p.max),now=st&&st.kingSince?Math.floor((Date.now()-new Date(st.kingSince))/36e5):null;
+  const where=now!=null?`sei 1° da ${now} ${now===1?'ora':'ore'}`:st&&st.pos&&st.points>0?`ora sei ${st.pos}°, serve il 1° posto`:'serve il 1° posto';
+  return[`Record: ${h} / ${p.max} ore di fila da 1° · ${where}`,Math.min(100,Math.round(h/p.max*100))]}
+ if(p.asc){if(p.cur==null)return['nessun record',0];const ok=p.cur<=p.max;return[fmt(p.cur)+(d.req.gioco==='reaction'?' ms':d.req.gioco==='mines'?' s':'')+' / '+fmt(p.max),ok?100:Math.max(5,Math.min(95,Math.round(p.max/p.cur*100)))]}
  const c=p.cur==null?0:p.cur;return[`${fmt(Math.min(c,p.max))} / ${fmt(p.max)}`,Math.min(100,Math.round(c/p.max*100))]}
 function openDecos(u,rerender,opts){opts=opts||{};let eq=JSON.parse(JSON.stringify(u.equipped)),tab=opts.tab||'frame',test=!!opts.test;const st=u.stats;
  const real=JSON.parse(JSON.stringify(u.equipped));let teq=JSON.parse(JSON.stringify(u.goal||u.equipped));teq.badges=teq.badges||[];
@@ -373,7 +390,7 @@ async function show(){
  const firstKind=KINDS.slice().sort((a,b)=>u.ratings.filter(r=>r.kind===b).length-u.ratings.filter(r=>r.kind===a).length)[0];
  const ctx={kind:KINDS.includes(P.get('tipo'))?P.get('tipo'):firstKind,viewer:viewerDid,cmp,showCmp,similar:S.similar(all,did),avColor:'',testing:false};CTX=ctx;
  ensureFont(u.theme.font);
- root.innerHTML=pageHTML(u,ctx);
+ root.innerHTML=pageHTML(u,ctx);fillChess(u);
  const reload=async()=>{const all2=await S.loadAll();applyCovers(u,all2.filter(r=>String(r.discord_id)===did));setKind(ctx.kind)};
  const coversChanged=()=>{applyCovers(u,u.ratings.map(r=>r.custom?{...r,cover:r.ocover,custom:false}:r));rerenderPass();setKind(ctx.kind);const c=q('.cats',root);c&&(c.outerHTML=catsHTML(u))};
  const setKind=k=>{ctx.kind=k;const s=q('#stars');s&&(s.innerHTML=starsHTML(u,k));const t=q('#t10');t&&(t.innerHTML=topHTML(u,k));qa('#skind button').forEach(b=>b.classList.toggle('active',b.dataset.k===k));bindT10()};
