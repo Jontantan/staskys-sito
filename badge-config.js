@@ -1,41 +1,55 @@
-/* Staskys — CONFIGURAZIONE BADGE (update 3) · un solo file da modificare
+/* Staskys — CONFIGURAZIONE BADGE (update 4: requisiti definitivi decisi da Jonathan) · un solo file da modificare
    ------------------------------------------------------------------------------
-   ⚠️ TUTTI I BADGE QUI SOTTO SONO ESEMPI PROVVISORI (provvisorio:true): Jonathan dirà quelli veri.
-   Per cambiarli basta modificare nome, icona, punti o il requisito; per toglierne uno cancella la riga.
+   Per cambiare un badge basta modificare nome, icona, rarità o il requisito; per toglierne uno cancella la riga.
    (Non cambiare gli id dei badge già esistenti: chi li ha messi sul passaporto li perderebbe.)
 
    Ogni badge:
-     id        codice unico (b_…)          nome   nome mostrato        icona  emoji
-     rarita    comune · rara · epica · leggendaria
-     punti     quanti "punti badge" vale (servono per la classifica Badge)
-     req       come si sblocca (sotto i tipi possibili)
-   Tipi di requisito — minigiochi:
-     {tipo:'punti', valore:N}   almeno N punti      {tipo:'primo', valore:N}  primo in N minigiochi
-     {tipo:'podi', valore:N}    sul podio in N      {tipo:'streak', valore:N} streak di N giorni
-     {tipo:'giochi', valore:N}  N minigiochi diversi {tipo:'posizione', valore:N} tra i primi N della classifica punti
-     {tipo:'record', gioco:'snake', valore:N}  record in un gioco
-   Tipi di requisito — catalogo:
-     {tipo:'voti', valore:N}                     almeno N titoli votati (tutte le categorie)
-     {tipo:'categoria', kind:'anime', valore:N}  almeno N titoli votati/segnati in una categoria (anime, game, movie, tv, manga, book)
-     {tipo:'categorie', valore:N}                titoli in almeno N categorie diverse
-     {tipo:'top10', valore:N}                    almeno N Top 10 complete (10 titoli) */
+     id      codice unico (b_…)        nome   nome mostrato        icona  emoji
+     rarita  comune · rara · epica · leggendaria · mitico   (i "punti badge" dipendono dalla rarità, vedi PUNTI)
+     oro     true = versione d'ORO di un badge (bordo dorato e luccichio)
+     req     come si sblocca (tipi possibili in decorazioni-config.js, in alto)
+   La scritta corta sotto ogni badge bloccato si genera da sola dal requisito; per cambiarla aggiungi testo:'…'. */
 window.STASKYS_BADGES={
- PROVVISORI:true,
+ PUNTI:{comune:5,rara:15,epica:30,leggendaria:60,mitico:120},
  LISTA:[
-  /* minigiochi (gli stessi di prima, ora con i punti badge) */
-  {id:'b_first',nome:'Re di un gioco',icona:'👑',rarita:'epica',punti:30,req:{tipo:'primo',valore:1},provvisorio:true},
-  {id:'b_streak7',nome:'Costante',icona:'🔥',rarita:'rara',punti:20,req:{tipo:'streak',valore:7},provvisorio:true},
-  {id:'b_games5',nome:'Tuttofare',icona:'🎮',rarita:'comune',punti:10,req:{tipo:'giochi',valore:5},provvisorio:true},
-  {id:'b_podium3',nome:'Da podio',icona:'🏅',rarita:'rara',punti:20,req:{tipo:'podi',valore:3},provvisorio:true},
-  {id:'b_points500',nome:'Collezionista',icona:'💎',rarita:'epica',punti:30,req:{tipo:'punti',valore:300},provvisorio:true},
-  {id:'b_top3',nome:'Leggenda',icona:'⭐',rarita:'leggendaria',punti:50,req:{tipo:'posizione',valore:3},provvisorio:true},
-  /* catalogo (nuovi) */
-  {id:'b_voti10',nome:'Primi passi',icona:'✍️',rarita:'comune',punti:5,req:{tipo:'voti',valore:10},provvisorio:true},
-  {id:'b_voti100',nome:'Critico',icona:'🧐',rarita:'epica',punti:30,req:{tipo:'voti',valore:100},provvisorio:true},
-  {id:'b_otaku',nome:'Otaku',icona:'🎌',rarita:'rara',punti:15,req:{tipo:'categoria',kind:'anime',valore:50},provvisorio:true},
-  {id:'b_cinefilo',nome:'Cinefilo',icona:'🎬',rarita:'rara',punti:15,req:{tipo:'categoria',kind:'movie',valore:50},provvisorio:true},
-  {id:'b_lettore',nome:'Topo di biblioteca',icona:'📖',rarita:'rara',punti:15,req:{tipo:'categoria',kind:'book',valore:20},provvisorio:true},
-  {id:'b_onnivoro',nome:'Onnivoro',icona:'🌈',rarita:'epica',punti:25,req:{tipo:'categorie',valore:5},provvisorio:true},
-  {id:'b_top10',nome:'Classifica perfetta',icona:'🔟',rarita:'comune',punti:10,req:{tipo:'top10',valore:1},provvisorio:true}
+  /* classifica generale (punti dei minigiochi) */
+  {id:'b_king',nome:'Re di Staskys',icona:'🫅',rarita:'mitico',req:{tipo:'posizione',valore:1}},
+  {id:'b_top3',nome:'Podio',icona:'🏆',rarita:'epica',req:{tipo:'posizione',valore:3}},
+  {id:'b_climber',nome:'Scalatore',icona:'🧗',rarita:'rara',req:{tipo:'posizione',valore:10}},
+  /* minigiochi */
+  {id:'b_games5',nome:'Tuttofare',icona:'🎮',rarita:'comune',req:{tipo:'giochi',valore:5}},
+  {id:'b_podium3',nome:'Medagliere',icona:'🏅',rarita:'rara',req:{tipo:'podi',valore:3}},
+  {id:'b_first',nome:'Re di un gioco',icona:'👑',rarita:'epica',req:{tipo:'primo',valore:1}},
+  {id:'b_points500',nome:'Collezionista',icona:'💎',rarita:'epica',req:{tipo:'punti',valore:750}},
+  {id:'b_streak7',nome:'In fiamme',icona:'🔥',rarita:'rara',req:{tipo:'streak',valore:14}},
+  {id:'b_night',nome:'Nottambulo',icona:'🦉',rarita:'rara',req:{tipo:'notte'}},
+  /* catalogo */
+  {id:'b_voti10',nome:'Primi passi',icona:'✍️',rarita:'comune',req:{tipo:'voti',valore:10}},
+  {id:'b_top10',nome:'Classifica perfetta',icona:'🔟',rarita:'comune',req:{tipo:'top10',valore:1}},
+  {id:'b_voti100',nome:'Giudice',icona:'⚖️',rarita:'epica',req:{tipo:'voti',valore:100}},
+  {id:'b_onnivoro',nome:'Onnivoro',icona:'🌈',rarita:'epica',req:{tipo:'categorie',valore:6}},
+  {id:'b_harsh',nome:'Critico spietato',icona:'🗡️',rarita:'rara',req:{tipo:'bassi',valore:30}},
+  {id:'b_harsh_oro',nome:'Critico spietato · Oro',icona:'🗡️',rarita:'leggendaria',oro:true,req:{tipo:'bassi',valore:100}},
+  {id:'b_heart',nome:'Cuore d\'oro',icona:'💛',rarita:'rara',req:{tipo:'dieci',valore:30}},
+  {id:'b_heart_oro',nome:'Cuore d\'oro · Oro',icona:'💛',rarita:'leggendaria',oro:true,req:{tipo:'dieci',valore:100}},
+  {id:'b_lettore',nome:'Topo di biblioteca',icona:'📖',rarita:'rara',req:{tipo:'categoria',kind:'book',valore:20}},
+  {id:'b_lettore_oro',nome:'Topo di biblioteca · Oro',icona:'📖',rarita:'leggendaria',oro:true,req:{tipo:'categoria',kind:'book',valore:100}},
+  {id:'b_serie',nome:'Maratoneta',icona:'📺',rarita:'rara',req:{tipo:'categoria',kind:'tv',valore:20}},
+  {id:'b_serie_oro',nome:'Maratoneta · Oro',icona:'📺',rarita:'leggendaria',oro:true,req:{tipo:'categoria',kind:'tv',valore:100}},
+  {id:'b_cinefilo',nome:'Cinefilo',icona:'🎬',rarita:'rara',req:{tipo:'categoria',kind:'movie',valore:40}},
+  {id:'b_cinefilo_oro',nome:'Cinefilo · Oro',icona:'🎬',rarita:'leggendaria',oro:true,req:{tipo:'categoria',kind:'movie',valore:100}},
+  {id:'b_gamer',nome:'Gamer',icona:'🕹️',rarita:'rara',req:{tipo:'categoria',kind:'game',valore:35}},
+  {id:'b_gamer_oro',nome:'Gamer · Oro',icona:'🕹️',rarita:'leggendaria',oro:true,req:{tipo:'categoria',kind:'game',valore:100}},
+  {id:'b_otaku',nome:'Otaku',icona:'🎌',rarita:'epica',req:{tipo:'categoria',kind:'anime',valore:80}},
+  {id:'b_otaku_oro',nome:'Otaku · Oro',icona:'🎌',rarita:'leggendaria',oro:true,req:{tipo:'categoria',kind:'anime',valore:150}},
+  /* passaporto e sito */
+  {id:'b_like10',nome:'Apprezzato',icona:'👍',rarita:'comune',req:{tipo:'like',valore:10}},
+  {id:'b_like50',nome:'Popolare',icona:'❤️',rarita:'epica',req:{tipo:'like',valore:50}},
+  {id:'b_like100',nome:'Influencer',icona:'🌟',rarita:'leggendaria',req:{tipo:'like',valore:100}},
+  {id:'b_pioneer',nome:'Pioniere',icona:'🚩',rarita:'rara',req:{tipo:'entro',data:'2026-12-31'}},
+  {id:'b_move',nome:'Traslocato',icona:'📦',rarita:'comune',req:{tipo:'import'}},
+  {id:'b_style',nome:'Stilista',icona:'🎨',rarita:'comune',req:{tipo:'stile'}},
+  /* assegnato a mano: aggiungi l'ID Discord nella lista ids */
+  {id:'b_staff',nome:'Staff',icona:'🛡️',rarita:'epica',req:{tipo:'manuale',ids:['760448374196404236']},testo:'Solo per lo staff di Staskys'}
  ]
 };

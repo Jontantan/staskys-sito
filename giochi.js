@@ -7,7 +7,7 @@ const READY=!!(CFG.SUPABASE_URL&&CFG.SUPABASE_ANON_KEY&&!/INCOLLA_QUI/.test(CFG.
 const sb=READY?window.supabase.createClient(CFG.SUPABASE_URL,CFG.SUPABASE_ANON_KEY,{auth:{flowType:'pkce',detectSessionInUrl:true,persistSession:true,autoRefreshToken:true,storage:window.localStorage,storageKey:'sb-otxtpwojvuyxksrsfpdl-auth-token'}}):null;
 const GAMES={
  snake:{t:'Snake',k:'King Snake',d:'Mangia più mele possibile senza sbattere. Frecce/WASD su PC, scorri o usa i tasti su telefono.',unit:'mele',asc:false},
- reaction:{t:'Tempo di reazione',k:'King Reazione',d:'Tocca appena lo schermo diventa scuro. 3 tentativi: conta la media. Meno è meglio.',unit:'ms',asc:true,lbDesc:'tempo medio più basso',fmt:v=>v+' ms'},
+ reaction:{t:'Riflessi',k:'King Reazione',d:'Tocca appena lo schermo diventa scuro. 5 tentativi validi: conta la media. Sotto i 125 ms è un anticipo e quel tentativo non vale. Meno è meglio.',unit:'ms',asc:true,lbDesc:'tempo medio più basso',fmt:v=>v+' ms'},
  clicker:{t:'Clicker veloce',k:'King Clicker',d:'Quanti clic riesci a fare in 10 secondi? Il tempo parte al primo clic.',unit:'clic',asc:false}
 };
 let inited=false,user=null,cur='snake',stop=()=>{};
@@ -220,8 +220,11 @@ function snake(){
  reset();renderPicker();loadSkins();raf=requestAnimationFrame(loop);return()=>{clearTimeout(timer);cancelAnimationFrame(raf);run=false;removeEventListener('keydown',key)}}
 
 /* ---------- Tempo di reazione ---------- */
+/* update 4: 5 tentativi validi; sotto i 125 ms = anticipo (non vale, si ripete il tentativo) */
+const RX_N=5,RX_MIN=125;
+try{if(!localStorage.rx_v4){localStorage.removeItem('reaction_best');localStorage.rx_v4='1'}}catch(e){} // record locale vecchio (3 tentativi) azzerato
 function reaction(){
- stage.innerHTML='<div class="ghud"><span>Tentativo <b id="tr">0</b>/3</span><span>Record <b id="rec">'+(localStorage.reaction_best?localStorage.reaction_best+' ms':'–')+'</b></span></div><div class="rzone" id="z" tabindex="0"><span class="big">Inizia</span><span>Tocca per cominciare</span></div><p class="gmsg"></p>';
+ stage.innerHTML='<div class="ghud"><span>Tentativo <b id="tr">0</b>/'+RX_N+'</span><span>Record <b id="rec">'+(localStorage.reaction_best?localStorage.reaction_best+' ms':'–')+'</b></span></div><div class="rzone" id="z" tabindex="0"><span class="big">Inizia</span><span>Tocca per cominciare</span></div><p class="gmsg"></p>';
  const z=q('#z');let st='idle',times=[],t0=0,to=null;
  const show=(cls,a,b)=>{z.className='rzone '+cls;z.innerHTML=`<span class="big">${a}</span><span>${b}</span>`};
  function arm(){audio();st='wait';show('wait','Aspetta…','Tocca quando diventa scuro');to=setTimeout(()=>{st='go';t0=performance.now();show('go','ORA!','');tone('square',1320,.06,0,.04)},1200+Math.random()*2500)}
@@ -229,11 +232,13 @@ function reaction(){
   if(st==='idle'||st==='done'){times=[];q('#tr').textContent=0;msg('');arm()}
   else if(st==='wait'){clearTimeout(to);st='early';show('','Troppo presto!','Tocca per riprovare questo tentativo')}
   else if(st==='early')arm();
-  else if(st==='go'){const ms=Math.round(performance.now()-t0);times.push(ms);q('#tr').textContent=times.length;
-   if(times.length<3){st='between';show('',ms+' ms','Tocca per il prossimo tentativo')}
-   else{st='done';const avg=Math.round(times.reduce((a,b)=>a+b)/3);show('',avg+' ms','Media di '+times.join(' · ')+' ms — tocca per rigiocare');
+  else if(st==='go'){const ms=Math.round(performance.now()-t0);
+   if(ms<RX_MIN){st='early';show('','Anticipo! ('+ms+' ms)','Sotto i '+RX_MIN+' ms non vale: tocca per riprovare questo tentativo');return}
+   times.push(ms);q('#tr').textContent=times.length;
+   if(times.length<RX_N){st='between';show('',ms+' ms','Tocca per il prossimo tentativo')}
+   else{st='done';const avg=Math.round(times.reduce((a,b)=>a+b)/RX_N);show('',avg+' ms','Media di '+times.join(' · ')+' ms — tocca per rigiocare');
     if(!localStorage.reaction_best||avg<+localStorage.reaction_best){localStorage.reaction_best=avg;q('#rec').textContent=avg+' ms'}
-    if(avg>=100)save('reaction',avg);else msg('Troppo veloce per essere vero: punteggio non salvato.')}}
+    if(avg>=RX_MIN)save('reaction',avg);else msg('Troppo veloce per essere vero: punteggio non salvato.')}}
   else if(st==='between')arm()}
  z.addEventListener('pointerdown',hit);z.addEventListener('keydown',e=>{if(e.key===' '||e.key==='Enter')hit(e)});
  return()=>clearTimeout(to)}
@@ -287,6 +292,7 @@ let torna='';try{torna=sessionStorage.giochi_torna||'';sessionStorage.removeItem
 const start=GAMES[location.hash.slice(1)]?location.hash.slice(1):GAMES[torna]?torna:'snake';
 if(sb){sb.auth.getSession().then(async({data})=>{user=data.session?.user||null;
   /* subito dopo il login: salva il tuo profilo del server; poi tieni in memoria il tuo avatar/nickname del server */
+  if(user){const k='staskys_fs_'+user.id;try{if(!sessionStorage[k]){sessionStorage[k]=1;sb.rpc('touch_first_seen').then(()=>{},()=>{})}}catch(e){}}
   if(user&&SP){if(data.session.provider_token)await Promise.race([SP.syncSelf(sb).catch(()=>null),new Promise(r=>setTimeout(r,4000))]);
    SP.load(sb).then(m=>{const d=didOf(user);if(m[d]){SP.remember(d,m[d]);renderAuth()}})}},()=>{}).then(()=>{inited=true;renderAuth();open(cur);loadStreak()});
  sb.auth.onAuthStateChange((_e,s)=>{const was=user?.id;user=s?.user||null;if(was!==user?.id){renderAuth();renderLock();board(cur);loadStreak();for(const k in BEST)delete BEST[k];loadBest(cur);if(GAMES[cur].onUser)try{GAMES[cur].onUser(user)}catch(e){}}})}

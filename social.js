@@ -138,8 +138,11 @@ async function loadRanking(kind){
 /* ---------- minigiochi: record, posizioni, streak e PUNTI ---------- */
 /* PUNTI (provvisorio): 10 per ogni minigioco giocato, +50/+30/+20 per 1°/2°/3° posto, +5 se sei in top 10, +5 per ogni giorno di streak */
 const ASC=new Set(['reaction','mines','wordle']); /* giochi dove vince il punteggio più basso */
-const GAME_NAMES={snake:'Snake',reaction:'Tempo di reazione',clicker:'Clicker veloce',flappy:'Flappy',tetris:'Tetris',dino:'Dino runner',quiz:'Quiz anime',wordle:'Wordle',2048:'2048',breakout:'Breakout',stack:'Stack',suika:'Suika',mines:'Prato fiorito',typing:'Battitura'};
-function points(rec,streak){return rec.reduce((s,r)=>s+10+(r.rank===1?50:r.rank===2?30:r.rank===3?20:r.rank<=10?5:0),0)+(streak||0)*5}
+const GAME_NAMES={snake:'Snake',reaction:'Riflessi',clicker:'Clicker veloce',flappy:'Flappy',tetris:'Tetris',dino:'Dino runner',quiz:'Quiz anime',wordle:'Wordle',2048:'2048',breakout:'Breakout',stack:'Stack',suika:'Suika',mines:'Prato fiorito',typing:'Battitura'};
+/* UPDATE 4: Wordle e Clicker veloce non danno più punti né primi posti/podi (si possono ancora giocare, con la loro classifica) */
+const NO_POINTS=new Set(['wordle','clicker']);
+const counts=r=>!NO_POINTS.has(r.game);
+function points(rec,streak){return rec.filter(counts).reduce((s,r)=>s+10+(r.rank===1?50:r.rank===2?30:r.rank===3?20:r.rank<=10?5:0),0)+(streak||0)*5}
 function demoGames(){/* partite finte, solo per la DEMO */
  const P=[['demo-demo','Membro demo',2,{snake:41,wordle:3,tetris:2210,flappy:27,2048:1388},7,12],['demo-aki','Demo Aki',1,{snake:55,tetris:3100,quiz:9,typing:88,suika:2400,stack:31},12,20],['demo-rin','Demo Rin',3,{wordle:2,reaction:212,mines:48,flappy:19},3,5],
   ['demo-kai','Demo Kai',4,{snake:38,flappy:44,dino:1810,breakout:930,clicker:118,2048:2048,tetris:1500},21,30],['demo-yuki','Demo Yuki',5,{quiz:10,reaction:188,typing:102},0,4],['demo-sora','Demo Sora',0,{dino:2400,stack:40,suika:3300,mines:61},5,9],
@@ -162,7 +165,7 @@ async function loadGames(){if(gcache)return gcache;
  /* streak (prio 3) e punteggi (prio 4): indirizzi salvati quando si è giocato, possono essere vecchi */
  st.forEach(r=>A.addAv(uid2did[r.user_id],r.avatar_url,3));lb.forEach(r=>A.addAv(r.discord_id,r.avatar_url,4));
  users.forEach(u=>{u.name=A.nameOf(u.did,rname[u.did]||u.name);u.avatar=A.avList(u.did)[0]});
- users.forEach(u=>{u.rec.sort((a,b)=>a.rank-b.rank);u.points=points(u.rec,u.streak);u.firsts=u.rec.filter(r=>r.rank===1).length;u.podiums=u.rec.filter(r=>r.rank<=3).length;u.best=Object.fromEntries(u.rec.map(r=>[r.game,r.score]))});
+ users.forEach(u=>{u.rec.sort((a,b)=>a.rank-b.rank);u.points=points(u.rec,u.streak);u.firsts=u.rec.filter(r=>counts(r)&&r.rank===1).length;u.podiums=u.rec.filter(r=>counts(r)&&r.rank<=3).length;u.best=Object.fromEntries(u.rec.map(r=>[r.game,r.score]))});
  const ranked=[...users.values()].sort((a,b)=>b.points-a.points||b.firsts-a.firsts);ranked.forEach((u,i)=>u.pos=i+1);
  return gcache={users,ranked,byGame}}
 
@@ -183,8 +186,42 @@ async function saveProfile(patch){const did=A.DEMO?'demo-demo':(A.user?A.profile
  if(!error)pcache.set(did,{...cur,...row});return error}
 
 /* ---------- UPDATE 3: statistiche catalogo per i badge ---------- */
-function catStats(rows){const kind={};let voti=0;rows.forEach(r=>{kind[r.kind]=(kind[r.kind]||0)+1;if(has(r))voti++});
- const top10=Object.keys(kind).filter(k=>top10f(rows,k).list.length>=10).length;return{voti,kind,cats:Object.keys(kind).length,top10}}
+/* update 4: rated = titoli votati per categoria, low = voti sotto il 5, tens = voti da 10 */
+function catStats(rows){const kind={},rated={};let voti=0,low=0,tens=0;rows.forEach(r=>{kind[r.kind]=(kind[r.kind]||0)+1;if(has(r)){voti++;rated[r.kind]=(rated[r.kind]||0)+1;if(+r.rating<5)low++;if(+r.rating>=10)tens++}});
+ const top10=Object.keys(kind).filter(k=>top10f(rows,k).list.length>=10).length;return{voti,kind,rated,low,tens,cats:Object.keys(kind).length,top10}}
+
+/* ---------- UPDATE 4: like ai passaporti, primo accesso, streak migliore, partite notturne, meta del profilo ---------- */
+let xcache=null;
+const DEMO_X={likes:{'demo-demo':['demo-aki','demo-kai','demo-rin','demo-x1','demo-x2','demo-x3','demo-sora','demo-yuki','demo-x4','demo-x5','demo-x6','demo-x7'],'demo-aki':['demo-kai','demo-rin'],'demo-kai':['demo-aki']},
+ first:{'demo-demo':'2026-09-02','demo-aki':'2026-08-01','demo-kai':'2026-10-20','demo-rin':'2026-11-20'},best:{'demo-demo':9,'demo-kai':31},night:{'demo-kai':true}};
+async function loadExtra(){if(xcache)return xcache;const likes=new Map(),first=new Map(),best=new Map(),night=new Map();let ok={likes:false};
+ const addL=(t,l)=>{t=String(t);if(!likes.has(t))likes.set(t,new Set());likes.get(t).add(String(l))};
+ if(A.DEMO){Object.entries(DEMO_X.likes).forEach(([t,L])=>L.forEach(l=>addL(t,l)));let mine=[];try{mine=JSON.parse(localStorage.demo_likes||'[]')}catch(e){}
+  mine.forEach(t=>addL(t,'demo-demo'));Object.entries(DEMO_X.first).forEach(([k,v])=>first.set(k,v));Object.entries(DEMO_X.best).forEach(([k,v])=>best.set(k,v));Object.entries(DEMO_X.night).forEach(([k,v])=>night.set(k,v));ok.likes=true}
+ else if(A.sb){const safe=p=>p.then(r=>r,()=>({error:true}));
+  const [l,f,p]=await Promise.all([safe(paged(()=>A.sb.from('passport_likes').select('target_discord,liker_discord,user_id').order('target_discord').order('user_id'))),
+   safe(paged(()=>A.sb.from('site_first_seen').select('discord_id,first_at').order('discord_id'))),safe(paged(()=>A.sb.from('player_stats').select('discord_id,best_streak,night').order('user_id')))]);
+  if(!l.error){ok.likes=true;(l.data||[]).forEach(r=>addL(r.target_discord,r.liker_discord||r.user_id))}
+  if(!f.error)(f.data||[]).forEach(r=>first.set(String(r.discord_id),r.first_at));
+  if(!p.error)(p.data||[]).forEach(r=>{const d=String(r.discord_id||'');if(!d)return;best.set(d,Math.max(best.get(d)||0,+r.best_streak||0));if(r.night)night.set(d,true)})}
+ return xcache={likes,first,best,night,ok}}
+/* metti/togli like (uno per persona per passaporto) */
+async function toggleLike(target,on){target=String(target);
+ if(A.DEMO){let L=[];try{L=JSON.parse(localStorage.demo_likes||'[]')}catch(e){}L=L.filter(x=>x!==target);if(on)L.push(target);localStorage.demo_likes=JSON.stringify(L);xcache=null;return null}
+ if(!A.sb||!A.user)return{message:'login'};
+ const me=A.profile(A.user).discord;const r=on?await A.sb.from('passport_likes').insert({target_discord:target}):await A.sb.from('passport_likes').delete().eq('user_id',A.user.id).eq('target_discord',target);
+ if(!r.error&&xcache){const s=xcache.likes.get(target)||new Set();on?s.add(me):(s.delete(me),s.delete(A.user.id));xcache.likes.set(target,s)}return r.error}
+/* ha personalizzato il passaporto? (badge Stilista) */
+function styled(pf){const t=pf&&pf.theme||{},e=pf&&pf.equipped||{};return!!(t.accent||(t.bg&&t.bg!=='grad')||(t.font&&t.font!=='inter')||(t.frame&&t.frame!=='round')||t.bp||e.frame||e.effect||e.bg||(Array.isArray(e.badges)&&e.badges.length))}
+/* tutte le statistiche di un membro per badge e decorazioni */
+function statsFor(did,games,rows,profiles,X,base){did=String(did);const g=games.users.get(did)||base||{rec:[],points:0,firsts:0,podiums:0,streak:0,bestStreak:0,best:{},pos:null};const pf=profiles.get(did)||{},meta=pf.meta&&typeof pf.meta==='object'?pf.meta:{};
+ const likers=X.likes.get(did);return{...g,did,cat:catStats(rows||[]),bestStreak:Math.max(g.bestStreak||0,X.best.get(did)||0),night:!!X.night.get(did),likes:likers?likers.size:0,firstAt:X.first.get(did)||'',imported:!!meta.imported,styled:styled(pf)}}
+async function saveMeta(patch){const did=A.DEMO?'demo-demo':(A.user?A.profile(A.user).discord:'');const P=await loadProfiles(),cur=P.get(did)||{};const meta={...(cur.meta&&typeof cur.meta==='object'?cur.meta:{}),...patch};
+ Object.keys(meta).forEach(k=>meta[k]==null&&delete meta[k]);
+ if(A.DEMO){const row={...cur,meta};localStorage.demo_profile=JSON.stringify(row);P.set(did,row);return null}
+ if(!A.sb||!A.user)return{message:'login'};
+ const {error}=await A.sb.from('site_profiles').upsert({meta,updated_at:new Date().toISOString()},{onConflict:'user_id'});
+ if(!error)P.set(did,{...cur,meta});return error}
 /* ---------- UPDATE 3: copertine personalizzate (site_profiles.covers = {"kind:media_id": url}) ---------- */
 const COVER_OK=/^https:\/\/(image\.tmdb\.org|s4\.anilist\.co|media\.rawg\.io|covers\.openlibrary\.org|otxtpwojvuyxksrsfpdl\.supabase\.co\/storage\/v1\/object\/public\/covers\/)[^\s"'<>]{1,400}$/;
 function cleanCovers(c){const o={};if(c&&typeof c==='object')Object.entries(c).slice(0,300).forEach(([k,v])=>{if(/^(anime|game|movie|tv|manga|book):[\w.-]{1,40}$/.test(k)&&COVER_OK.test(String(v||'')))o[k]=String(v)});return o}
@@ -207,6 +244,6 @@ function searchMembers(list,all,viewer,term,max=8){const t=String(term||'').trim
  return list.filter(m=>m.did!==viewer&&m.name.toLowerCase().includes(t)).map(m=>{const c=viewer?compare(mine,M.get(m.did)||[]):{n:0,pct:null};return{...m,n:c.n,pct:c.pct,starts:m.name.toLowerCase().startsWith(t)}})
   .sort((a,b)=>b.starts-a.starts||(b.n?1:0)-(a.n?1:0)||(b.pct||0)-(a.pct||0)||a.name.localeCompare(b.name)).slice(0,max)}
 
-window.STASKYS_SOCIAL={MIN_VOTES,WEIGHT_M,loadAll,reset:()=>{cache=null;pcache=null;staffP=null},top10,saveTop10,compare,label,similar,byUser,ranking,loadRanking,DEMO_ME:'demo-demo',
- ASC,GAME_NAMES,points,loadGames,loadProfiles,saveProfile,members,searchMembers,catStats,cleanCovers,saveCovers,isStaff,COVER_OK};
+window.STASKYS_SOCIAL={MIN_VOTES,WEIGHT_M,loadAll,reset:()=>{cache=null;pcache=null;staffP=null;xcache=null;gcache=null},top10,saveTop10,compare,label,similar,byUser,ranking,loadRanking,DEMO_ME:'demo-demo',
+ ASC,GAME_NAMES,points,loadGames,loadProfiles,saveProfile,members,searchMembers,catStats,cleanCovers,saveCovers,isStaff,COVER_OK,NO_POINTS,loadExtra,toggleLike,statsFor,saveMeta,styled};
 })();

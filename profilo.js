@@ -16,12 +16,18 @@ function sanitizeEq(eq,unl){eq=eq||{};const ok=id=>id&&unl.includes(id)&&D.byId[
   badges:(Array.isArray(eq.badges)?eq.badges:[]).filter(id=>ok(id)&&D.byId[id].tipo==='badge').slice(0,D.MAX_BADGE)}}
 function cleanTheme(t){t=t&&typeof t==='object'?t:{};return{accent:/^#[0-9a-f]{6}$/i.test(t.accent||'')?t.accent:'',bg:D.SFONDI[t.bg]?t.bg:'grad',banner:t.banner==='none'&&!t.bp?'auto':t.banner==='discord'||D.BANNER[t.banner]?t.banner:'auto',bp:t.bp?1:0,frame:D.CORNICI[t.frame]?t.frame:'round',
  font:D.FONT[t.font]?t.font:'inter',order:Array.isArray(t.order)?[...new Set(t.order.filter(k=>ORDER.includes(k))),...ORDER].filter((k,i,a)=>a.indexOf(k)===i):ORDER.slice(),stars:t.stars!==false}}
+/* obiettivo salvato dalla modalità test (update 4): solo id esistenti, per tipo */
+function cleanGoal(g){if(!g||typeof g!=='object')return null;const ok=(id,t)=>id&&D.byId[id]&&D.byId[id].tipo===t?id:'';
+ const o={frame:ok(g.frame,'frame'),effect:ok(g.effect,'effect'),bg:ok(g.bg,'bg'),badges:(Array.isArray(g.badges)?g.badges:[]).filter(id=>ok(id,'badge')).slice(0,D.MAX_BADGE)};
+ return o.frame||o.effect||o.bg||o.badges.length?o:null}
+const goalIds=g=>g?[g.frame,g.effect,g.bg,...g.badges].filter(Boolean):[];
 /* copertine scelte dal membro (update 3): le vedono tutti sul suo profilo, Top 10 e passaporto; il catalogo resta originale */
 function applyCovers(u,rows){u.ratings=rows.map(r=>{const c=u.covers[r.kind+':'+r.media_id];return c?{...r,ocover:r.cover,cover:c,custom:true}:r});return u}
-async function loadUser(did,all,games,profiles){
+async function loadUser(did,all,games,profiles,X){
  const mine=all.filter(r=>String(r.discord_id)===did);
- const st={...(games.users.get(did)||NO_STATS),cat:S.catStats(mine)},pf=profiles.get(did)||{},unl=D.unlocked(st);
- const base=applyCovers({did,stats:st,rec:st.rec,streak:st.streak,unlocked:unl,bio:String(pf.bio||'').slice(0,160),theme:cleanTheme(pf.theme),equipped:sanitizeEq(pf.equipped,unl),covers:S.cleanCovers(pf.covers),badgePts:D.badgePoints(unl)},mine);
+ const st=S.statsFor(did,games,mine,profiles,X,NO_STATS),pf=profiles.get(did)||{},unl=D.unlocked(st);
+ const meta=pf.meta&&typeof pf.meta==='object'?pf.meta:{},likers=X.likes.get(did)||new Set(),vw=VIEWER;
+ const base=applyCovers({did,stats:st,rec:st.rec,streak:st.streak,unlocked:unl,bio:String(pf.bio||'').slice(0,160),theme:cleanTheme(pf.theme),equipped:sanitizeEq(pf.equipped,unl),covers:S.cleanCovers(pf.covers),badgePts:D.badgePoints(unl),likes:likers.size,liked:!!vw&&(likers.has(vw)||(A.user&&likers.has(A.user.id))),likesOk:X.ok.likes,firstAt:st.firstAt,goal:cleanGoal(meta.goal)},mine);
  if(A.DEMO){const L=base.ratings,me=did===S.DEMO_ME;
   return{...base,nick:L[0]?.username||st.name||'Membro demo',username:me?'demo_staskys':'',avatar:L[0]?.avatar_url||st.avatar||'',joined:me?'2024-03-12':'',inServer:true,demo:true,isMe:me}}
  const mem=await A.loadMembers(),m=mem[did]||{};
@@ -57,26 +63,33 @@ function similarHTML(list,u){
 const searchHTML=()=>`<div class="card side-card msearch"><h3>Cerca membri</h3><p class="muted small">Apri il passaporto di chiunque e scopri quanto siete simili</p>
  <label class="msq"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="msq" type="search" placeholder="Scrivi un nickname…" autocomplete="off" enterkeyhint="search" aria-label="Cerca membri"></label>
  <ul class="sim mres" id="mres"></ul></div>`;
-const badgeHTML=id=>{const d=D.byId[id];return d?`<span class="dbadge r-${d.rarita}" title="${E(d.nome)} · ${E(D.RARITA[d.rarita])}">${d.icona||'★'}</span>`:''};
+const badgeHTML=id=>{const d=D.byId[id];return d?`<span class="dbadge ${D.badgeCls(d)}" title="${E(d.nome)} · ${E(D.RARITA[d.rarita])}">${d.icona||'★'}</span>`:''};
 function avatarHTML(u){const t=u.theme,eq=u.equipped;
- return`<span class="avwrap shape-${t.frame}${eq.frame?' fr fr-'+eq.frame:''}"><img class="pass-av" ${A.avAttr(u.did,u.avatar)} alt="">${eq.frame==='fr_crown'?'<i class="crown" aria-hidden="true"></i>':''}${eq.frame==='fr_orbit'?'<i class="orb" aria-hidden="true"></i>':''}</span>`}
+ return`<span class="avwrap shape-${t.frame}${eq.frame?' fr fr-'+eq.frame:''}"><img class="pass-av" ${A.avAttr(u.did,u.avatar)} alt="">${eq.frame?D.frameHTML(eq.frame):''}</span>`}
 /* banner: 'auto' (mai scelto) = banner del profilo Discord/server se c'è; 'discord' solo se c'è davvero (patch 2.3) */
 const banOf=u=>{const b=u.theme.banner;if(b==='auto'||b==='discord')return u.banner?'discord':'none';return b};
 const banHTML=(u,k)=>k==='discord'?`<div class="pass-ban ban-discord" aria-hidden="true" style="background-image:url('${E(u.banner)}')"></div>`:`<div class="pass-ban ban-${k}" aria-hidden="true"></div>`;
+/* like al passaporto (update 4): uno per persona, si può togliere; sul tuo vedi solo quanti sono */
+const HEART='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.2C1 8.6 3 5 6.6 5c2.1 0 3.6 1.2 4.4 2.6h2C13.8 6.2 15.3 5 17.4 5 21 5 23 8.6 21.6 11.8 19.5 16.4 12 21 12 21z"/></svg>';
+function likeHTML(u){if(!u.likesOk&&!u.likes)return'';const n=`<b class="plike-n">${fmt(u.likes)}</b>`;
+ if(u.isMe)return`<button class="plike" disabled title="Like ricevuti sul tuo passaporto">${HEART}${n} <span>like</span></button>`;
+ return`<button class="plike${u.liked?' on':''}" id="plike" aria-pressed="${u.liked?'true':'false'}" title="${u.liked?'Togli il like':'Metti like a questo passaporto'}">${HEART}${n} <span>${u.liked?'Ti piace':'Mi piace'}</span></button>`}
 function passHTML(u,ctx){
  const t=u.theme,eq=u.equipped,rated=u.ratings.filter(A.hasR);
  const now=u.ratings.filter(r=>r.status==='in_corso').sort((a,b)=>String(b.updated_at).localeCompare(a.updated_at))[0];
  const since=u.joined?new Date(u.joined).toLocaleDateString('it-IT',{month:'long',year:'numeric'}):'';
+ const site=u.firstAt?Math.max(0,Math.floor((Date.now()-new Date(u.firstAt))/864e5)):null;
  return`<article class="pass bg-${t.bg} font-${t.font}${eq.bg?' dbg dbg-'+eq.bg:''}${banOf(u)!=='none'?' has-ban':''}" style="--c:${t.accent||ctx.avColor||'#555'}">
    ${banOf(u)!=='none'?banHTML(u,banOf(u)):''}
-   ${eq.bg?`<div class="dbg-layer" aria-hidden="true"></div>`:''}
+   ${eq.bg?D.bgHTML(eq.bg):''}
+   ${ctx.testing?'<span class="test-ribbon">🧪 Modalità test · anteprima</span>':''}
    <div class="pass-glow" aria-hidden="true"></div>
    <header class="pass-head">
     ${avatarHTML(u)}
     <div class="pass-id"><p class="pass-label">Passaporto Staskys</p><h1><span class="pname${eq.effect?' fx '+eq.effect:''}" data-text="${E(u.nick)}">${E(u.nick)}</span>${eq.badges.length?`<span class="dbadges">${eq.badges.map(badgeHTML).join('')}</span>`:''}</h1>
-    <p class="pass-sub">${u.username?'@'+E(u.username):''}${since?` · nel server da ${E(since)}`:''}${!u.inServer?' · non è più nel server':''}</p>
+    <p class="pass-sub">${[u.username?'@'+E(u.username):'',since?`nel server da ${E(since)}`:'',site!=null?`sul sito da ${site===0?'oggi':site===1?'1 giorno':fmt(site)+' giorni'}`:'',!u.inServer?'non è più nel server':''].filter(Boolean).join(' · ')}</p>
     ${u.bio?`<p class="pass-bio">${E(u.bio)}</p>`:u.isMe?'<button class="pass-bio add" id="addbio">+ Aggiungi una bio</button>':''}
-    ${now?`<span class="pill"><i class="live"></i>${E(A.KINDS[now.kind].verb)} <b>${E(now.title)}</b>${E(epTxt(now))}</span>`:''}</div>
+    ${likeHTML(u)}${now?`<span class="pill"><i class="live"></i>${E(A.KINDS[now.kind].verb)} <b>${E(now.title)}</b>${E(epTxt(now))}</span>`:''}</div>
     ${ctx.cmp&&ctx.cmp.n?`<div class="pass-match"><b>${ctx.cmp.pct}%</b><span>con te</span></div>`:''}
     ${u.isMe&&!u.demo?'<button class="btn ghost sm pass-out" id="logout">Esci</button>':''}
     <button class="btn ghost sm pass-share" id="share" aria-label="Condividi il profilo come immagine" title="Condividi il profilo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5"/><path d="M8 10H6a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1h-2"/></svg><span>Condividi</span></button>
@@ -103,15 +116,17 @@ function pageHTML(u,ctx){
  <section class="pf-wrap">
  <div class="pf-main">
   ${passHTML(u,ctx)}
+  ${questMHTML(u)}
   ${ctx.showCmp?compareHTML(u,ctx.viewer,ctx.cmp):''}
   ${u.theme.order.map(k=>secs[k]||'').join('')}
  </div>
  <aside class="pf-side">
+  ${questHTML(u)}
   ${similarHTML(ctx.similar,u)}
   ${searchHTML()}
   <div class="card side-card"><h3>Minigiochi</h3><p class="muted small">Record personali e posizione in classifica</p>
    ${u.rec.length?`<ol class="recs">${u.rec.map(r=>`<li><span class="rk${r.rank<=3?' top':''}">${r.rank===1?'👑':'#'+r.rank}</span><span class="rg">${E(S.GAME_NAMES[r.game]||r.game)}</span><b>${fmt(r.score)}</b></li>`).join('')}</ol>`:`<p class="muted small">${u.isMe?'Non hai ancora giocato. <a href="giochi.html">Vai ai giochi</a>':'Non ha ancora giocato.'}</p>`}
-   <p class="muted tiny">Punti (provvisori): 10 per gioco, bonus podio e top 10, +5 per giorno di streak.</p></div>
+   <p class="muted tiny">Punti: 10 per gioco, bonus podio e top 10, +5 per giorno di streak. Wordle e Clicker veloce non danno punti.</p></div>
   <a class="card side-card side-link" href="classifica.html?${A.DEMO?'demo=1&':''}tab=punti"><h3>Classifica punti →</h3><p class="muted small">Chi ha più punti nei minigiochi, con podio e badge.</p></a>
   <a class="card side-card side-link" href="classifica.html${dq}"><h3>Classifica titoli →</h3><p class="muted small">I titoli più votati dalla community, in media.</p></a>
  </aside>
@@ -180,6 +195,7 @@ function openCustomize(u,rerender,openCovers){
    <p class="label">Banner</p><div class="czgrid">${u.banner?`<button class="czo ban-discord${banOf({...u,theme:t})==='discord'?' on':''}" data-g="ban" data-v="discord"><i class="ban-discord" style="background-image:url('${E(u.banner)}')"></i><span>Discord</span></button>`:''}${sw('ban',D.BANNER,banOf({...u,theme:t}))}</div>
    <p class="label">Forma avatar</p><div class="czrow">${sw('shape',D.CORNICI,t.frame)}</div>
    <p class="label">Font del nome</p><div class="czrow fonts">${Object.entries(D.FONT).map(([k,v])=>`<button class="czo font-${k}${t.font===k?' on':''}" data-g="font" data-v="${k}"><b style="font-family:'${v[1]}',Inter,sans-serif">Aa</b><span>${E(v[0])}</span></button>`).join('')}</div>
+   <p class="label">Decorazioni</p><button class="czbtn" id="cztest"><span>🧪</span><span><b>Modalità test</b><small>Prova cornici, effetti, sfondi e badge (anche bloccati) e salva il look come obiettivo</small></span><i>→</i></button>
    <p class="label">Copertine</p><button class="czcov" id="czcov"><span class="czcov-st">${(()=>{const L=u.ratings.filter(r=>r.cover).slice(0,3);return L.map(r=>`<img src="${E(r.cover)}" alt="" loading="lazy">`).join('')})()}</span><span><b>Cambia le copertine dei tuoi titoli</b><small>Scegli tra quelle ufficiali o caricane una dal PC: la vedranno tutti sul tuo profilo${Object.keys(u.covers||{}).length?` · ${Object.keys(u.covers).length} cambiate`:''}</small></span><i>→</i></button>
    <p class="label">Sezioni</p><label class="cztog"><input type="checkbox" id="czstars" ${t.stars?'checked':''}> Mostra “Le mie stelle” nel passaporto</label>
    <ol class="czord">${t.order.map((k,i)=>`<li><span>${E(D.SEZIONI[k])}</span><button data-ou="${i}" ${i?'':'disabled'} aria-label="Su">↑</button><button data-od="${i}" ${i<t.order.length-1?'':'disabled'} aria-label="Giù">↓</button></li>`).join('')}</ol>
@@ -193,6 +209,7 @@ function openCustomize(u,rerender,openCovers){
   qa('.czo',box).forEach(b=>b.onclick=()=>{const g=b.dataset.g,v=b.dataset.v;if(g==='bg')t.bg=v;if(g==='ban'){t.banner=v;t.bp=1}if(g==='shape')t.frame=v;if(g==='font')t.font=v;live();draw()});
   q('#czstars',box).onchange=e=>{t.stars=e.target.checked;live()};
   const cc=q('#czcov',box);cc&&(cc.onclick=()=>openCovers&&openCovers());
+  const ct=q('#cztest',box);ct&&(ct.onclick=()=>{close();setTimeout(()=>openDecos(u,rerender,{test:true}),220)});
   qa('[data-ou]',box).forEach(b=>b.onclick=()=>{const i=+b.dataset.ou;[t.order[i-1],t.order[i]]=[t.order[i],t.order[i-1]];live();draw()});
   qa('[data-od]',box).forEach(b=>b.onclick=()=>{const i=+b.dataset.od;[t.order[i+1],t.order[i]]=[t.order[i],t.order[i+1]];live();draw()});
   q('#czreset',box).onclick=()=>{t=cleanTheme({});live();draw()};
@@ -200,32 +217,61 @@ function openCustomize(u,rerender,openCovers){
    if(err){q('#czmsg',box).textContent=/site_profiles|schema|relation/.test(err.message||'')?'La personalizzazione si salva appena il database è aggiornato (fase 3).':'Non sono riuscito a salvare. Riprova.';return}saved=true;close()}};
  draw()}
 
-/* ---------- le mie decorazioni ---------- */
+/* ---------- le mie decorazioni (update 4: ordine per rarità, scritta per sbloccare, modalità test e obiettivo) ---------- */
 function decoPreview(d,u){
- if(d.tipo==='frame')return`<span class="avwrap shape-round fr fr-${d.id} mini"><img class="pass-av" ${A.avAttr(u.did,u.avatar)} alt="">${d.id==='fr_crown'?'<i class="crown"></i>':''}${d.id==='fr_orbit'?'<i class="orb"></i>':''}</span>`;
+ if(d.tipo==='frame')return`<span class="avwrap shape-round fr fr-${d.id} mini"><img class="pass-av" ${A.avAttr(u.did,u.avatar)} alt="">${D.frameHTML(d.id)}</span>`;
  if(d.tipo==='effect')return`<span class="pname fx ${d.id}" data-text="Aa">Aa</span>`;
- if(d.tipo==='bg')return`<span class="dbg dbg-${d.id} bgmini"><span class="dbg-layer"></span></span>`;
- return`<span class="dbadge big r-${d.rarita}">${d.icona||'★'}</span>`}
-function openDecos(u,rerender){let eq=JSON.parse(JSON.stringify(u.equipped)),tab='frame';const st=u.stats;
- const {box,close}=sheetOpen('decosheet','deco-sheet','');
- const draw=()=>{const L=D.DECO.filter(d=>d.tipo===tab);
-  box.innerHTML=`<button class="cx" aria-label="Chiudi">×</button><p class="label">Sbloccale con i minigiochi</p><h3 class="cz-h">Le mie decorazioni</h3>
-  <p class="muted small">${fmt(st.points)} punti${st.pos?' · #'+st.pos+' in classifica':''} · ${st.firsts} primi posti · streak ${st.streak} · <b>${u.unlocked.length}/${D.DECO.length}</b> sbloccate</p>
+ if(d.tipo==='bg')return`<span class="dbg bgmini">${D.bgHTML(d.id)}</span>`;
+ return`<span class="dbadge big ${D.badgeCls(d)}">${d.icona||'★'}</span>`}
+/* progresso verso una decorazione: [testo, percentuale] (null se è sì/no) */
+function progOf(d,st){const p=D.prog(d,st);if(!p)return null;
+ if(p.asc){if(p.cur==null)return[d.req.tipo==='posizione'?'non in classifica':'nessun record',0];const ok=p.cur<=p.max;return[(d.req.tipo==='posizione'?'#'+p.cur:fmt(p.cur)+(d.req.gioco==='reaction'?' ms':d.req.gioco==='mines'?' s':''))+' / '+(d.req.tipo==='posizione'?'#'+p.max:fmt(p.max)),ok?100:Math.max(5,Math.min(95,Math.round(p.max/p.cur*100)))]}
+ const c=p.cur==null?0:p.cur;return[`${fmt(Math.min(c,p.max))} / ${fmt(p.max)}`,Math.min(100,Math.round(c/p.max*100))]}
+function openDecos(u,rerender,opts){opts=opts||{};let eq=JSON.parse(JSON.stringify(u.equipped)),tab=opts.tab||'frame',test=!!opts.test;const st=u.stats;
+ const real=JSON.parse(JSON.stringify(u.equipped));let teq=JSON.parse(JSON.stringify(u.goal||u.equipped));teq.badges=teq.badges||[];
+ const applyTest=()=>{if(test){u.equipped=JSON.parse(JSON.stringify(teq));CTX.testing=true}else{u.equipped=sanitizeEq(eq,u.unlocked);CTX.testing=false}rerender()};
+ const {box,close}=sheetOpen('decosheet','deco-sheet','',()=>{if(test||CTX.testing){CTX.testing=false;u.equipped=sanitizeEq(real,u.unlocked);rerender()}});
+ const draw=()=>{const L=D.sortR(D.DECO.filter(d=>d.tipo===tab)),cur=test?teq:eq,miss=goalIds(teq).filter(id=>!u.unlocked.includes(id));
+  box.innerHTML=`<button class="cx" aria-label="Chiudi">×</button><p class="label">Sbloccale con minigiochi, catalogo e passaporto</p><h3 class="cz-h">Le mie decorazioni</h3>
+  <p class="muted small">${fmt(st.points)} punti${st.pos?' · #'+st.pos+' in classifica':''} · streak ${st.streak} · ${u.likes} like · <b>${u.unlocked.length}/${D.DECO.length}</b> sbloccate</p>
+  <div class="dtest${test?' on':''}"><button class="tswitch${test?' on':''}" id="dtest" role="switch" aria-checked="${test}" aria-label="Modalità test"></button><b>🧪 Modalità test${test?': prova tutto, anche quello bloccato. Non si salva sul profilo.':' · prova come verrebbe il tuo passaporto con qualsiasi decorazione'}</b>
+   ${test?`<button class="btn sm" id="dgoal" ${miss.length?'':'disabled'}>🎯 Salva come obiettivo</button>`:''}</div>
+  ${test&&!miss.length?'<p class="muted tiny" style="margin:-.4rem 0 .6rem">Scegli almeno una cosa bloccata per creare un obiettivo.</p>':''}
   <div class="seg dtabs">${Object.entries(D.TIPI).map(([k,v])=>`<button data-t="${k}" class="${k===tab?'active':''}">${E(v)}</button>`).join('')}</div>
-  <div class="dgrid">${L.map(d=>{const has=u.unlocked.includes(d.id),on=d.tipo==='badge'?eq.badges.includes(d.id):eq[d.tipo]===d.id;
-   return`<div class="ditem r-${d.rarita}${has?'':' locked'}${on?' on':''}"><div class="dprev">${decoPreview(d,u)}${has?'':'<span class="dlock" aria-hidden="true">🔒</span>'}</div>
+  <div class="dgrid">${L.map(d=>{const has=u.unlocked.includes(d.id),on=d.tipo==='badge'?cur.badges.includes(d.id):cur[d.tipo]===d.id,pr=has?null:progOf(d,st);
+   return`<div class="ditem ${D.badgeCls(d)}${has?'':' locked'}${test?' testable':''}${on?(test?' tested on':' on'):''}" ${test?`data-tt="${d.id}" role="button" tabindex="0"`:''}><div class="dprev">${decoPreview(d,u)}${has||test?'':'<span class="dlock" aria-hidden="true">🔒</span>'}</div>
     <b>${E(d.nome)}</b><span class="drar">${E(D.RARITA[d.rarita])}</span>
-    ${has?`<button class="btn sm ${on?'':'ghost'}" data-eq="${d.id}">${on?'Indossata ✓':'Indossa'}</button>`:`<small class="dreq">${E(D.reqText(d.req))}${d.provvisorio?' <i>(provvisorio)</i>':''}</small>`}</div>`}).join('')}</div>
+    ${has?'':`<small class="dlockcap">${E(D.reqText(d.req,d))}</small>${pr?`<span class="dprog" title="${E(pr[0])}"><i style="width:${pr[1]}%"></i></span><small class="muted tiny">${E(pr[0])}</small>`:''}`}
+    ${test?`<span class="btn sm ${on?'':'ghost'}">${on?'In prova ✓':'Prova'}</span>`:has?`<button class="btn sm ${on?'':'ghost'}" data-eq="${d.id}">${on?'Indossata ✓':'Indossa'}</button>`:''}</div>`}).join('')}</div>
   ${tab==='badge'?`<p class="muted tiny">Puoi mostrare fino a ${D.MAX_BADGE} badge accanto al nome.</p>`:''}
-  <div class="cs-act"><button class="btn" id="dsave">Salva</button></div><p class="muted small" id="dmsg"></p>`;
+  <div class="cs-act">${test?'<button class="btn ghost" id="dexit">Esci dal test</button>':'<button class="btn" id="dsave">Salva</button>'}</div><p class="muted small" id="dmsg" aria-live="polite"></p>`;
   q('.cx',box).onclick=close;
   qa('[data-t]',box).forEach(b=>b.onclick=()=>{tab=b.dataset.t;draw()});
-  qa('[data-eq]',box).forEach(b=>b.onclick=()=>{const d=D.byId[b.dataset.eq];
-   if(d.tipo==='badge'){const i=eq.badges.indexOf(d.id);if(i>=0)eq.badges.splice(i,1);else{if(eq.badges.length>=D.MAX_BADGE)eq.badges.shift();eq.badges.push(d.id)}}
-   else eq[d.tipo]=eq[d.tipo]===d.id?'':d.id;u.equipped=sanitizeEq(eq,u.unlocked);rerender();draw()});
-  q('#dsave',box).onclick=async()=>{q('#dmsg',box).textContent='Salvataggio…';const err=await S.saveProfile({equipped:u.equipped});
-   if(err){q('#dmsg',box).textContent=/site_profiles|schema|relation/.test(err.message||'')?'Le decorazioni si salvano appena il database è aggiornato (fase 3).':'Non sono riuscito a salvare. Riprova.';return}close()}};
+  q('#dtest',box).onclick=()=>{test=!test;if(test){teq=JSON.parse(JSON.stringify(u.goal||eq));teq.badges=teq.badges||[]}applyTest();draw()};
+  const pick=(id,o)=>{const d=D.byId[id];if(d.tipo==='badge'){const i=o.badges.indexOf(id);if(i>=0)o.badges.splice(i,1);else{if(o.badges.length>=D.MAX_BADGE)o.badges.shift();o.badges.push(id)}}else o[d.tipo]=o[d.tipo]===id?'':id};
+  qa('[data-tt]',box).forEach(b=>{const go=()=>{pick(b.dataset.tt,teq);applyTest();draw()};b.onclick=go;b.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go()}}});
+  qa('[data-eq]',box).forEach(b=>b.onclick=()=>{pick(b.dataset.eq,eq);u.equipped=sanitizeEq(eq,u.unlocked);rerender();draw()});
+  const gl=q('#dgoal',box);gl&&(gl.onclick=async()=>{const g=cleanGoal(teq);q('#dmsg',box).textContent='Salvo l\'obiettivo…';const err=await S.saveMeta({goal:g});
+   if(err){q('#dmsg',box).textContent=/meta|schema|column/.test(err.message||'')?'L\'obiettivo si salva appena il database è aggiornato (update 4).':'Non sono riuscito a salvare. Riprova.';return}
+   u.goal=g;q('#dmsg',box).textContent='🎯 Obiettivo salvato! Trovi la Quest '+(matchMedia('(max-width:900px)').matches?'sotto il passaporto.':'a destra, sopra “Membri simili”.');refreshQuest(u)});
+  const ex=q('#dexit',box);ex&&(ex.onclick=()=>{test=false;applyTest();draw()});
+  const sv=q('#dsave',box);sv&&(sv.onclick=async()=>{q('#dmsg',box).textContent='Salvataggio…';const err=await S.saveProfile({equipped:u.equipped});
+   if(err){q('#dmsg',box).textContent=/site_profiles|schema|relation/.test(err.message||'')?'Le decorazioni si salvano appena il database è aggiornato (fase 3).':'Non sono riuscito a salvare. Riprova.';return}real.frame=u.equipped.frame;Object.assign(real,JSON.parse(JSON.stringify(u.equipped)));close()})};
+ if(test)applyTest();
  draw()}
+
+/* ---------- Quest: cosa manca per l'obiettivo (update 4) ---------- */
+function questInner(u){const g=u.goal;if(!g)return'';const ids=goalIds(g),st=u.stats,done=ids.filter(id=>u.unlocked.includes(id)).length;
+ return`<h3><span>🎯</span> Quest</h3><p class="qtot">Il tuo obiettivo · ${done}/${ids.length} completati</p>
+ <ul class="qlist">${D.sortR(ids.map(id=>D.byId[id])).map(d=>{const ok=u.unlocked.includes(d.id),pr=ok?null:progOf(d,st);
+  return`<li class="${ok?'ok':''}"><span class="qi">${d.tipo==='badge'?d.icona:d.tipo==='frame'?'🖼️':d.tipo==='effect'?'✨':'🌌'}</span><span class="qt"><b>${E(d.nome)}</b><small>${ok?'Sbloccato!':E(D.reqText(d.req,d))}</small></span><span class="qv">${ok?'✓':pr?E(pr[0]):'—'}</span>${!ok&&pr?`<span class="qbar"><i style="width:${pr[1]}%"></i></span>`:''}</li>`}).join('')}</ul>
+ <div class="qact"><button class="btn sm ghost" data-qtest>Prova il look</button><button class="btn sm ghost" data-qdel>Togli obiettivo</button></div>`}
+function questActive(u){const ids=goalIds(u.goal);return u.isMe&&ids.length&&ids.some(id=>!u.unlocked.includes(id))}
+function questHTML(u){return questActive(u)?`<div class="card side-card quest" id="questd">${questInner(u)}</div>`:''}
+function questMHTML(u){return questActive(u)?`<details class="card quest quest-m" id="questm" open><summary><b>🎯 Quest</b><span class="muted small">${goalIds(u.goal).filter(id=>!u.unlocked.includes(id)).length} da sbloccare</span></summary>${questInner(u).replace(/^<h3>.*?<\/h3>/,'')}</details>`:''}
+let CTX={},QB=null;
+function refreshQuest(u){const side=q('.pf-side',root),main=q('.pf-main',root);if(!side||!main)return;q('#questd',root)?.remove();q('#questm',root)?.remove();
+ if(!questActive(u))return;side.insertAdjacentHTML('afterbegin',questHTML(u));q('.pass',main).insertAdjacentHTML('afterend',questMHTML(u));QB&&QB()}
 
 /* ---------- I miei Awards ---------- */
 async function fillAwards(u){const el=q('#myaw');if(!el||!W)return;
@@ -261,12 +307,12 @@ async function show(){
  const viewerDid=VIEWER=A.DEMO?S.DEMO_ME:(A.user?A.profile(A.user).discord:'');STAFF=await S.isStaff();
  const did=P.get('u')||viewerDid;
  if(!did){const mem=await A.loadMembers();root.innerHTML=landing(mem);const b=q('#login');b&&(b.onclick=()=>A.login());return}
- const [all,games,profiles]=await Promise.all([S.loadAll(),S.loadGames(),S.loadProfiles()]);
- const u=await loadUser(did,all,games,profiles);
+ const [all,games,profiles,X]=await Promise.all([S.loadAll(),S.loadGames(),S.loadProfiles(),S.loadExtra()]);
+ const u=await loadUser(did,all,games,profiles,X);
  const M=S.byUser(all),viewerRows=viewerDid?M.get(viewerDid)||[]:[];
  const showCmp=!u.isMe,cmp=showCmp&&viewerDid?S.compare(viewerRows,u.ratings):null;
  const firstKind=KINDS.slice().sort((a,b)=>u.ratings.filter(r=>r.kind===b).length-u.ratings.filter(r=>r.kind===a).length)[0];
- const ctx={kind:KINDS.includes(P.get('tipo'))?P.get('tipo'):firstKind,viewer:viewerDid,cmp,showCmp,similar:S.similar(all,did),avColor:''};
+ const ctx={kind:KINDS.includes(P.get('tipo'))?P.get('tipo'):firstKind,viewer:viewerDid,cmp,showCmp,similar:S.similar(all,did),avColor:'',testing:false};CTX=ctx;
  ensureFont(u.theme.font);
  root.innerHTML=pageHTML(u,ctx);
  const reload=async()=>{const all2=await S.loadAll();applyCovers(u,all2.filter(r=>String(r.discord_id)===did));setKind(ctx.kind)};
@@ -280,10 +326,18 @@ async function show(){
   const cz=q('#customize');cz&&(cz.onclick=()=>openCustomize(u,rerenderPass,()=>window.STASKYS_COVERS.open(u,ctx.kind,coversChanged)));
   const sh=q('#share');sh&&(sh.onclick=()=>window.STASKYS_SHARE&&window.STASKYS_SHARE.open(u,ctx));
   const ab=q('#addbio');ab&&(ab.onclick=()=>{openCustomize(u,rerenderPass);setTimeout(()=>{const b=q('#bio');b&&b.focus()},260)});
-  const dc=q('#decos');dc&&(dc.onclick=()=>openDecos(u,rerenderPass))};
+  const dc=q('#decos');dc&&(dc.onclick=()=>openDecos(u,rerenderPass));
+  const lk=q('#plike');lk&&(lk.onclick=async()=>{if(!A.DEMO&&!A.user){A.login();return}const on=!u.liked;lk.disabled=true;const err=await S.toggleLike(u.did,on);lk.disabled=false;
+   if(err){const m=String(err.message||'');alert(/passport_likes|schema|relation/.test(m)?'I like si attivano appena il database è aggiornato (update 4).':/Troppi/.test(m)?m:/login/.test(m)?'Accedi con Discord per mettere like.':'Non sono riuscito a salvare il like. Riprova.');return}
+   u.liked=on;u.likes=Math.max(0,u.likes+(on?1:-1));rerenderPass();const b=q('#plike');b&&b.classList.add('pop')})};
+ /* Quest: pulsanti "Prova il look" e "Togli obiettivo" */
+ const bindQuest=QB=()=>{qa('[data-qtest]',root).forEach(b=>b.onclick=()=>openDecos(u,rerenderPass,{test:true}));
+  qa('[data-qdel]',root).forEach(b=>b.onclick=async()=>{if(!confirm('Togliere il tuo obiettivo?'))return;const err=await S.saveMeta({goal:null});if(err){alert('Non sono riuscito a toglierlo. Riprova.');return}u.goal=null;refreshQuest(u)})};
  /* ridisegna solo il passaporto + l'ordine delle sezioni (anteprima dal vivo) */
  const rerenderPass=()=>{const old=q('.pass',root);old.outerHTML=passHTML(u,ctx);const main=q('.pf-main',root);u.theme.order.forEach(k=>{const s=q(`.sec[data-sec="${k}"]`,main);s&&main.appendChild(s)});bindPass()};
- bindPass();bindT10();
+ bindPass();bindT10();bindQuest();
+ /* obiettivo completato: la Quest sparisce (e l'obiettivo si cancella da solo) */
+ if(u.isMe&&u.goal&&!questActive(u))S.saveMeta({goal:null}).then(()=>{u.goal=null});
  const cl=q('#cmplogin');cl&&(cl.onclick=()=>A.login());
  bindSearch(all,viewerDid);
  if(u.isMe)fillAwards(u);

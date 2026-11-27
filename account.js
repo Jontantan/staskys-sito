@@ -80,6 +80,8 @@ A.ready=sb?sb.auth.getSession().then(async({data})=>{A.user=data.session?.user||
  return A.user}).catch(()=>null):Promise.resolve(null);
 /* carica subito i profili del server se sei collegato (serve per la barra in alto, i voti e i punteggi che salvi) */
 A.ready.then(u=>{if(u&&!A.DEMO)A.loadMembers()});
+/* UPDATE 4: data del primo accesso (il database la salva una volta sola e non la cambia più); una chiamata per sessione */
+A.ready.then(u=>{if(!u||A.DEMO||!sb)return;const k='staskys_fs_'+u.id;try{if(sessionStorage[k])return;sessionStorage[k]=1}catch(e){}sb.rpc('touch_first_seen').then(()=>{},()=>{})});
 if(sb)sb.auth.onAuthStateChange((_e,s)=>{const was=A.user?.id;A.user=s?.user||null;if(was!==A.user?.id)document.dispatchEvent(new CustomEvent('staskys-auth'))});
 window.STASKYS=A;
 })();

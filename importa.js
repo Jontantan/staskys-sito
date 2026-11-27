@@ -4,6 +4,10 @@
    Prima di salvare si vede SEMPRE un'anteprima dei titoli trovati. Niente Steam, niente scraping.
    Film/serie/giochi si abbinano con la funzione super-endpoint (v3): finché non è pubblicata compare "In arrivo tra poco ⏳". */
 (function(){
+/* update 4: badge "Traslocato" — segna nel profilo che hai importato una lista (meta.imported), senza toccare il resto */
+async function markImported(){const A=window.STASKYS;try{if(A.DEMO){const r=JSON.parse(localStorage.demo_profile||'null')||{};r.meta={...(r.meta||{}),imported:true};localStorage.demo_profile=JSON.stringify(r);return}
+ if(!A.sb||!A.user)return;const {data}=await A.sb.from('site_profiles').select('meta').eq('user_id',A.user.id).maybeSingle();const meta={...((data&&data.meta)||{}),imported:true};
+ await A.sb.from('site_profiles').upsert({meta,updated_at:new Date().toISOString()},{onConflict:'user_id'})}catch(e){}}
 const A=window.STASKYS,E=A.E,q=(s,r=document)=>r.querySelector(s),qa=(s,r=document)=>[...r.querySelectorAll(s)];
 const CFG=window.GIOCHI_CONFIG||{},HDR=A.LOCAL?{}:{apikey:CFG.SUPABASE_ANON_KEY,Authorization:'Bearer '+CFG.SUPABASE_ANON_KEY};
 const ST=['visto','in_corso','droppato','voglio'];
@@ -206,7 +210,7 @@ function open(ctx){const {box,openBox,close}=ctx,canSave=A.DEMO||A.user;let caps
   q('#impgo',out).onclick=async()=>{const over=q('#impo',out)&&q('#impo',out).checked;const todo=rows.filter(r=>over||!mine[key(r.kind,r.media_id)]);const msg=q('#impmsg',out);
    if(!todo.length){msg.textContent='Niente da importare: hai già tutti questi titoli.';return}q('#impgo',out).disabled=true;
    for(let i=0;i<todo.length;i+=200){msg.textContent=`Importo… ${Math.min(i+200,todo.length)}/${todo.length}`;const err=await ctx.DB.upsert(todo.slice(i,i+200));if(err){msg.textContent=ctx.errText(err);q('#impgo',out).disabled=false;return}}
-   msg.textContent=`Fatto! ${todo.length} titoli importati.`;setTimeout(ctx.done,700)}};
+   msg.textContent=`Fatto! ${todo.length} titoli importati.`;markImported();setTimeout(ctx.done,700)}};
  pick();openBox();A.caps().then(c=>{caps=c;if(q('.impsrc',box))pick()})}
 window.STASKYS_IMPORT={open,SRC,_t:{csv,unzip,stOf}};
 })();

@@ -6,7 +6,7 @@ const A=window.STASKYS,S=window.STASKYS_SOCIAL,D=window.STASKYS_DECO,E=A.E,q=(s,
 const W=1080;
 /* colori dei banner del sito (disegni originali, come nel CSS) */
 const BAN={aurora:['#0f766e','#22d3ee','#a78bfa'],sunset:['#7c2d12','#f97316','#f43f5e'],ocean:['#0c4a6e','#0ea5e9','#22d3ee'],sakura:['#831843','#f472b6','#fbcfe8'],circuit:['#052e16','#16a34a','#22d3ee'],galaxy:['#1e1b4b','#7c3aed','#db2777'],ember:['#450a0a','#dc2626','#f59e0b'],none:['#111','#1c1c22','#111']};
-const FRAME={fr_pixel:'#a3e635',fr_sakura:'#f9a8d4',fr_neon:'#22d3ee',fr_orbit:'#a78bfa',fr_flame:'#f97316',fr_crown:'#fbbf24'};
+const FRAME={fr_pixel:'#a3e635',fr_sakura:'#f9a8d4',fr_neon:'#22d3ee',fr_orbit:'#a78bfa',fr_flame:'#f97316',fr_crown:'#fbbf24',fr_king:'#ff2d3d'};
 /* immagini esterne con CORS; il ?stk=1 evita la copia in cache caricata senza CORS dalla pagina */
 const img=src=>new Promise(ok=>{if(!src)return ok(null);const i=new Image();i.crossOrigin='anonymous';i.onload=()=>ok(i);i.onerror=()=>ok(null);
  i.src=/^https?:\/\//.test(src)&&!src.startsWith(location.origin)?src+(src.includes('?')?'&':'?')+'stk=1':src});
@@ -38,7 +38,7 @@ async function draw(u,ctx,full){
  if(fr==='fr_orbit'||fr==='fr_neon'){x.strokeStyle='rgba(255,255,255,.7)';x.lineWidth=4;x.setLineDash([18,14]);x.beginPath();x.arc(cx,cy,R+34,0,7);x.stroke();x.setLineDash([])}
  x.fillStyle='#09090c';x.beginPath();x.arc(cx,cy,R+4,0,7);x.fill();
  const av=await firstImg(A.avList(u.did,u.avatar));x.save();x.beginPath();x.arc(cx,cy,R,0,7);x.clip();if(av)cover(x,av,cx-R,cy-R,R*2,R*2);else{x.fillStyle='#333';x.fill()}x.restore();
- if(fr==='fr_crown'||(u.stats.pos===1&&u.stats.points>0))crown(x,cx,cy-R-30,62);
+ if(fr==='fr_crown'||fr==='fr_king'||(u.stats.pos===1&&u.stats.points>0))crown(x,cx,cy-R-30,62);
  /* nome */
  let y=cy+R+92;x.textAlign='center';const nick=fit(x,u.nick,W-120,84,'900');
  const eff=u.equipped.effect;if(eff==='fx_gold'){g=x.createLinearGradient(cx-300,0,cx+300,0);g.addColorStop(0,'#fde68a');g.addColorStop(.5,'#f59e0b');g.addColorStop(1,'#fde68a');x.fillStyle=g}

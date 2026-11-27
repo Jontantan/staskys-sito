@@ -1,0 +1,339 @@
+/* Staskys — UPDATE 4: rarità Mitico, decorazioni rifatte (disegni originali), sfondi animati, badge d'oro,
+   like al passaporto, modalità test + Quest, podio argento/bronzo e corona del primo. */
+
+/* ================= rarità ================= */
+:root{--r-com:#a1a1aa;--r-rar:#38bdf8;--r-epi:#c084fc;--r-leg:#fbbf24;--r-mit:#ff2d3d}
+.r-mitico .drar,.drar.r-mitico{color:var(--r-mit)!important;text-shadow:0 0 10px rgba(255,45,61,.7)}
+.ditem.r-mitico,.bk-card.r-mitico{background:radial-gradient(120% 80% at 50% 0%,rgba(255,45,61,.28),var(--card2,#151518) 62%)!important;border-color:rgba(255,45,61,.55)!important;
+ box-shadow:0 0 0 1px rgba(255,45,61,.35) inset,0 0 26px -6px rgba(255,45,61,.6);animation:mitPulse 2.6s ease-in-out infinite}
+.ditem.r-leggendaria,.bk-card.r-leggendaria{border-color:rgba(251,191,36,.38)}
+@keyframes mitPulse{50%{box-shadow:0 0 0 1px rgba(255,90,90,.6) inset,0 0 38px -4px rgba(255,45,61,.85)}}
+.r-mitico.dbadge{border-color:var(--r-mit);background:radial-gradient(circle at 50% 30%,rgba(255,80,80,.55),rgba(60,0,8,.9));box-shadow:0 0 10px rgba(255,45,61,.8),0 0 22px rgba(255,45,61,.45);animation:mitBadge 1.8s ease-in-out infinite;position:relative;overflow:hidden}
+.r-mitico.dbadge::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.65) 50%,transparent 70%);transform:translateX(-120%);animation:shine 2.6s ease-in-out infinite}
+@keyframes mitBadge{50%{box-shadow:0 0 16px rgba(255,60,60,1),0 0 34px rgba(255,45,61,.6)}}
+/* badge d'oro (versioni Leggendarie dei badge a conteggio) */
+.dbadge.oro{border:1.5px solid #fde68a;background:radial-gradient(circle at 50% 25%,#fff3b0 0,#f59e0b 55%,#78350f 100%);box-shadow:0 0 12px rgba(251,191,36,.75);position:relative;overflow:hidden}
+.dbadge.oro::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.8) 50%,transparent 70%);transform:translateX(-120%);animation:shine 3s ease-in-out infinite}
+@keyframes shine{0%,55%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
+.dbadge.sm{width:24px;height:24px;border-radius:8px;font-size:.78rem}
+
+/* ================= galleria decorazioni: scritta per sbloccare + modalità test ================= */
+.dlockcap{display:block;font-size:.7rem;line-height:1.25;color:rgba(255,255,255,.7);margin-top:.15rem;max-width:100%}
+.dlockcap::before{content:"🔒 ";font-size:.62rem}
+.dprog{display:block;width:80%;height:4px;border-radius:9px;background:rgba(255,255,255,.12);overflow:hidden;margin:.25rem auto 0}
+.dprog i{display:block;height:100%;background:linear-gradient(90deg,#22d3ee,#a78bfa);border-radius:inherit}
+.dtest{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;padding:.7rem .9rem;border-radius:16px;border:1px dashed rgba(167,139,250,.6);background:rgba(139,92,246,.1);margin:.2rem 0 .8rem;font-size:.84rem}
+.dtest.on{border-style:solid;background:linear-gradient(90deg,rgba(139,92,246,.25),rgba(34,211,238,.15))}
+.dtest b{flex:1;min-width:180px}
+.tswitch{position:relative;width:46px;height:26px;border-radius:99px;background:#333;border:0;cursor:pointer;flex:none;transition:background .2s}
+.tswitch::after{content:"";position:absolute;left:3px;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .2s}
+.tswitch.on{background:#8b5cf6}.tswitch.on::after{transform:translateX(20px)}
+.ditem.tested{border-color:#a78bfa!important;box-shadow:0 0 0 1px #a78bfa inset}
+.ditem.locked.testable{cursor:pointer}.ditem.locked.testable .dprev>*:not(.dlock){filter:none}
+.test-ribbon{position:absolute;top:.9rem;left:50%;transform:translateX(-50%);z-index:5;padding:.32rem .8rem;border-radius:99px;background:rgba(139,92,246,.92);color:#fff;font:700 .7rem Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;box-shadow:0 6px 18px rgba(0,0,0,.4);white-space:nowrap}
+.czbtn{display:flex;align-items:center;gap:.7rem;width:100%;padding:.75rem .9rem;border-radius:16px;border:1px solid var(--line2);background:var(--card2);color:#fff;font:inherit;text-align:left;cursor:pointer}
+.czbtn b{display:block;font-size:.9rem}.czbtn small{display:block;color:var(--mut);font-size:.74rem}.czbtn>span:first-child{font-size:1.4rem}.czbtn i{margin-left:auto;font-style:normal;color:var(--mut)}
+
+/* ================= Quest (obiettivo) ================= */
+.quest{position:relative;overflow:hidden;border:1px solid rgba(167,139,250,.45)!important;background:radial-gradient(120% 90% at 100% 0%,rgba(139,92,246,.22),transparent 60%),var(--card,#111)!important}
+.quest h3{display:flex;align-items:center;gap:.45rem}.quest h3 span{font-size:1.1rem}
+.qlist{list-style:none;padding:0;margin:.8rem 0 0;display:grid;gap:.55rem}
+.qlist li{display:grid;grid-template-columns:auto 1fr auto;gap:.55rem;align-items:center;font-size:.84rem}
+.qlist .qi{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:rgba(255,255,255,.06);font-size:1rem;overflow:hidden;position:relative}
+.qlist .qt b{display:block;font-size:.84rem}.qlist .qt small{display:block;color:var(--mut);font-size:.72rem;line-height:1.25}
+.qlist .qv{font-size:.72rem;color:var(--mut);white-space:nowrap}
+.qlist li.ok .qt b{text-decoration:line-through;opacity:.6}.qlist li.ok .qv{color:#4ade80}
+.qbar{grid-column:2/4;height:5px;border-radius:9px;background:rgba(255,255,255,.1);overflow:hidden;margin-top:-.25rem}
+.qbar i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#8b5cf6,#22d3ee)}
+.qact{display:flex;gap:.5rem;margin-top:.9rem;flex-wrap:wrap}
+.qtot{font-size:.75rem;color:var(--mut);margin-top:.15rem}
+.quest-m{display:none}
+@media(max-width:900px){.pf-side .quest{display:none}.quest-m{display:block}
+ .quest-m>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:.5rem}.quest-m>summary::-webkit-details-marker{display:none}
+ .quest-m>summary::after{content:"▾";margin-left:auto;color:var(--mut);transition:transform .2s}.quest-m[open]>summary::after{transform:rotate(180deg)}}
+
+/* ================= like al passaporto ================= */
+.plike{display:inline-flex;align-items:center;gap:.4rem;margin:.75rem .4rem 0 0;padding:.42rem .85rem;border-radius:999px;border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.3);color:#fff;font:600 .82rem Inter,sans-serif;cursor:pointer;backdrop-filter:blur(8px);transition:transform .15s,background .2s,border-color .2s}
+.plike svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;transition:transform .25s}
+.plike:hover{border-color:rgba(255,255,255,.5)}.plike:active{transform:scale(.94)}
+.plike.on{background:rgba(255,45,85,.22);border-color:#ff4d6d;color:#ffd1da}.plike.on svg{fill:#ff4d6d;stroke:#ff4d6d}
+.plike.pop svg{animation:likePop .45s cubic-bezier(.3,1.6,.5,1)}
+.plike[disabled]{cursor:default;opacity:.9}
+@keyframes likePop{40%{transform:scale(1.45)}100%{transform:scale(1)}}
+.plike-n{font-variant-numeric:tabular-nums}
+
+/* ================= CORNICI (disegni originali) ================= */
+.avwrap.fr{isolation:isolate}
+.avwrap.fr::before,.avwrap.fr::after,.avwrap.fr>.crown,.avwrap.fr>.orb{display:none!important}
+.avwrap.fr .pass-av{position:relative;z-index:1}
+.dx{position:absolute;display:block;pointer-events:none;z-index:2;font-style:normal}
+.dx.bk,.fl,.fcore,.rays,.halo,.o1,.o2,.o3{z-index:0}
+@keyframes spin{to{transform:rotate(1turn)}}
+@keyframes spinR{to{transform:rotate(-1turn)}}
+@keyframes twk{0%,100%{opacity:0;transform:scale(.2) rotate(0)}50%{opacity:1;transform:scale(1) rotate(90deg)}}
+/* Pixel (comune): anello a quadratini che scatta come un vecchio videogioco */
+.px,.px2{inset:-13%;border-radius:50%;background:repeating-conic-gradient(#a3e635 0 9deg,transparent 9deg 15deg);
+ -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 7px),#000 calc(100% - 7px));mask:radial-gradient(farthest-side,transparent calc(100% - 7px),#000 calc(100% - 7px));animation:spin 6s steps(24) infinite}
+.px2{inset:-19%;background:repeating-conic-gradient(#22d3ee 0 5deg,transparent 5deg 30deg);opacity:.85;animation:spinR 9s steps(12) infinite;-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 4px));mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 4px))}
+.pxs{inset:-26%;transform:rotate(calc(var(--i)*90deg + 45deg))}
+.pxs::before{content:"";position:absolute;left:50%;top:0;width:8%;height:8%;margin-left:-4%;background:#f0abfc;box-shadow:0 0 6px #f0abfc;animation:pxb 1.6s steps(2) infinite;animation-delay:calc(var(--i)*-.4s)}
+@keyframes pxb{50%{opacity:0}}
+/* Petali (rara): anello rosa e petali che girano danzando */
+.skr{inset:-9%;border-radius:50%;background:conic-gradient(from 0deg,#fbcfe8,#f472b6,#fff1f7,#f9a8d4,#ec4899,#fbcfe8);
+ -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 5px),#000 calc(100% - 5px));mask:radial-gradient(farthest-side,transparent calc(100% - 5px),#000 calc(100% - 5px));animation:spin 7s linear infinite;filter:drop-shadow(0 0 6px rgba(244,114,182,.7))}
+.pet{inset:-24%;animation:spin 10s linear infinite;animation-delay:calc(var(--i)*-1.43s)}
+.pet::before{content:"";position:absolute;left:50%;top:2%;width:15%;height:10%;border-radius:100% 0 100% 0;background:linear-gradient(135deg,#fff1f7,#f9a8d4 55%,#db2777);box-shadow:0 0 8px rgba(244,114,182,.6);animation:petSway 1.8s ease-in-out infinite alternate;animation-delay:calc(var(--i)*-.3s)}
+@keyframes petSway{from{transform:rotate(-35deg) scale(.85)}to{transform:rotate(40deg) scale(1.1)}}
+/* Neon (rara): doppio tubo al neon che sfarfalla + scia di luce che corre */
+.tube{inset:-8%;border-radius:50%;border:3px solid #22d3ee;box-shadow:0 0 10px #22d3ee,0 0 22px #22d3ee,inset 0 0 10px #22d3ee;animation:neonF 4s linear infinite}
+.tube.t2{inset:-15%;border-width:2px;border-color:#e879f9;box-shadow:0 0 10px #e879f9,0 0 24px #d946ef,inset 0 0 8px #e879f9;animation-delay:-1.7s}
+@keyframes neonF{0%,18%,22%,62%,64%,100%{opacity:1}20%,63%{opacity:.25}}
+.trail{inset:-15%;border-radius:50%;background:conic-gradient(from 0deg,transparent 0 72%,rgba(255,255,255,.0) 72%,#fff 97%,transparent 98%);
+ -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 4px));mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 4px));animation:spin 1.8s linear infinite;filter:drop-shadow(0 0 6px #fff)}
+/* Orbita (epica): pianeti con la scia che girano a velocità diverse */
+.oring{inset:-14%;border-radius:50%;border:1px solid rgba(255,255,255,.35);box-shadow:0 0 0 7px rgba(167,139,250,.07),0 0 18px rgba(167,139,250,.35)}
+.o1,.o2,.o3{inset:-14%;border-radius:50%;animation:spin 4s linear infinite;background:conic-gradient(from 270deg,transparent 0 60%,rgba(196,181,253,.0) 60%,rgba(196,181,253,.75) 100%);
+ -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 3px));mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 3px))}
+.o1 b,.o2 b,.o3 b{position:absolute;top:-6%;left:50%;width:14%;height:14%;margin-left:-7%;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#c4b5fd 45%,#6d28d9);box-shadow:0 0 12px #a78bfa,0 0 24px rgba(167,139,250,.6)}
+.o2{inset:-25%;animation:spinR 7s linear infinite;background:conic-gradient(from 90deg,rgba(103,232,249,.7) 0,transparent 35%);opacity:.9}
+.o2 b{width:9%;height:9%;margin-left:-4.5%;top:-4%;background:radial-gradient(circle at 35% 30%,#fff,#67e8f9 50%,#0e7490);box-shadow:0 0 10px #22d3ee}
+.o3{inset:-5%;animation-duration:2.6s;background:none}.o3 b{width:6%;height:6%;margin-left:-3%;top:-3%;background:#fde68a;box-shadow:0 0 8px #fde68a}
+/* Fiamma (epica): lingue di fuoco vere che si muovono tutto intorno */
+.fcore{inset:-4%;border-radius:50%;box-shadow:0 0 18px 6px rgba(249,115,22,.65),0 0 44px 14px rgba(239,68,68,.35);animation:fcore 1.4s ease-in-out infinite alternate}
+@keyframes fcore{to{box-shadow:0 0 26px 9px rgba(251,146,60,.8),0 0 60px 20px rgba(239,68,68,.45)}}
+.fl{inset:0;transform:rotate(calc(var(--i)*25.7deg))}
+.fl::before{content:"";position:absolute;left:50%;top:-17%;width:24%;height:34%;margin-left:-12%;border-radius:50% 50% 50% 50%/62% 62% 38% 38%;
+ background:radial-gradient(ellipse at 50% 85%,#fffbe6 0 14%,#fde047 26%,#fb923c 48%,#ef4444 66%,rgba(239,68,68,0) 74%);transform-origin:50% 100%;animation:flk .55s ease-in-out infinite alternate;animation-delay:calc(var(--i)*-.17s)}
+.fl:nth-child(odd)::before{height:26%;top:-10%;animation-duration:.7s}
+@keyframes flk{0%{transform:scaleY(.72) scaleX(1.05) skewX(-6deg)}50%{transform:scaleY(1.08) scaleX(.9) skewX(5deg)}100%{transform:scaleY(1.22) scaleX(.82) skewX(-3deg)}}
+.fsp{inset:-10%;transform:rotate(calc(var(--i)*60deg + 20deg))}
+.fsp::before{content:"";position:absolute;left:50%;top:0;width:4%;height:4%;border-radius:50%;background:#fde047;box-shadow:0 0 6px #fb923c;animation:fsp 1.6s ease-out infinite;animation-delay:calc(var(--i)*-.27s)}
+@keyframes fsp{0%{transform:translateY(0);opacity:1}100%{transform:translateY(-260%);opacity:0}}
+/* Corona (leggendaria): raggi dorati, doppio anello che brilla, scintille e corona fluttuante */
+.rays{inset:-48%;border-radius:50%;background:repeating-conic-gradient(rgba(253,224,71,.38) 0 5deg,transparent 5deg 15deg);
+ -webkit-mask:radial-gradient(circle,#000 28%,transparent 68%);mask:radial-gradient(circle,#000 28%,transparent 68%);animation:spin 16s linear infinite}
+.halo{inset:-10%;border-radius:50%;box-shadow:0 0 22px 6px rgba(251,191,36,.55),0 0 60px 16px rgba(245,158,11,.25);animation:haloP 2.4s ease-in-out infinite}
+@keyframes haloP{50%{box-shadow:0 0 30px 10px rgba(253,224,71,.75),0 0 80px 24px rgba(245,158,11,.35)}}
+.gring{inset:-10%;border-radius:50%;background:conic-gradient(#fde68a,#f59e0b,#fffbeb,#b45309,#fde68a,#fff7c2,#d97706,#fde68a);
+ -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 7px),#000 calc(100% - 7px));mask:radial-gradient(farthest-side,transparent calc(100% - 7px),#000 calc(100% - 7px));animation:spin 5s linear infinite}
+.gring.in{inset:-3%;background:conic-gradient(from 90deg,transparent 0 40%,#fff 50%,transparent 60%);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 2px),#000 calc(100% - 2px));mask:radial-gradient(farthest-side,transparent calc(100% - 2px),#000 calc(100% - 2px));animation:spinR 2.6s linear infinite}
+.stl{inset:-30%;transform:rotate(calc(var(--i)*60deg + 30deg))}
+.stl::before{content:"";position:absolute;left:50%;top:0;width:13%;height:13%;margin-left:-6.5%;background:#fffbeb;clip-path:polygon(50% 0,61% 39%,100% 50%,61% 61%,50% 100%,39% 61%,0 50%,39% 39%);filter:drop-shadow(0 0 4px #fde047);animation:twk 2.2s ease-in-out infinite;animation-delay:calc(var(--i)*-.37s)}
+.crw{left:50%;top:-50%;width:66%;transform:translateX(-50%) rotate(-7deg);z-index:3;filter:drop-shadow(0 0 8px rgba(251,191,36,.9)) drop-shadow(0 3px 6px rgba(0,0,0,.5));animation:crwF 2.8s ease-in-out infinite}
+.crw svg{display:block;width:100%;height:auto;overflow:visible}
+.crw .gem{animation:gemT 1.8s ease-in-out infinite;transform-box:fill-box;transform-origin:center}.crw .g2{animation-delay:-.6s}.crw .g3{animation-delay:-1.2s}
+@keyframes gemT{50%{opacity:.55;transform:scale(.8)}}
+@keyframes crwF{0%,100%{transform:translateX(-50%) translateY(0) rotate(-7deg)}50%{transform:translateX(-50%) translateY(-9%) rotate(5deg)}}
+/* Re di Staskys (MITICO, rosso): raggi rossi e oro controrotanti, anello cremisi, braci che salgono e corona rubino */
+.fr-fr_king .rays{background:repeating-conic-gradient(rgba(255,45,61,.45) 0 6deg,transparent 6deg 14deg);inset:-55%}
+.fr-fr_king .rays.r2{background:repeating-conic-gradient(rgba(253,224,71,.32) 0 3deg,transparent 3deg 20deg);animation:spinR 11s linear infinite;inset:-42%}
+.fr-fr_king .halo{box-shadow:0 0 24px 8px rgba(255,45,61,.65),0 0 70px 20px rgba(220,38,38,.35);animation:kHalo 1.8s ease-in-out infinite}
+@keyframes kHalo{50%{box-shadow:0 0 34px 12px rgba(255,70,70,.9),0 0 90px 30px rgba(220,38,38,.5)}}
+.kring{inset:-11%;border-radius:50%;background:conic-gradient(#7f1d1d,#ff2d3d,#fde047,#ff2d3d,#450a0a,#ff6b6b,#fde047,#7f1d1d);
+ -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 8px),#000 calc(100% - 8px));mask:radial-gradient(farthest-side,transparent calc(100% - 8px),#000 calc(100% - 8px));animation:spin 3.2s linear infinite;filter:drop-shadow(0 0 6px #ff2d3d)}
+.kring.in{inset:-3%;background:conic-gradient(from 0deg,transparent 0 35%,#fff 50%,transparent 65%);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 2px),#000 calc(100% - 2px));mask:radial-gradient(farthest-side,transparent calc(100% - 2px),#000 calc(100% - 2px));animation:spinR 2s linear infinite;filter:none}
+.emb{left:calc(var(--i)*10% + 2%);bottom:-6%;width:5%;height:5%;border-radius:50%;background:#fde047;box-shadow:0 0 6px #ff2d3d,0 0 10px #f97316;animation:emb 2.4s ease-in infinite;animation-delay:calc(var(--i)*-.24s);z-index:3}
+@keyframes emb{0%{transform:translate(0,0) scale(1);opacity:0}15%{opacity:1}100%{transform:translate(calc((var(--i) - 4.5)*6%),-520%) scale(.3);opacity:0}}
+.fr-fr_king .stl::before{background:#ffe4e6;filter:drop-shadow(0 0 5px #ff2d3d)}
+.fr-fr_king .crw{width:74%;top:-58%;filter:drop-shadow(0 0 10px rgba(255,45,61,.95)) drop-shadow(0 3px 6px rgba(0,0,0,.5))}
+.avwrap.mini .crw{top:-46%}
+
+/* ================= EFFETTI SUL NOME ================= */
+.fx.fx_glow{text-shadow:0 0 8px color-mix(in srgb,var(--c) 80%,#fff),0 0 22px var(--c);animation:glowB 2.6s ease-in-out infinite}
+@keyframes glowB{50%{text-shadow:0 0 12px #fff,0 0 30px color-mix(in srgb,var(--c) 90%,#fff),0 0 54px var(--c)}}
+.fx.fx_rainbow{background:linear-gradient(90deg,#ff4d4d,#ff9f1c,#ffe14d,#4ade80,#22d3ee,#818cf8,#e879f9,#ff4d4d);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;
+ animation:flowX 3.2s linear infinite;filter:drop-shadow(0 0 10px rgba(255,255,255,.18))}
+@keyframes flowX{to{background-position:300% 0}}
+.fx.fx_gold{position:relative;background:linear-gradient(100deg,#92400e 0%,#fde68a 18%,#f59e0b 32%,#fffbeb 46%,#fbbf24 54%,#b45309 70%,#fde68a 86%,#92400e 100%);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;
+ animation:flowX 3.4s linear infinite;filter:drop-shadow(0 2px 10px rgba(245,158,11,.45))}
+.fx.fx_gold::before,.fx.fx_gold::after{content:"✦";position:absolute;font-size:.42em;-webkit-text-fill-color:#fffbeb;color:#fffbeb;text-shadow:0 0 8px #fde047;animation:twk 2.4s ease-in-out infinite;pointer-events:none}
+.fx.fx_gold::before{right:-.55em;top:-.25em}.fx.fx_gold::after{left:-.35em;bottom:-.05em;font-size:.3em;animation-delay:-1.2s}
+.fx.fx_glitch{position:relative;display:inline-block;animation:gJit 3.2s steps(1) infinite}
+.fx.fx_glitch::before,.fx.fx_glitch::after{content:attr(data-text);position:absolute;inset:0;pointer-events:none;mix-blend-mode:screen}
+.fx.fx_glitch::before{color:#22d3ee;animation:gA 3.2s steps(1) infinite}
+.fx.fx_glitch::after{color:#ff2d75;animation:gB 3.2s steps(1) infinite}
+@keyframes gJit{0%,100%{transform:none}4%{transform:translate(-2px,1px) skewX(-8deg)}6%{transform:translate(2px,-1px)}8%{transform:none}52%{transform:skewX(10deg)}53%{transform:none}}
+@keyframes gA{0%,100%{transform:translate(-2px,0);clip-path:inset(0 0 60% 0)}3%{transform:translate(-6px,0);clip-path:inset(10% 0 70% 0)}5%{transform:translate(5px,0);clip-path:inset(55% 0 20% 0)}7%{transform:translate(-3px,0);clip-path:inset(30% 0 45% 0)}9%{transform:translate(-2px,0);clip-path:inset(0 0 60% 0)}51%{transform:translate(7px,0);clip-path:inset(65% 0 5% 0)}53%{transform:translate(-2px,0);clip-path:inset(0 0 60% 0)}}
+@keyframes gB{0%,100%{transform:translate(2px,0);clip-path:inset(55% 0 0 0)}3%{transform:translate(6px,0);clip-path:inset(70% 0 5% 0)}5%{transform:translate(-5px,0);clip-path:inset(15% 0 60% 0)}7%{transform:translate(3px,0);clip-path:inset(40% 0 30% 0)}9%{transform:translate(2px,0);clip-path:inset(55% 0 0 0)}51%{transform:translate(-7px,0);clip-path:inset(5% 0 75% 0)}53%{transform:translate(2px,0);clip-path:inset(55% 0 0 0)}}
+
+/* ================= SFONDI ANIMATI (scene originali) ================= */
+.pass .dbg-layer{z-index:-2}
+.dbg-layer{position:absolute;inset:0;overflow:hidden;pointer-events:none;border-radius:inherit}
+.dbg-layer i{position:absolute;display:block;font-style:normal}
+.dbg-layer::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.18),transparent 30%,transparent 70%,rgba(0,0,0,.35))}
+/* le vecchie versioni (fase 3) non devono più sovrapporsi */
+.dbg .dbg-layer[class*="sc-"]{animation:none;filter:none}
+/* bolle, petali, foglie ecc. */
+@keyframes rise{0%{transform:translate(0,0);opacity:0}10%{opacity:.9}100%{transform:translate(var(--w,0),-115%);opacity:0}}
+@keyframes fallSw{0%{transform:translate(0,-20px) rotate(0);opacity:0}8%{opacity:1}50%{transform:translate(var(--w,40px),50%) rotate(200deg)}100%{transform:translate(calc(var(--w,40px)*-.3),115%) rotate(420deg);opacity:.2}}
+/* Oceano profondo */
+.dbg-layer.sc-bg_ocean{background:linear-gradient(180deg,#0b4f78 0%,#073454 30%,#041c33 65%,#020b16 100%)}
+.sc-ray{top:-20%;left:15%;width:22%;height:140%;background:linear-gradient(180deg,rgba(186,230,253,.35),rgba(186,230,253,0) 75%);transform:skewX(-18deg);transform-origin:top;animation:raySw 7s ease-in-out infinite alternate;filter:blur(2px)}
+.sc-ray.r2{left:45%;width:14%;animation-duration:9s;animation-delay:-3s;opacity:.7}.sc-ray.r3{left:70%;width:18%;animation-duration:11s;animation-delay:-6s;opacity:.55}
+@keyframes raySw{from{transform:skewX(-22deg);opacity:.5}to{transform:skewX(-8deg);opacity:1}}
+.sc-bub{left:var(--x);bottom:-14px;width:var(--s);height:var(--s);border-radius:50%;border:1px solid rgba(224,242,254,.6);background:radial-gradient(circle at 30% 30%,rgba(255,255,255,.7) 0 15%,transparent 30%);animation:rise var(--t) linear infinite;animation-delay:calc(var(--d)*-1);--w:12px;top:auto;height:var(--s)}
+.sc-bub{transform-origin:center}
+.sc-bg_ocean .sc-bub{animation-name:bubR}
+@keyframes bubR{0%{transform:translate(0,0);opacity:0}10%{opacity:1}50%{transform:translate(8px,-300px)}100%{transform:translate(-6px,-640px);opacity:0}}
+.sc-jel{right:12%;top:40%;width:34px;height:46px;animation:jel 6s ease-in-out infinite}
+.sc-jel::before{content:"";position:absolute;left:0;top:0;width:34px;height:20px;border-radius:50% 50% 30% 30%/80% 80% 20% 20%;background:radial-gradient(ellipse at 50% 30%,rgba(244,114,182,.95),rgba(192,38,211,.5) 70%);box-shadow:0 0 18px rgba(232,121,249,.8)}
+.sc-jel::after{content:"";position:absolute;left:6px;top:16px;width:22px;height:30px;background:repeating-linear-gradient(90deg,rgba(244,114,182,.7) 0 2px,transparent 2px 6px);-webkit-mask:linear-gradient(#000,transparent);mask:linear-gradient(#000,transparent);animation:tent 1.5s ease-in-out infinite alternate}
+.sc-jel.j2{right:auto;left:8%;top:62%;transform:scale(.6);animation-delay:-3s;filter:hue-rotate(140deg)}
+@keyframes jel{0%,100%{translate:0 0}50%{translate:6px -22px}}
+@keyframes tent{to{transform:scaleY(.82) skewX(6deg)}}
+/* Notte stellata */
+.dbg-layer.sc-bg_stars{background:radial-gradient(120% 70% at 50% 110%,#23305a 0%,#0d1430 45%,#050816 100%)}
+.sc-st{inset:0;background-image:radial-gradient(1.4px 1.4px at 12% 18%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 28% 64%,#fff 50%,transparent 51%),radial-gradient(1.8px 1.8px at 47% 32%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 66% 78%,#dbeafe 50%,transparent 51%),radial-gradient(1.3px 1.3px at 83% 22%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 92% 58%,#fff 50%,transparent 51%);background-size:180px 140px;animation:stTw 3.2s ease-in-out infinite alternate}
+.sc-st.s2{background-size:260px 190px;background-position:60px 40px;animation-duration:4.6s;animation-delay:-2s;opacity:.8}
+@keyframes stTw{from{opacity:.35}to{opacity:1}}
+.sc-moon{right:9%;top:12%;width:46px;height:46px;border-radius:50%;box-shadow:inset -12px 5px 0 0 #fef3c7;filter:drop-shadow(0 0 14px rgba(254,243,199,.6))}
+.sc-shoot{left:20%;top:12%;width:120px;height:2px;background:linear-gradient(90deg,#fff,rgba(255,255,255,0));transform:rotate(-20deg);opacity:0;animation:shoot 7s ease-in infinite}
+.sc-shoot.h2{left:55%;top:30%;animation-delay:-3.5s;width:80px}
+@keyframes shoot{0%,88%{opacity:0;translate:0 0}90%{opacity:1}100%{opacity:0;translate:-220px 80px}}
+/* Neve */
+.dbg-layer.sc-bg_snow{background:linear-gradient(180deg,#0b1a30 0%,#14294a 55%,#1e3a64 100%)}
+.sc-sn{left:0;right:0;top:-240px;bottom:0;background-image:radial-gradient(2.4px 2.4px at 20px 30px,#fff 50%,transparent 51%),radial-gradient(1.6px 1.6px at 80px 90px,#e0f2fe 50%,transparent 51%),radial-gradient(2px 2px at 50px 160px,#fff 50%,transparent 51%),radial-gradient(1.4px 1.4px at 100px 200px,#fff 50%,transparent 51%);background-size:120px 240px;animation:snowF 10s linear infinite}
+.sc-sn.n2{background-size:170px 240px;animation-duration:15s;opacity:.7;filter:blur(.6px)}
+.sc-sn.n3{background-size:90px 120px;animation-duration:7s;opacity:.9;top:-120px;animation-name:snowF2}
+@keyframes snowF{to{transform:translateY(240px)}}@keyframes snowF2{to{transform:translateY(120px)}}
+.sc-glow{left:-10%;right:-10%;bottom:-40%;height:70%;background:radial-gradient(ellipse at 50% 100%,rgba(125,211,252,.45),transparent 65%);animation:stTw 4s ease-in-out infinite alternate}
+/* Città al neon */
+.dbg-layer.sc-bg_neon{background:linear-gradient(180deg,#0c0221 0%,#2a0b4f 55%,#5b1470 78%,#12041f 100%)}
+.sc-hz{left:-10%;right:-10%;bottom:22%;height:40%;background:radial-gradient(ellipse at 50% 100%,rgba(255,61,154,.55),transparent 65%);animation:stTw 3s ease-in-out infinite alternate}
+.sc-city,.sc-win{left:0;right:0;bottom:0;height:48%;clip-path:polygon(0 100%,0 40%,6% 40%,6% 22%,12% 22%,12% 48%,17% 48%,17% 10%,21% 6%,25% 10%,25% 52%,31% 52%,31% 28%,38% 28%,38% 60%,43% 60%,43% 18%,47% 18%,47% 0,50% 0,50% 18%,54% 18%,54% 44%,60% 44%,60% 30%,66% 30%,66% 56%,71% 56%,71% 14%,78% 14%,78% 40%,84% 40%,84% 24%,90% 24%,90% 50%,95% 50%,95% 34%,100% 34%,100% 100%)}
+.sc-city{background:linear-gradient(180deg,#160a2b,#07030f)}
+.sc-win{background-image:linear-gradient(90deg,transparent 0 3px,rgba(0,0,0,0) 3px),repeating-linear-gradient(90deg,transparent 0 5px,rgba(255,214,102,.85) 5px 8px,transparent 8px 13px),repeating-linear-gradient(180deg,transparent 0 6px,#000 6px 11px);background-blend-mode:normal;-webkit-mask:repeating-linear-gradient(180deg,#000 0 4px,transparent 4px 10px),linear-gradient(90deg,#000 0 30%,transparent 30% 38%,#000 38% 70%,transparent 70% 76%,#000 76%);mask:repeating-linear-gradient(180deg,#000 0 4px,transparent 4px 10px);-webkit-mask-composite:source-in;mask-composite:intersect;opacity:.55;animation:winF 5s steps(1) infinite}
+.sc-win.w2{background-image:repeating-linear-gradient(90deg,transparent 0 9px,rgba(34,211,238,.9) 9px 12px,transparent 12px 21px);opacity:.45;animation-delay:-2.3s;animation-duration:7s}
+@keyframes winF{0%,100%{opacity:.55}30%{opacity:.35}31%{opacity:.6}70%{opacity:.4}}
+.sc-rain{left:0;right:0;top:-200px;bottom:0;background:repeating-linear-gradient(105deg,transparent 0 14px,rgba(186,200,255,.22) 14px 15px,transparent 15px 34px);background-size:auto 200px;animation:rainF .7s linear infinite}
+.sc-rain.light{opacity:.5}
+@keyframes rainF{to{transform:translateY(200px)}}
+/* Lava */
+.dbg-layer.sc-bg_lava{background:radial-gradient(120% 90% at 50% 120%,#7c1d06 0%,#2b0903 50%,#120302 100%)}
+.sc-lb{left:var(--x);top:var(--y);width:60%;aspect-ratio:1.4;border-radius:50%;background:radial-gradient(ellipse,rgba(255,138,0,.85) 0%,rgba(234,88,12,.55) 30%,rgba(127,29,29,0) 65%);filter:blur(6px);animation:lavaB 9s ease-in-out infinite alternate;animation-delay:calc(var(--d)*-1);transform:scale(var(--s))}
+@keyframes lavaB{0%{translate:0 0;scale:1}50%{translate:12% -10%;scale:1.2}100%{translate:-10% 6%;scale:.85}}
+.sc-ck{inset:0;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 240' preserveAspectRatio='none'%3E%3Cg fill='none' stroke='%23ffb020' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M0 170 L40 160 L70 182 L110 168 L150 190 L190 172 L230 196 L270 178 L320 200 L360 184 L400 196'/%3E%3Cpath d='M110 168 L120 140 L150 128'/%3E%3Cpath d='M230 196 L245 222 L240 240'/%3E%3Cpath d='M270 178 L290 150 L330 140 L360 120'/%3E%3Cpath d='M40 160 L30 130 L50 110'/%3E%3C/g%3E%3C/svg%3E") center/100% 100% no-repeat;filter:drop-shadow(0 0 4px #ff7a00) drop-shadow(0 0 10px #ff4d00);animation:ckP 2.8s ease-in-out infinite}
+.sc-ck.c2{transform:scaleX(-1) translateY(-35%);opacity:.6;animation-delay:-1.4s}
+@keyframes ckP{50%{opacity:.45}}
+.sc-vig{inset:0;background:radial-gradient(ellipse at 50% 20%,rgba(0,0,0,.45),transparent 60%)}
+/* Brace */
+.dbg-layer.sc-bg_ember{background:radial-gradient(130% 80% at 50% 115%,#6b1405 0%,#2a0604 50%,#0d0202 100%)}
+.sc-eglow{left:-10%;right:-10%;bottom:-30%;height:65%;background:radial-gradient(ellipse at 50% 100%,rgba(251,113,33,.65),rgba(220,38,38,.25) 45%,transparent 70%);animation:stTw 2.2s ease-in-out infinite alternate}
+.sc-e{left:var(--x);bottom:-8px;width:var(--s);height:var(--s);border-radius:50%;background:#fde68a;box-shadow:0 0 6px #fb923c,0 0 12px #ef4444;animation:emR var(--t) ease-in infinite;animation-delay:calc(var(--d)*-1)}
+@keyframes emR{0%{transform:translate(0,0);opacity:0}10%{opacity:1}60%{opacity:.9}100%{transform:translate(var(--w),-420px) scale(.4);opacity:0}}
+/* Pioggia di petali */
+.dbg-layer.sc-bg_petals{background:linear-gradient(180deg,#2a0a24 0%,#4a1240 50%,#1a0618 100%)}
+.sc-pt{left:var(--x);top:-16px;width:var(--s);height:calc(var(--s)*.7);border-radius:100% 0 100% 0;background:linear-gradient(135deg,#fff1f7,#f9a8d4 60%,#ec4899);box-shadow:0 0 6px rgba(249,168,212,.5);animation:ptF var(--t) linear infinite;animation-delay:calc(var(--d)*-1)}
+@keyframes ptF{0%{transform:translate(0,0) rotate(0);opacity:0}8%{opacity:1}50%{transform:translate(var(--w),260px) rotate(220deg)}100%{transform:translate(calc(var(--w)*-.4),560px) rotate(480deg);opacity:.3}}
+/* Galassia */
+.dbg-layer.sc-bg_galaxy{background:#04010f}
+.sc-neb{left:-30%;top:-60%;width:160%;aspect-ratio:1;border-radius:50%;background:conic-gradient(from 0deg,rgba(124,58,237,.0),rgba(124,58,237,.55),rgba(236,72,153,.4),rgba(59,130,246,.45),rgba(124,58,237,.0) 70%,rgba(34,211,238,.3),rgba(124,58,237,0));-webkit-mask:radial-gradient(circle,#000 8%,rgba(0,0,0,.6) 30%,transparent 62%);mask:radial-gradient(circle,#000 8%,rgba(0,0,0,.6) 30%,transparent 62%);filter:blur(8px);animation:spin 50s linear infinite}
+.sc-neb.n2{left:10%;top:-20%;width:110%;animation:spinR 70s linear infinite;opacity:.7}
+.sc-comet{left:80%;top:8%;width:4px;height:4px;border-radius:50%;background:#fff;box-shadow:0 0 8px #fff,0 0 16px #a5b4fc;opacity:0;animation:comet 9s ease-in infinite}
+.sc-comet::after{content:"";position:absolute;right:2px;top:1px;width:90px;height:2px;background:linear-gradient(270deg,rgba(255,255,255,.9),transparent);transform-origin:right}
+@keyframes comet{0%,80%{opacity:0;translate:0 0}82%{opacity:1}100%{opacity:0;translate:-260px 120px}}
+.sc-comet{rotate:-25deg}
+/* Tempesta */
+.dbg-layer.sc-bg_storm{background:linear-gradient(180deg,#0a0d16 0%,#151b2b 55%,#1e2537 100%)}
+.sc-cl{left:-30%;top:-25%;width:90%;height:60%;border-radius:50%;background:radial-gradient(ellipse,rgba(71,85,105,.85),rgba(30,41,59,0) 68%);filter:blur(4px);animation:cloudD 16s ease-in-out infinite alternate}
+.sc-cl.c2{left:30%;top:-30%;width:100%;animation-duration:22s;animation-delay:-8s}.sc-cl.c3{left:5%;top:5%;width:70%;height:40%;opacity:.7;animation-duration:19s;animation-delay:-4s}
+@keyframes cloudD{to{translate:18% 4%}}
+.sc-flash{inset:0;background:radial-gradient(ellipse at 60% 10%,rgba(219,234,254,.85),rgba(147,197,253,.25) 50%,transparent 75%);opacity:0;animation:flash 6.5s linear infinite}
+@keyframes flash{0%,62%,64.5%,66%,100%{opacity:0}63%{opacity:.9}65%{opacity:.6}}
+.sc-bolt{left:58%;top:0;width:60px;height:70%;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 160'%3E%3Cpath d='M34 0 L18 62 L32 62 L12 160 L46 52 L30 52 L44 0 Z' fill='%23eff6ff'/%3E%3C/svg%3E") center top/contain no-repeat;filter:drop-shadow(0 0 6px #bfdbfe) drop-shadow(0 0 14px #60a5fa);opacity:0;animation:flash 6.5s linear infinite}
+/* Autunno */
+.dbg-layer.sc-bg_autumn{background:linear-gradient(180deg,#1f0c05 0%,#4a1a08 45%,#9a3412 85%,#c2410c 100%)}
+.sc-sun{left:50%;bottom:-30%;width:70%;aspect-ratio:1;transform:translateX(-50%);border-radius:50%;background:radial-gradient(circle,rgba(253,186,116,.75),rgba(249,115,22,.25) 45%,transparent 68%);animation:stTw 5s ease-in-out infinite alternate}
+.sc-lf{left:var(--x);top:-18px;width:var(--s);height:var(--s);border-radius:0 80% 0 80%;background:linear-gradient(135deg,#fde047,#f97316 50%,#b91c1c);filter:hue-rotate(var(--h));box-shadow:inset -1px -1px 0 rgba(0,0,0,.25);animation:ptF var(--t) linear infinite;animation-delay:calc(var(--d)*-1)}
+.sc-lf::after{content:"";position:absolute;left:50%;top:10%;width:1px;height:90%;background:rgba(120,53,15,.6);transform:rotate(-45deg);transform-origin:top}
+/* Retrowave */
+.dbg-layer.sc-bg_retro{background:linear-gradient(180deg,#0d0026 0%,#2b0a5a 40%,#a1236f 58%,#160033 60%,#0b0018 100%)}
+.sc-rsun{left:50%;top:14%;width:44%;max-width:240px;aspect-ratio:1;transform:translateX(-50%);border-radius:50%;background:linear-gradient(180deg,#ffe14d 0%,#ff8a3d 45%,#ff2d95 85%);
+ -webkit-mask:linear-gradient(#000 0 52%,transparent 52% 56%,#000 56% 64%,transparent 64% 68%,#000 68% 75%,transparent 75% 79%,#000 79% 85%,transparent 85% 89%,#000 89%);mask:linear-gradient(#000 0 52%,transparent 52% 56%,#000 56% 64%,transparent 64% 68%,#000 68% 75%,transparent 75% 79%,#000 79% 85%,transparent 85% 89%,#000 89%);filter:drop-shadow(0 0 22px rgba(255,61,154,.7));animation:stTw 3s ease-in-out infinite alternate}
+.sc-mtn{left:0;right:0;top:44%;height:16%;background:linear-gradient(180deg,#3b0764,#12002b);clip-path:polygon(0 100%,8% 40%,16% 70%,26% 20%,36% 65%,44% 45%,52% 80%,60% 30%,70% 60%,80% 15%,90% 55%,100% 35%,100% 100%)}
+.sc-grid{left:-50%;right:-50%;top:60%;bottom:-10%;perspective:180px;overflow:hidden}
+.sc-grid b{position:absolute;left:0;right:0;top:-40px;height:calc(100% + 40px);background-image:linear-gradient(rgba(255,61,154,.9) 2px,transparent 2px),linear-gradient(90deg,rgba(34,211,238,.75) 2px,transparent 2px);background-size:40px 40px;transform:rotateX(62deg);transform-origin:top;animation:gridM 1s linear infinite;filter:drop-shadow(0 0 3px #ff3d9a)}
+@keyframes gridM{to{translate:0 40px}}
+/* Codice */
+.dbg-layer.sc-bg_code{background:radial-gradient(ellipse at 50% 0%,#04210d,#010803 70%)}
+.sc-col{left:var(--x);top:0;writing-mode:vertical-rl;text-orientation:upright;font:600 13px/1.05 ui-monospace,Menlo,monospace;letter-spacing:2px;color:transparent;background:linear-gradient(180deg,rgba(34,197,94,0),rgba(34,197,94,.7) 60%,#dcfce7);-webkit-background-clip:text;background-clip:text;opacity:var(--o);animation:codeF var(--t) linear infinite;animation-delay:calc(var(--d)*-1);text-shadow:none;white-space:nowrap}
+@keyframes codeF{from{transform:translateY(-105%)}to{transform:translateY(110%)}}
+.dbg-layer.sc-bg_code::after{background:linear-gradient(180deg,rgba(0,0,0,.35),transparent 40%,rgba(0,0,0,.45))}
+/* Fuochi d'artificio */
+.dbg-layer.sc-bg_fireworks{background:linear-gradient(180deg,#05031a 0%,#110a33 60%,#1d0f3d 100%)}
+.sc-fw{left:var(--x);top:var(--y);width:120px;height:120px;margin:-60px 0 0 -60px;border-radius:50%;
+ background:repeating-conic-gradient(var(--c) 0 3deg,transparent 3deg 20deg);-webkit-mask:radial-gradient(circle,transparent 22%,#000 26%,#000 46%,transparent 50%);mask:radial-gradient(circle,transparent 22%,#000 26%,#000 46%,transparent 50%);opacity:0;animation:fwB 6.9s ease-out infinite;animation-delay:var(--d);filter:drop-shadow(0 0 6px var(--c))}
+.sc-fw::after{content:"";position:absolute;inset:34%;border-radius:50%;background:radial-gradient(circle,#fff,var(--c) 40%,transparent 70%)}
+@keyframes fwB{0%{transform:scale(.1);opacity:0}2%{opacity:1}22%{transform:scale(var(--s));opacity:.95}36%{transform:scale(calc(var(--s)*1.15));opacity:0}100%{opacity:0}}
+.sc-glowb{left:0;right:0;bottom:0;height:30%;background:linear-gradient(0deg,rgba(88,28,135,.45),transparent)}
+/* Giardino giapponese */
+.dbg-layer.sc-bg_zen{background:linear-gradient(180deg,#160c2e 0%,#3a1d4f 45%,#7a3b5a 80%,#b8606a 100%)}
+.sc-zmoon{left:12%;top:12%;width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 40% 40%,#fff7ed,#fed7aa 70%);box-shadow:0 0 30px rgba(254,215,170,.55),0 0 80px rgba(254,215,170,.25)}
+.sc-hill{left:-10%;right:-10%;bottom:-8%;height:30%;border-radius:50% 50% 0 0;background:linear-gradient(180deg,#2a1235,#12081a)}
+.sc-branch{right:-2%;top:-4%;width:58%;height:70%;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 220'%3E%3Cg fill='none' stroke='%23200d16' stroke-linecap='round'%3E%3Cpath d='M300 18 C240 30 200 60 150 70 C110 78 80 110 40 120' stroke-width='9'/%3E%3Cpath d='M205 52 C200 90 220 120 210 150' stroke-width='5'/%3E%3Cpath d='M120 80 C100 60 90 40 70 30' stroke-width='4'/%3E%3Cpath d='M150 70 C160 100 150 130 165 160' stroke-width='3.5'/%3E%3C/g%3E%3Cg fill='%23f9a8d4'%3E%3Ccircle cx='60' cy='112' r='7'/%3E%3Ccircle cx='72' cy='30' r='6'/%3E%3Ccircle cx='96' cy='48' r='7'/%3E%3Ccircle cx='128' cy='76' r='6'/%3E%3Ccircle cx='165' cy='160' r='7'/%3E%3Ccircle cx='153' cy='118' r='6'/%3E%3Ccircle cx='210' cy='150' r='8'/%3E%3Ccircle cx='214' cy='100' r='6'/%3E%3Ccircle cx='240' cy='36' r='7'/%3E%3Ccircle cx='270' cy='22' r='6'/%3E%3Ccircle cx='182' cy='62' r='6'/%3E%3C/g%3E%3Cg fill='%23fff1f7'%3E%3Ccircle cx='60' cy='112' r='2.5'/%3E%3Ccircle cx='96' cy='48' r='2.5'/%3E%3Ccircle cx='165' cy='160' r='2.5'/%3E%3Ccircle cx='210' cy='150' r='3'/%3E%3Ccircle cx='240' cy='36' r='2.5'/%3E%3C/g%3E%3C/svg%3E") right top/contain no-repeat;transform-origin:100% 0;animation:brS 6s ease-in-out infinite alternate}
+@keyframes brS{to{transform:rotate(-2.5deg)}}
+.sc-lan{left:18%;bottom:20%;width:16px;height:22px;border-radius:40%;background:radial-gradient(circle at 50% 45%,#fff7d6,#fb923c 55%,#9a3412);box-shadow:0 0 16px 4px rgba(251,146,60,.6);animation:lanG 2.6s ease-in-out infinite alternate}
+.sc-lan.l2{left:auto;right:22%;bottom:16%;transform:scale(.8);animation-delay:-1.3s}
+@keyframes lanG{to{box-shadow:0 0 26px 8px rgba(251,146,60,.85);opacity:.85}}
+.sc-bg_zen .sc-pt{top:-12px;animation-name:ptZ}
+@keyframes ptZ{0%{transform:translate(0,0) rotate(0);opacity:0}8%{opacity:1}100%{transform:translate(var(--w),520px) rotate(400deg);opacity:.2}}
+/* Lampo */
+.dbg-layer.sc-bg_lightning{background:radial-gradient(ellipse at 50% 0%,#0f2a5c 0%,#071330 50%,#020617 100%)}
+.sc-lgrid{inset:0;background-image:linear-gradient(rgba(56,189,248,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(56,189,248,.08) 1px,transparent 1px);background-size:28px 28px;-webkit-mask:radial-gradient(ellipse at 50% 40%,#000,transparent 75%);mask:radial-gradient(ellipse at 50% 40%,#000,transparent 75%)}
+.sc-lz{left:14%;top:-4%;width:110px;height:95%;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 110 300'%3E%3Cg fill='none' stroke='%23e0f2fe' stroke-linejoin='round' stroke-linecap='round'%3E%3Cpath d='M60 0 L48 60 L66 72 L40 140 L58 150 L30 230 L44 236 L26 300' stroke-width='3.2'/%3E%3Cpath d='M48 60 L24 92 L30 110' stroke-width='1.8'/%3E%3Cpath d='M40 140 L72 176 L68 196' stroke-width='1.6'/%3E%3Cpath d='M58 150 L88 162' stroke-width='1.4'/%3E%3C/g%3E%3C/svg%3E") center top/contain no-repeat;filter:drop-shadow(0 0 4px #7dd3fc) drop-shadow(0 0 12px #38bdf8);opacity:0;animation:zap 3.4s steps(1) infinite}
+.sc-lz.z2{left:auto;right:10%;transform:scaleX(-1) scale(.8);animation-delay:-1.7s;animation-duration:4.1s}
+@keyframes zap{0%,100%{opacity:0}6%{opacity:1}8%{opacity:.2}10%{opacity:1}16%{opacity:0}52%{opacity:0}54%{opacity:.8}57%{opacity:0}}
+.sc-lflash{inset:0;background:radial-gradient(ellipse at 30% 20%,rgba(125,211,252,.35),transparent 60%);opacity:0;animation:zap 3.4s steps(1) infinite}
+.sc-spk{left:var(--x);top:var(--y);width:3px;height:3px;border-radius:50%;background:#e0f2fe;box-shadow:0 0 6px #38bdf8,0 0 12px #0ea5e9;animation:spk 1.6s ease-in-out infinite;animation-delay:calc(var(--d)*-1)}
+@keyframes spk{0%,100%{opacity:.1;transform:scale(.5)}50%{opacity:1;transform:scale(1.4)}}
+/* Aurora boreale */
+.dbg-layer.sc-bg_aurora{background:linear-gradient(180deg,#020617 0%,#04142b 60%,#062b3a 100%)}
+.sc-au{left:-20%;top:-10%;width:140%;height:70%;background:linear-gradient(100deg,transparent 15%,rgba(52,211,153,.55) 32%,rgba(34,211,238,.45) 45%,rgba(167,139,250,.4) 58%,transparent 75%);filter:blur(14px);border-radius:50%;transform:skewY(-8deg);animation:auW 9s ease-in-out infinite alternate}
+.sc-au.a2{top:5%;animation-duration:13s;animation-delay:-5s;opacity:.7;background:linear-gradient(80deg,transparent 20%,rgba(74,222,128,.5) 40%,rgba(232,121,249,.35) 60%,transparent 80%)}
+.sc-au.a3{top:-20%;animation-duration:17s;animation-delay:-9s;opacity:.5}
+@keyframes auW{0%{transform:skewY(-8deg) translateX(-6%) scaleY(.85)}50%{transform:skewY(4deg) translateX(4%) scaleY(1.15)}100%{transform:skewY(-3deg) translateX(8%) scaleY(.95)}}
+.sc-amtn{left:0;right:0;bottom:0;height:24%;background:#020814;clip-path:polygon(0 100%,0 60%,10% 30%,18% 55%,28% 10%,38% 50%,48% 25%,58% 60%,68% 20%,78% 45%,88% 15%,100% 50%,100% 100%)}
+
+/* anteprime piccole nella galleria */
+.bgmini .dbg-layer{z-index:0}
+.bgmini .sc-moon{width:22px;height:22px;box-shadow:inset -6px 3px 0 0 #fef3c7}.bgmini .sc-zmoon{width:26px;height:26px}
+.bgmini .sc-fw{width:60px;height:60px;margin:-30px 0 0 -30px}.bgmini .sc-col{font-size:8px}.bgmini .sc-jel{transform:scale(.5)}
+.bgmini .sc-lz{width:46px}.bgmini .sc-bolt{width:30px}
+.dprev .avwrap.mini{margin-top:.6rem}
+
+/* ================= CLASSIFICA: podio oro / argento / bronzo ================= */
+.ppod.ppod{padding-top:4.2rem}
+.ppod .pav{isolation:isolate}
+.ppod .pav::before{content:"";position:absolute;inset:-16%;border-radius:50%;z-index:-1;pointer-events:none}
+/* 1° — oro: raggi rotanti, anello che brilla, scintille e corona più grande */
+.ppod .p1 .pav::before{inset:-34%;background:repeating-conic-gradient(rgba(253,224,71,.42) 0 5deg,transparent 5deg 14deg);-webkit-mask:radial-gradient(circle,#000 30%,transparent 70%);mask:radial-gradient(circle,#000 30%,transparent 70%);animation:spin 14s linear infinite}
+.ppod .p1 .pav::after{content:"";position:absolute;inset:-6%;border-radius:50%;background:conic-gradient(#fde68a,#f59e0b,#fffbeb,#b45309,#fde68a,#fff7c2,#d97706,#fde68a);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 6px),#000 calc(100% - 6px));mask:radial-gradient(farthest-side,transparent calc(100% - 6px),#000 calc(100% - 6px));animation:spin 4s linear infinite;z-index:1;pointer-events:none;filter:drop-shadow(0 0 8px rgba(251,191,36,.9))}
+.ppod .p1 .pcrown{width:96px;height:68px;top:-60px;filter:drop-shadow(0 0 12px rgba(251,191,36,1)) drop-shadow(0 0 32px rgba(245,158,11,.7))}
+.ppod .p1 .pspark{width:12px;height:12px}.pspark.s4{right:-28px;top:30px;animation-delay:.4s}.pspark.s5{left:-26px;top:-8px;animation-delay:1.2s;width:9px;height:9px}
+.pod-glint{position:absolute;inset:0;border-radius:50%;overflow:hidden;z-index:2;pointer-events:none}
+.pod-glint::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.55) 50%,transparent 65%);transform:translateX(-130%);animation:shine 3.6s ease-in-out infinite}
+.ppod .p2 .pod-glint::after{animation-duration:4.4s;background:linear-gradient(115deg,transparent 38%,rgba(255,255,255,.4) 50%,transparent 62%)}
+.ppod .p3 .pod-glint::after{animation-duration:5s;background:linear-gradient(115deg,transparent 40%,rgba(255,237,213,.35) 50%,transparent 60%)}
+/* 2° — argento: anello d'argento che scorre piano e una stellina */
+.ppod .p2 .pav::before{inset:-7%;background:conic-gradient(#f8fafc,#94a3b8,#e2e8f0,#64748b,#f8fafc);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 4px));mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 4px));animation:spin 9s linear infinite;z-index:1;filter:drop-shadow(0 0 6px rgba(226,232,240,.55))}
+.ppod .p2 .pav img{box-shadow:0 0 22px rgba(203,213,225,.35)!important}
+/* 3° — bronzo: anello di bronzo con un bagliore caldo che respira */
+.ppod .p3 .pav::before{inset:-7%;background:conic-gradient(#fed7aa,#b45309,#fdba74,#7c2d12,#fed7aa);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 4px));mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 4px));animation:spinR 11s linear infinite;z-index:1}
+.ppod .p3 .pav img{animation:bronzeB 3.4s ease-in-out infinite}
+@keyframes bronzeB{50%{box-shadow:0 0 26px rgba(217,119,6,.55)}}
+.pmedal{position:absolute;top:-14px;left:50%;transform:translateX(-50%);width:30px;height:30px;z-index:3;filter:drop-shadow(0 2px 6px rgba(0,0,0,.5));animation:medalS 3.2s ease-in-out infinite;transform-origin:50% 0}
+.pmedal svg{width:100%;height:100%;display:block}
+@keyframes medalS{0%,100%{transform:translateX(-50%) rotate(-6deg)}50%{transform:translateX(-50%) rotate(6deg)}}
+.ppod .p2 .pod-n{background:linear-gradient(#f8fafc,#94a3b8)!important;color:#0f172a!important}
+.ppod .p3 .pod-n{background:linear-gradient(#fdba74,#b45309)!important;color:#1c0a00!important}
+
+/* ================= riduci movimento: tutto fermo ================= */
+@media(prefers-reduced-motion:reduce){
+ .dx,.dx::before,.dx::after,.dx *,.dbg-layer,.dbg-layer *,.dbg-layer i::before,.dbg-layer i::after,.fx,.fx::before,.fx::after,.dbadge,.dbadge::after,
+ .ppod .pav::before,.ppod .pav::after,.ppod .pav img,.pod-glint::after,.pmedal,.ditem.r-mitico,.bk-card.r-mitico,.plike svg{animation:none!important}
+ .sc-shoot,.sc-comet,.sc-flash,.sc-bolt,.sc-lz,.sc-lflash,.sc-fw{opacity:0!important}.sc-fw:nth-child(1),.sc-fw:nth-child(3){opacity:.8!important;transform:scale(1)}
+ .sc-lz:first-of-type{opacity:.9!important}.stl::before,.pxs::before{opacity:1;transform:none}
+}
+/* bloccate: si vede bene com'è fatta, solo un po' spenta */
+.ditem.locked .dprev>*:not(.dlock){filter:saturate(.55) brightness(.72)!important}
+.ditem.locked .dlock{z-index:4;font-size:1.1rem;filter:drop-shadow(0 2px 4px rgba(0,0,0,.8))}
