@@ -184,9 +184,9 @@ body.cplaying .chero{display:none}body.cplaying main>.wrap{padding-top:1.2rem}
 #clive .crow .chip{margin-left:auto}
 .cwatchb{font-size:.75rem;cursor:pointer;text-decoration:none;color:var(--fg);border:1px solid var(--line);background:var(--soft);align-self:center}
 /* nuova sfida più grande */
-#cnew.cbig{grid-column:1/-1;padding:1.8rem 2rem}#cnew.cbig h3{font-size:1.5rem}
-#cnew.cbig .cseg{padding:.35rem;margin-top:1rem}#cnew.cbig .cseg button{padding:.75rem 1.4rem;font-size:1.05rem}
-#cnew.cbig input{font-size:1.05rem;padding:.8rem 1rem}#cnew.cbig .btn{font-size:1.05rem;padding:.8rem 1.6rem}#cnew.cbig #chint{font-size:.95rem}
+#cnew.cnewbig{grid-column:1/-1;padding:1.8rem 2rem}#cnew.cnewbig h3{font-size:1.5rem}
+#cnew.cnewbig .cseg{padding:.35rem;margin-top:1rem}#cnew.cnewbig .cseg button{padding:.75rem 1.4rem;font-size:1.05rem}
+#cnew.cnewbig input{font-size:1.05rem;padding:.8rem 1rem}#cnew.cnewbig .btn{font-size:1.05rem;padding:.8rem 1.6rem}#cnew.cnewbig #chint{font-size:.95rem}
 /* schermo intero */
 .cgame.cfs{position:fixed;inset:0;z-index:200;background:var(--bg);padding:1rem 1.2rem;margin:0;grid-template-columns:minmax(0,calc(100vh - 15rem)) minmax(260px,380px);justify-content:center;overflow:auto}
 .cgame:fullscreen{background:var(--bg);padding:1rem 1.2rem;grid-template-columns:minmax(0,calc(100vh - 15rem)) minmax(260px,380px);justify-content:center;overflow:auto}
@@ -198,3 +198,14 @@ body.cfast .cover,body.cfast .card,body.cfast header,body.cfast nav{backdrop-fil
 body.cfast .cboard{box-shadow:none}body.cfast .csq svg.pc{filter:none}body.cfast .ccombo,body.cfast .cburst,body.cfast #clofip{display:none!important}
 body.cfast .bg-orbs,body.cfast .orbs,body.cfast .deco,body.cfast canvas.fx{display:none!important}
 body.cfast .nav{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+/* fix 5.1.1: "Online ora" di dimensione normale (la vecchia classe .cbig del modale ingrandiva tutto a 4rem) */
+#cnew .conline h4{font-size:.95rem}
+#cnew .conp{font-size:.92rem;padding:.3rem .45rem .3rem .3rem;gap:.55rem;line-height:1.2}
+#cnew .conp .cav{width:28px;height:28px}
+#cnew .conp span{font-weight:600;max-width:16ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#cnew .conp small{font-size:.76rem;font-weight:600;padding:.25rem .65rem;border-radius:999px;background:var(--fg);color:var(--bg)}
+#cnew .conl{align-items:center}#cnew .cwatchb{font-size:.8rem;padding:.4rem .75rem}
+#cnew .conp small.cplay{background:none;color:var(--mut);padding:.25rem .2rem}
+@media(max-width:860px){.clob{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:600px){#cnew.cnewbig{padding:1.3rem 1.1rem}#cnew.cnewbig h3{font-size:1.3rem}#cnew.cnewbig .cseg{max-width:100%}
+ #cnew.cnewbig .cseg button{padding:.6rem .75rem;font-size:.88rem;white-space:nowrap}#cnew .conp span{max-width:11ch}}

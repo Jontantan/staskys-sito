@@ -32,7 +32,7 @@ const kingIco=()=>`<span class="sking" title="1° nella classifica scacchi">${PZ
 /* ================= LOBBY ================= */
 async function lobby(){view='lobby';document.body.classList.remove('cplaying');stopGame();document.title='Scacchi · Staskys';
  root.innerHTML=`<div class="clob">
-  <div class="card cbox cbig" id="cnew"></div>
+  <div class="card cbox cnewbig" id="cnew"></div>
   <div class="card cbox" id="cmine"><h3>Le tue partite</h3><p class="muted small">Caricamento…</p></div>
   <div class="card cbox cwide" id="crank"></div>
   <div class="card cbox" id="clive"><h3>👀 Partite in corso</h3><p class="muted small">Caricamento…</p></div>
@@ -74,7 +74,7 @@ function renderNew(){const b=q('#cnew');if(!b)return;
    pingInvite(opp,g.id);setOpp('');if(g.mode==='live'){openGame(g.id);return}loadMine()}catch(e){toast(errMsg(e),true);btn.disabled=false}};
  renderOnline()}
 function renderOnline(){const b=q('#conl');if(!b)return;const L=[...presence.values()].filter(p=>p.did!==myDid);q('#cocount').textContent=L.length?'· '+L.length:'';
- b.innerHTML=L.length?L.map(p=>`<button class="conp" data-did="${E(p.did)}" title="Sfida ${E(nameOf(p.did,p.name))}">${av(p.did)}<span>${E(nameOf(p.did,p.name))}</span>${p.playing?'<small>sta giocando</small>':'<small>sfida →</small>'}</button>${typeof p.playing==='string'?`<a class="chip cwatchb" href="?g=${E(p.playing)}" data-watch="${E(p.playing)}">👀 Guarda</a>`:''}`).join(''):'<span class="muted small">Nessun altro sulla pagina scacchi in questo momento.</span>';
+ b.innerHTML=L.length?L.map(p=>`<button class="conp" data-did="${E(p.did)}" title="Sfida ${E(nameOf(p.did,p.name))}">${av(p.did)}<span>${E(nameOf(p.did,p.name))}</span>${p.playing?'<small class="cplay">sta giocando</small>':'<small>sfida →</small>'}</button>${typeof p.playing==='string'?`<a class="chip cwatchb" href="?g=${E(p.playing)}" data-watch="${E(p.playing)}">👀 Guarda</a>`:''}`).join(''):'<span class="muted small">Nessun altro sulla pagina scacchi in questo momento.</span>';
  qa('[data-watch]',b).forEach(x=>x.onclick=e=>{e.preventDefault();openGame(x.dataset.watch)});
  qa('.conp',b).forEach(x=>x.onclick=()=>{const i=q('#copp');i.value=nameOf(x.dataset.did);i.dispatchEvent(new Event('input'));setTimeout(()=>{const s=q(`#csugg [data-did="${x.dataset.did}"]`);s?s.click():null},300)})}
 async function joinLobby(){if(lobbyChan||!A.sb)return;try{lobbyChan=A.sb.channel('scacchi-lobby',{config:{presence:{key:myDid}}});
