@@ -23,7 +23,7 @@ const didOf=u=>{const m=(u&&u.user_metadata)||{};return String(m.provider_id||m.
 function renderAuth(){const a=q('#gauth');
  if(!READY){a.innerHTML='<span><b>Giochi in arrivo.</b> <span class="muted">Stiamo preparando le classifiche: torna presto!</span></span>';return}
  if(!inited){a.innerHTML='<span class="muted">Controllo l\'accesso…</span>';return} // finché la sessione salvata non è letta, non mostrare "Accedi"
- if(user){const p=profile(user);a.innerHTML=`<span class="who">${p.avatar?`<img src="${E(p.avatar)}" alt="">`:''}${E(p.name)}</span><button class="btn ghost sm" id="logout">Esci</button>`;q('#logout').onclick=()=>sb.auth.signOut()}
+ if(user){const p=profile(user);a.innerHTML=`<span class="who">${p.avatar?`<img src="${E(p.avatar)}" alt="">`:''}${E(p.name)}</span><button class="btn ghost sm" id="logout">Esci</button>`;q('#logout').onclick=()=>sb.auth.signOut({scope:'local'})} /* patch 4.2: esci solo da questo dispositivo */
  else a.innerHTML='<span class="muted">Accedi con Discord per giocare e salvare i tuoi punteggi.</span><button class="btn sm" data-login>Accedi con Discord</button>';
  bindLogin(a)}
 function bindLogin(r){qa('[data-login]',r).forEach(b=>b.onclick=()=>{try{sessionStorage.giochi_torna=cur}catch(e){}sb.auth.signInWithOAuth({provider:'discord',options:{redirectTo:location.origin+location.pathname,scopes:SP?SP.SCOPES:undefined}})})}
@@ -44,15 +44,38 @@ async function board(game){const g=GAMES[game],lb=q('#lb');q('#bdesc').textConte
  if(error){lb.innerHTML='<li class="muted">Classifica non disponibile al momento.</li>';return}
  if(!data.length){lb.innerHTML='<li class="muted">Ancora nessun punteggio. Sii il primo!</li>';return}
  lb.innerHTML=data.map((r,i)=>`<li data-uid="${E(r.user_id)}" class="${user&&r.user_id===user.id?'me':''}" style="animation-delay:${i*.04}s">${g.lbAvatar?g.lbAvatar(r,E):r.avatar_url?`<img src="${E(r.avatar_url)}" alt="" loading="lazy">`:'<img alt="">'}<span class="n">${E(r.username)}${i===0?' <span class="crown" title="'+E(g.k||'Primo in classifica')+'">👑</span>':''}</span><span class="s">${g.lbScore?g.lbScore(r.score):Number(r.score).toLocaleString('it-IT')} <small class="muted">${g.unit}</small></span></li>`).join('');fixAv(lb)}
-async function save(game,score){
- if(!READY||!user)return;const p=profile(user),g=GAMES[game];score=Math.round(score);
+/* ---------- PATCH 4.2 · ANTI-CHEAT ----------
+   Ogni partita la apre il SERVER (start_game, al primo tocco/tasto nel gioco) e il punteggio si salva solo con submit_score:
+   il server controlla che la partita sia tua, non già usata, e che il punteggio sia possibile nel tempo passato davvero.
+   Finché il database non è aggiornato, si salva come prima. */
+const SES={};let NO_RPC=false;
+const missingFn=e=>/PGRST202|42883/.test(String(e&&e.code||''))||/Could not find the function|function .* does not exist/i.test(String(e&&e.message||''));
+function begin(game){if(!READY||!user||NO_RPC||!GAMES[game])return;const s=SES[game];if(s&&Date.now()-s.at<2*3600e3)return;
+ SES[game]={at:Date.now(),p:Promise.resolve(sb.rpc('start_game',{p_game:game})).then(r=>{if(r.error){if(missingFn(r.error)){NO_RPC=true;return{}}return{err:r.error}}return{id:r.data&&r.data.id}},()=>({err:{message:'rete'}}))}}
+const touchGame=e=>{if(!e.isTrusted||!user)return;const t=e.target;
+ if(e.type==='keydown'){if(e.ctrlKey||e.metaKey||e.altKey)return;if(t&&t.closest&&/INPUT|TEXTAREA|SELECT/.test(t.tagName)&&!stage.contains(t))return;if(!q('#gstage'))return}
+ else if(!(t&&stage.contains(t)))return;
+ begin(cur)};
+addEventListener('pointerdown',touchGame,true);addEventListener('keydown',touchGame,true);
+async function submit(game,score,extra){
+ if(!NO_RPC){let s=SES[game];delete SES[game];if(!s){begin(game);s=SES[game];delete SES[game]}
+  const r0=s?await s.p:{err:{message:'rete'}};
+  if(r0.id){const r=await Promise.resolve(sb.rpc('submit_score',{p_session:r0.id,p_score:score,p_extra:extra||{}})).catch(()=>({error:{message:'rete'}}));
+   if(!r.error)return r.data&&r.data.ok===false?{message:r.data.error||'Punteggio non valido: non è stato salvato.',show:1}:null;
+   if(!missingFn(r.error))return r.error;NO_RPC=true}
+  else if(!NO_RPC)return r0.err&&r0.err.code==='P0001'?r0.err:{message:'Connessione assente: punteggio non salvato. Controlla la rete e rigioca.',show:1}}
+ const p=profile(user);const {error}=await sb.from('scores').insert({game,score,username:p.name,avatar_url:p.avatar});return error}
+const errText=e=>e.show||e.code==='P0001'||/Wordle|veloce/.test(e.message||'')?e.message:'Non sono riuscito a salvare il punteggio.';
+async function save(game,score,extra){
+ if(!READY||!user)return;const g=GAMES[game];score=Math.round(score);
  const prev=BEST[game],rec=!g.noRecord&&(prev==null||(g.asc?score<prev:score>prev));
  if(rec){BEST[game]=score;const r=q('#rec');if(r&&!g.ownRec&&game===cur){r.textContent=g.fmt?g.fmt(score):score.toLocaleString('it-IT');API.pop(r)}if(prev!=null||score>0)celebrate(game,score,prev==null)}
  const keep=q('.gmsg',stage)?.textContent||'';msg(keep?keep+' · Salvataggio…':'Salvataggio…');
- const {error}=await sb.from('scores').insert({game,score,username:p.name,avatar_url:p.avatar});
+ const error=await submit(game,score,extra);
+ if(error&&rec)BEST[game]=prev;
  if(!error&&g.onSaved)try{g.onSaved(score)}catch(e){}
  if(!error)loadStreak();
- if(game!==cur)return;msg((keep?keep+' · ':'')+(error?(/Wordle|veloce/.test(error.message||'')?error.message:'Non sono riuscito a salvare il punteggio.'):'Salvato ✓'));if(!error)board(game)}
+ if(game!==cur)return;msg((keep?keep+' · ':'')+(error?errText(error):'Salvato ✓'));if(!error)board(game)}
 /* ---------- record personale + festa "NUOVO RECORD!" ---------- */
 const BEST={};
 async function loadBest(game){if(!READY||!user)return;const b=await myBest(game);const g=GAMES[game];
@@ -276,7 +299,7 @@ window.__clickCheck=clickCheck;
 /* ---------- giochi extra (giochi-*.js, caricati prima di questo file) ---------- */
 const MAKE={snake,reaction,clicker};
 const RM=()=>matchMedia('(prefers-reduced-motion: reduce)').matches||document.documentElement.classList.contains('still');
-const API={q,qa,E,stage,msg,save,audio,beep,tone,noise,muted,RM,myBest,profile,get AC(){return AC},celebrate,best:g=>BEST[g],sb,get user(){return user},get cur(){return cur},
+const API={q,qa,E,stage,msg,save,begin,audio,beep,tone,noise,muted,RM,myBest,profile,get AC(){return AC},celebrate,best:g=>BEST[g],sb,get user(){return user},get cur(){return cur},
  muteBtn(el){const set=()=>{el.textContent=muted()?'🔇':'🔊';el.title=muted()?'Audio disattivato':'Audio attivo'};set();
   el.onclick=()=>{localStorage.snake_mute=muted()?'0':'1';set();if(!muted()){audio();beep(990,.05)}el.blur()};return set},
  pop(el){el.classList.remove('pop');void el.offsetWidth;el.classList.add('pop')},
@@ -290,7 +313,7 @@ function open(game){stop();cur=game;qa('.gtab').forEach(b=>b.classList.toggle('a
 qa('.gtab').forEach(b=>b.onclick=()=>open(b.dataset.game));
 let torna='';try{torna=sessionStorage.giochi_torna||'';sessionStorage.removeItem('giochi_torna')}catch(e){}
 const start=GAMES[location.hash.slice(1)]?location.hash.slice(1):GAMES[torna]?torna:'snake';
-if(sb){sb.auth.getSession().then(async({data})=>{user=data.session?.user||null;
+if(sb){(SP&&SP.session?SP.session(sb):sb.auth.getSession().then(({data})=>data.session)).then(async session=>{const data={session};user=session?.user||null; /* patch 4.2: niente "Accedi" se manca solo la rete */
   /* subito dopo il login: salva il tuo profilo del server; poi tieni in memoria il tuo avatar/nickname del server */
   if(user){const k='staskys_fs_'+user.id;try{if(!sessionStorage[k]){sessionStorage[k]=1;sb.rpc('touch_first_seen').then(()=>{},()=>{})}}catch(e){}}
   if(user&&SP){if(data.session.provider_token)await Promise.race([SP.syncSelf(sb).catch(()=>null),new Promise(r=>setTimeout(r,4000))]);

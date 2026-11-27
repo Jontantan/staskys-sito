@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="it" data-theme="dark">
+<head>
+<meta charset="utf-8"><meta name="theme-color" content="#000000"><meta name="viewport" content="width=device-width,initial-scale=1">
+<script>/* patch 4.2: link diretto ai profili → staskys.it/u/<nome> apre profilo.html?u=<nome> */
+(function(){var m=location.pathname.match(/^\/u\/([^\/?#]+)\/?$/i);if(m)location.replace('/profilo.html?u='+m[1]+location.hash)})();</script>
+<base href="/">
+<title>Pagina non trovata · Staskys</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="assets/icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=3">
+<link rel="stylesheet" href="v2.css?v=2">
+</head>
+<body data-page="404">
+<main>
+<section class="page-hero" id="nf"><p class="label">Errore 404</p><h1>Pagina non trovata.</h1><p class="lead">Questa pagina non esiste (o è stata spostata). Torna alla home o cerca un profilo.</p>
+<div class="cta" style="justify-content:flex-start"><a class="btn" href="index.html">Torna alla home</a><a class="btn ghost" href="profilo.html">Profili dei membri</a></div></section>
+</main>
+<script src="data.js"></script>
+<script src="app.js?v=11"></script>
+</body>
+</html>

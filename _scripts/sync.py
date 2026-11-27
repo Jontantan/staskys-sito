@@ -267,6 +267,6 @@ print(f"OK: {len(items)} annunci, {len(staff)} staff, {sum(map(len, groups.value
 # ---------- profili del sito (members.json): se qualcosa va storto non blocca il resto ----------
 try:
     import members_sync
-    print(f"members.json: {members_sync.run(member, GUILD, SITE, write)} profili")
+    print(f"members.json: {members_sync.run(member, GUILD, SITE, write, roles_raw, STAFF_NAMES, plain_role)} profili")
 except Exception as e:
     print("members.json non aggiornato:", e.__class__.__name__)

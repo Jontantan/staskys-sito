@@ -39,7 +39,23 @@ def _ids(site):
             print(f"members: {table} non letta ({e.__class__.__name__})")
     return sorted(ids)
 
-def run(member, guild, site, write):
+def _role_of(m, roles_raw, show, plain):
+    """Ruolo dello staff più alto del membro (patch 4.2: compare sul profilo del sito). Nome e colore, oppure None."""
+    if not roles_raw or not show:
+        return None
+    by_id = {r["id"]: r for r in roles_raw}
+    best = None
+    for rid in m.get("roles") or []:
+        r = by_id.get(rid)
+        if r and plain(r["name"]) in show and (best is None or r["position"] > best["position"]):
+            best = r
+    if not best:
+        return None
+    return plain(best["name"]), (f"#{best['color']:06x}" if best.get("color") else "")
+
+
+def run(member, guild, site, write, roles_raw=None, show_roles=None, plain_role=None):
+    plain_role = plain_role or (lambda n: n)
     out = {}
     for uid in _ids(site)[:600]:
         m = member(uid)
@@ -58,6 +74,9 @@ def run(member, guild, site, write):
         out[uid] = {"in_server": True, "nick": clean_nick(m.get("nick") or u.get("global_name") or u.get("username") or ""),
                     "username": u.get("username") or "", "avatar": av, "global_avatar": u_av, "banner": banner,
                     "joined": (m.get("joined_at") or "")[:10]}
+        ro = _role_of(m, roles_raw, show_roles, plain_role)
+        if ro:
+            out[uid]["role"], out[uid]["role_color"] = ro
     from datetime import datetime, timezone
     write("members.json", json.dumps({"updated": datetime.now(timezone.utc).isoformat(), "members": out},
                                      ensure_ascii=False, indent=1))

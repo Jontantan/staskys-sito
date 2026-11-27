@@ -27,12 +27,12 @@ async function loadUser(did,all,games,profiles,X){
  const mine=all.filter(r=>String(r.discord_id)===did);
  const st=S.statsFor(did,games,mine,profiles,X,NO_STATS),pf=profiles.get(did)||{},unl=D.unlocked(st);
  const meta=pf.meta&&typeof pf.meta==='object'?pf.meta:{},likers=X.likes.get(did)||new Set(),vw=VIEWER;
- const base=applyCovers({did,stats:st,rec:st.rec,streak:st.streak,unlocked:unl,bio:String(pf.bio||'').slice(0,160),theme:cleanTheme(pf.theme),equipped:sanitizeEq(pf.equipped,unl),covers:S.cleanCovers(pf.covers),badgePts:D.badgePoints(unl),likes:likers.size,liked:!!vw&&(likers.has(vw)||(A.user&&likers.has(A.user.id))),likesOk:X.ok.likes,firstAt:st.firstAt,goal:cleanGoal(meta.goal)},mine);
+ const base=applyCovers({did,stats:st,rec:st.rec,streak:st.streak,unlocked:unl,bio:String(pf.bio||'').slice(0,160),theme:cleanTheme(pf.theme),equipped:sanitizeEq(pf.equipped,unl),covers:S.cleanCovers(pf.covers),badgePts:D.badgePoints(unl),likes:likers.size,liked:!!vw&&(likers.has(vw)||(A.user&&likers.has(A.user.id))),likesOk:X.ok.likes,likers:[...likers].map(String),firstAt:st.firstAt,goal:cleanGoal(meta.goal),commentsOff:!!pf.comments_off,siteRole:ROLES[did]||null},mine);
  if(A.DEMO){const L=base.ratings,me=did===S.DEMO_ME;
-  return{...base,nick:L[0]?.username||st.name||'Membro demo',username:me?'demo_staskys':'',avatar:L[0]?.avatar_url||st.avatar||'',joined:me?'2024-03-12':'',inServer:true,demo:true,isMe:me}}
+  return{...base,nick:L[0]?.username||st.name||'Membro demo',username:me?'demo_staskys':'',avatar:L[0]?.avatar_url||st.avatar||'',joined:me?'2024-03-12':'',inServer:true,demo:true,isMe:me,role:me?'Supervisor':did==='demo-aki'?'Helper':''}}
  const mem=await A.loadMembers(),m=mem[did]||{};
  const me=A.user&&A.profile(A.user).discord===did?A.profile(A.user):null,r0=base.ratings[0]||{};
- return{...base,nick:A.clean(m.nick||me?.name||st.name||r0.username||'Membro'),username:m.username||'',avatar:A.avList(did,m.avatar,st.avatar,r0.avatar_url)[0],joined:m.joined||'',banner:A.bannerOf(did),inServer:m.in_server!==false,isMe:!!me}}
+ return{...base,nick:A.clean(m.nick||me?.name||st.name||r0.username||'Membro'),username:m.username||'',avatar:A.avList(did,m.avatar,st.avatar,r0.avatar_url)[0],joined:m.joined||'',banner:A.bannerOf(did),inServer:m.in_server!==false,isMe:!!me,role:m.in_server!==false?m.role||'':'',roleColor:m.role_color||''}}
 
 /* ---------- pezzi di vista ---------- */
 const cover=(r,cls='')=>`<span class="cv ${cls}">${r.cover?`<img src="${E(r.cover)}" alt="" loading="lazy">`:`<i>${A.KINDS[r.kind]?.icon||''}</i>`}${A.hasR(r)?`<b class="rbadge">${A.fmtR(r.rating)}</b>`:''}</span>`;
@@ -74,6 +74,18 @@ const HEART='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7.5-4.
 function likeHTML(u){if(!u.likesOk&&!u.likes)return'';const n=`<b class="plike-n">${fmt(u.likes)}</b>`;
  if(u.isMe)return`<button class="plike" disabled title="Like ricevuti sul tuo passaporto">${HEART}${n} <span>like</span></button>`;
  return`<button class="plike${u.liked?' on':''}" id="plike" aria-pressed="${u.liked?'true':'false'}" title="${u.liked?'Togli il like':'Metti like a questo passaporto'}">${HEART}${n} <span>${u.liked?'Ti piace':'Mi piace'}</span></button>`}
+/* PATCH 4.2: ruoli (server + sito), "Piaciuto a", profilo Discord */
+let ROLES={},GMS=null;
+const nm=id=>A.nameOf(id,(GMS&&GMS.users&&GMS.users.get(String(id))||{}).name||'')||'Membro';
+function rolesHTML(u){const out=[];
+ if(u.siteRole&&u.siteRole.label)out.push(`<span class="prole site" style="--rc:${E(u.siteRole.color||'#22d3ee')}" title="Ruolo sul sito Staskys"><i aria-hidden="true">✦</i>${E(u.siteRole.label)}</span>`);
+ if(u.role)out.push(`<span class="prole" ${u.roleColor?`style="--rc:${E(u.roleColor)}"`:''} title="Ruolo nel server Staskys"><i class="rdot" aria-hidden="true"></i>${E(u.role)}</span>`);
+ return out.length?`<div class="proles">${out.join('')}</div>`:''}
+function likersHTML(u){const L=(u.likers||[]).filter(id=>/^\d{5,25}$/.test(id)||(u.demo&&/^demo-/.test(id)));if(!L.length)return'';
+ const show=L.slice(0,8),more=L.length-show.length;
+ return`<div class="plikers"><span class="plikers-t">Piaciuto a</span><span class="plikers-av">${show.map(id=>`<a href="${prof(id)}" title="${E(nm(id))}"><img ${A.avAttr(id,'')} alt="${E(nm(id))}" loading="lazy"></a>`).join('')}${more>0?`<button class="plikers-more" id="plmore">+${more}</button>`:''}</span></div>`}
+const DC_ICO='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 10h.01M12 10h.01M16 10h.01"/><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.4A8 8 0 1 1 21 12z"/></svg>';
+const dcHTML=u=>u.isMe||!/^\d{5,25}$/.test(u.did)?'':`<a class="pdc" href="https://discord.com/users/${E(u.did)}" target="_blank" rel="noopener" title="Apri il profilo Discord di ${E(u.nick)} (da lì puoi aggiungerlo agli amici)">${DC_ICO}<span>Profilo Discord</span></a>`;
 function passHTML(u,ctx){
  const t=u.theme,eq=u.equipped,rated=u.ratings.filter(A.hasR);
  const now=u.ratings.filter(r=>r.status==='in_corso').sort((a,b)=>String(b.updated_at).localeCompare(a.updated_at))[0];
@@ -87,9 +99,11 @@ function passHTML(u,ctx){
    <header class="pass-head">
     ${avatarHTML(u)}
     <div class="pass-id"><p class="pass-label">Passaporto Staskys</p><h1><span class="pname${eq.effect?' fx '+eq.effect:''}" data-text="${E(u.nick)}">${E(u.nick)}</span>${eq.badges.length?`<span class="dbadges">${eq.badges.map(badgeHTML).join('')}</span>`:''}</h1>
+    ${rolesHTML(u)}
     <p class="pass-sub">${[u.username?'@'+E(u.username):'',since?`nel server da ${E(since)}`:'',site!=null?`sul sito da ${site===0?'oggi':site===1?'1 giorno':fmt(site)+' giorni'}`:'',!u.inServer?'non è più nel server':''].filter(Boolean).join(' · ')}</p>
     ${u.bio?`<p class="pass-bio">${E(u.bio)}</p>`:u.isMe?'<button class="pass-bio add" id="addbio">+ Aggiungi una bio</button>':''}
-    ${likeHTML(u)}${now?`<span class="pill"><i class="live"></i>${E(A.KINDS[now.kind].verb)} <b>${E(now.title)}</b>${E(epTxt(now))}</span>`:''}</div>
+    ${likeHTML(u)}${dcHTML(u)}${now?`<span class="pill"><i class="live"></i>${E(A.KINDS[now.kind].verb)} <b>${E(now.title)}</b>${E(epTxt(now))}</span>`:''}
+    ${likersHTML(u)}</div>
     ${ctx.cmp&&ctx.cmp.n?`<div class="pass-match"><b>${ctx.cmp.pct}%</b><span>con te</span></div>`:''}
     ${u.isMe&&!u.demo?'<button class="btn ghost sm pass-out" id="logout">Esci</button>':''}
     <button class="btn ghost sm pass-share" id="share" aria-label="Condividi il profilo come immagine" title="Condividi il profilo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5"/><path d="M8 10H6a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1h-2"/></svg><span>Condividi</span></button>
@@ -130,7 +144,8 @@ function pageHTML(u,ctx){
   <a class="card side-card side-link" href="classifica.html?${A.DEMO?'demo=1&':''}tab=punti"><h3>Classifica punti →</h3><p class="muted small">Chi ha più punti nei minigiochi, con podio e badge.</p></a>
   <a class="card side-card side-link" href="classifica.html${dq}"><h3>Classifica titoli →</h3><p class="muted small">I titoli più votati dalla community, in media.</p></a>
  </aside>
- </section>`}
+ </section>
+ <section class="pf-comments card" id="pfc" aria-label="Commenti"><p class="muted small">Carico i commenti…</p></section>`}
 
 /* ---------- font su richiesta ---------- */
 function ensureFont(k){const f=D.FONT[k];if(!f||!f[2]||q('#font-'+k))return;document.head.insertAdjacentHTML('beforeend',`<link id="font-${k}" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=${f[2]}&display=swap">`)}
@@ -241,8 +256,8 @@ function openDecos(u,rerender,opts){opts=opts||{};let eq=JSON.parse(JSON.stringi
   <div class="dgrid">${L.map(d=>{const has=u.unlocked.includes(d.id),on=d.tipo==='badge'?cur.badges.includes(d.id):cur[d.tipo]===d.id,pr=has?null:progOf(d,st);
    return`<div class="ditem ${D.badgeCls(d)}${has?'':' locked'}${test?' testable':''}${on?(test?' tested on':' on'):''}" ${test?`data-tt="${d.id}" role="button" tabindex="0"`:''}><div class="dprev">${decoPreview(d,u)}${has||test?'':'<span class="dlock" aria-hidden="true">🔒</span>'}</div>
     <b>${E(d.nome)}</b><span class="drar">${E(D.RARITA[d.rarita])}</span>
-    ${has?'':`<small class="dlockcap">${E(D.reqText(d.req,d))}</small>${pr?`<span class="dprog" title="${E(pr[0])}"><i style="width:${pr[1]}%"></i></span><small class="muted tiny">${E(pr[0])}</small>`:''}`}
-    ${test?`<span class="btn sm ${on?'':'ghost'}">${on?'In prova ✓':'Prova'}</span>`:has?`<button class="btn sm ${on?'':'ghost'}" data-eq="${d.id}">${on?'Indossata ✓':'Indossa'}</button>`:''}</div>`}).join('')}</div>
+    ${has?`<small class="dlockcap ok"><b>✓ Sbloccata</b> · ${E(D.reqText(d.req,d))}</small>`:`<small class="dlockcap">${E(D.reqText(d.req,d))}</small>${pr?`<span class="dprog" title="${E(pr[0])}"><i style="width:${pr[1]}%"></i></span><small class="muted tiny">${E(pr[0])}</small>`:''}`}
+    ${test?`<span class="btn sm ${on?'':'ghost'}">${on?'In prova ✓':'Prova'}</span>`:has?`<button class="btn sm ${on?'':'ghost'}" data-eq="${d.id}">${on?'In uso ✓':'Utilizza'}</button>`:''}</div>`}).join('')}</div>
   ${tab==='badge'?`<p class="muted tiny">Puoi mostrare fino a ${D.MAX_BADGE} badge accanto al nome.</p>`:''}
   <div class="cs-act">${test?'<button class="btn ghost" id="dexit">Esci dal test</button>':'<button class="btn" id="dsave">Salva</button>'}</div><p class="muted small" id="dmsg" aria-live="polite"></p>`;
   q('.cx',box).onclick=close;
@@ -287,6 +302,43 @@ async function fillAwards(u){const el=q('#myaw');if(!el||!W)return;
  ${chosen.length?`<ul class="myaw-list">${chosen.map(([id,v])=>`<li>${v.cover?`<img src="${E(v.cover)}" alt="" loading="lazy">`:'<i>★</i>'}<span><small>${E(W.byId[id]?.nome||id)}</small><b>${E(v.detail||v.title)}</b>${v.detail?`<small>${E(v.title)}</small>`:''}</span></li>`).join('')}</ul>`:''}
  <a class="btn sm" href="${link}">${ph==='presto'?'Scopri i premi':ph==='nomination'?(n?'Continua le nomination':'Inizia le nomination'):ph==='finale'?'Vota la finale':'Guarda i risultati'} →</a>`}
 
+/* ---------- PATCH 4.2: tutti i "Piaciuto a" ---------- */
+function openLikers(u){const L=(u.likers||[]).filter(id=>/^\d{5,25}$/.test(id)||(u.demo&&/^demo-/.test(id)));
+ const {box,close}=sheetOpen('lksheet','',`<button class="cx" aria-label="Chiudi">×</button><p class="label">Like al passaporto</p><h3 class="cz-h">Piaciuto a ${L.length} ${L.length===1?'membro':'membri'}</h3>
+ <ul class="sim">${L.map(id=>`<li><a href="${prof(id)}"><img ${A.avAttr(id,'')} alt="" loading="lazy"><span class="simn"><b>${id===VIEWER?'Tu':E(nm(id))}</b></span></a></li>`).join('')}</ul>`);
+ q('.cx',box).onclick=close}
+
+/* ---------- PATCH 4.2: commenti sul profilo (in fondo alla pagina) ---------- */
+const ago=t=>{const d=(Date.now()-new Date(t))/1000;if(d<60)return'adesso';if(d<3600)return Math.floor(d/60)+' min fa';if(d<86400)return Math.floor(d/3600)+(d<7200?' ora fa':' ore fa');if(d<7*86400)return Math.floor(d/86400)+(d<172800?' giorno fa':' giorni fa');return new Date(t).toLocaleDateString('it-IT',{day:'numeric',month:'short',year:'numeric'})};
+async function fillComments(u){const el=q('#pfc');if(!el)return;
+ const [res,mod]=await Promise.all([S.loadComments(u.did),S.canModerate()]);if(!q('#pfc'))return;
+ const logged=A.DEMO||!!A.user,me=VIEWER;let list=res.list;
+ const can=c=>logged&&(c.author_discord===me||u.isMe||mod);
+ const item=c=>{const a=String(c.author_discord||'');return`<li class="pcm" data-id="${E(c.id)}"><a href="${prof(a)}" class="pcm-av"><img ${A.avAttr(a,'')} alt="" loading="lazy"></a>
+  <div class="pcm-b"><p class="pcm-h"><a href="${prof(a)}"><b>${a===me?'Tu':E(nm(a))}</b></a><span class="muted tiny">${E(ago(c.created_at))}</span>${can(c)?`<button class="pcm-del" data-del="${E(c.id)}" aria-label="Elimina commento" title="Elimina">Elimina</button>`:''}</p><p class="pcm-t">${E(c.body)}</p></div></li>`};
+ const draw=(note='')=>{const off=u.commentsOff;
+  el.innerHTML=`<div class="pcm-head"><div><p class="label" style="margin:0 0 .3rem">Bacheca</p><h3>Commenti${list.length?` <span class="muted">${list.length}</span>`:''}</h3></div>
+   ${u.isMe&&res.ok?`<label class="cztog pcm-tog"><input type="checkbox" id="pcmoff" ${off?'':'checked'}> Commenti attivi</label>`:''}</div>
+  ${!res.ok?'<p class="muted small">I commenti arrivano a breve.</p>'
+   :off?`<p class="muted small">${u.isMe?'Hai disattivato i commenti sul tuo profilo: nessuno può scriverne di nuovi.':'I commenti su questo profilo sono disattivati.'}</p>`
+   :logged?`<form class="pcm-form" id="pcmf"><textarea id="pcmt" maxlength="300" rows="2" placeholder="${u.isMe?'Scrivi qualcosa sulla tua bacheca…':'Lascia un commento a '+E(u.nick)+'…'}"></textarea><div class="pcm-row"><span class="muted tiny" id="pcmc">0/300</span><button class="btn sm" id="pcmgo" type="submit">Pubblica</button></div></form>`
+   :`<p class="muted small">Accedi con Discord per lasciare un commento. <button class="btn sm ghost" id="pcmlog">Accedi</button></p>`}
+  <p class="muted small" id="pcmmsg" aria-live="polite">${E(note)}</p>
+  ${res.ok?(list.length?`<ul class="pcm-list">${list.map(item).join('')}</ul>`:(!off?`<p class="muted small pcm-none">Ancora nessun commento${logged&&!u.isMe?': scrivi il primo!':'.'}</p>`:'')):''}`;
+  const lg=q('#pcmlog',el);lg&&(lg.onclick=()=>A.login());
+  const t=q('#pcmt',el),c=q('#pcmc',el);t&&(t.oninput=()=>{c.textContent=t.value.length+'/300'});
+  const f=q('#pcmf',el);f&&(f.onsubmit=async e=>{e.preventDefault();const b=q('#pcmgo',el);b.disabled=true;q('#pcmmsg',el).textContent='Pubblico…';
+   const r=await S.addComment(u.did,t.value);b.disabled=false;
+   if(r.error){const m=String(r.error.message||'');q('#pcmmsg',el).textContent=/Troppi|limite|disattivati|Scrivi/.test(m)?m:/login/.test(m)?'Accedi con Discord per commentare.':/check|length|body/.test(m)?'Il commento è troppo lungo (massimo 300 caratteri).':'Non sono riuscito a pubblicare il commento. Riprova.';return}
+   list.unshift(r.data);draw('Commento pubblicato ✓')});
+  qa('[data-del]',el).forEach(b=>b.onclick=async()=>{if(!confirm('Eliminare questo commento?'))return;b.disabled=true;const id=isNaN(+b.dataset.del)?b.dataset.del:+b.dataset.del;
+   const err=await S.deleteComment(id);if(err){b.disabled=false;q('#pcmmsg',el).textContent=err.message&&/cancellare/.test(err.message)?err.message:'Non sono riuscito a eliminarlo. Riprova.';return}
+   list=list.filter(x=>String(x.id)!==String(id));draw('Commento eliminato.')});
+  const tg=q('#pcmoff',el);tg&&(tg.onchange=async()=>{tg.disabled=true;const off=!tg.checked;const err=await S.setCommentsOff(off);tg.disabled=false;
+   if(err){tg.checked=!off;q('#pcmmsg',el).textContent=/comments_off|schema|column/.test(err.message||'')?'Si attiva appena il database è aggiornato (patch 4.2).':'Non sono riuscito a salvare. Riprova.';return}
+   u.commentsOff=off;draw(off?'Commenti disattivati.':'Commenti riattivati.')})};
+ draw()}
+
 /* ---------- cerca membri ---------- */
 function bindSearch(all,viewer){const inp=q('#msq'),out=q('#mres');if(!inp)return;let list=null,t;
  const go=async()=>{const term=inp.value.trim();if(!term){out.innerHTML='';return}list=list||await S.members(all);
@@ -296,6 +348,11 @@ function bindSearch(all,viewer){const inp=q('#msq'),out=q('#mres');if(!inp)retur
  inp.oninput=()=>{clearTimeout(t);t=setTimeout(go,140)};inp.onfocus=()=>{if(!list)S.members(all).then(l=>list=l)}}
 
 /* ---------- pagina ---------- */
+const slug=t=>String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'');
+async function findMember(name){const mem=await A.loadMembers(),n=String(name).toLowerCase().replace(/^@/,''),sl=slug(name);if(!n)return'';
+ const E2=Object.entries(mem);let hit=E2.find(([,m])=>String(m.username||'').toLowerCase()===n);
+ if(!hit&&sl)hit=E2.find(([,m])=>slug(m.nick)===sl)||E2.find(([,m])=>slug(m.username)===sl);return hit?hit[0]:''}
+const notFound=n=>`<section class="page-hero"><p class="label">Profilo</p><h1>Profilo non trovato.</h1><p class="lead">Nessun membro si chiama “${E(n)}”. Controlla il link oppure cerca il nome tra i profili.</p><div class="cta" style="justify-content:flex-start"><a class="btn" href="profilo.html">Vai ai profili</a></div></section>`;
 function landing(members){const list=Object.entries(members).filter(([,m])=>m.in_server!==false&&m.nick).slice(0,24);
  return`<section class="page-hero"><p class="label">Profilo</p><h1>Il tuo passaporto.</h1><p class="lead">Accedi con Discord: nickname e avatar arrivano dal server Staskys, punti e streak dai minigiochi, e i voti dal catalogo.</p>
  <div class="cta" style="justify-content:flex-start">${A.READY?'<button class="btn magnetic" id="login">Accedi con Discord</button>':''}<a class="btn ghost" href="profilo.html?demo=1">Guarda un profilo demo</a></div></section>
@@ -305,9 +362,11 @@ let VIEWER='',STAFF=false;
 async function show(){
  await A.ready;
  const viewerDid=VIEWER=A.DEMO?S.DEMO_ME:(A.user?A.profile(A.user).discord:'');STAFF=await S.isStaff();
- const did=P.get('u')||viewerDid;
+ let did=P.get('u')||viewerDid;
+ /* patch 4.2: link diretto staskys.it/u/<nome> → profilo.html?u=<nome> (nome utente Discord o nickname) */
+ if(did&&!A.DEMO&&!/^\d{5,25}$/.test(did)){did=await findMember(did);if(!did){root.innerHTML=notFound(P.get('u'));return}}
  if(!did){const mem=await A.loadMembers();root.innerHTML=landing(mem);const b=q('#login');b&&(b.onclick=()=>A.login());return}
- const [all,games,profiles,X]=await Promise.all([S.loadAll(),S.loadGames(),S.loadProfiles(),S.loadExtra()]);
+ const [all,games,profiles,X,R]=await Promise.all([S.loadAll(),S.loadGames(),S.loadProfiles(),S.loadExtra(),S.siteRoles()]);ROLES=R||{};GMS=games;
  const u=await loadUser(did,all,games,profiles,X);
  const M=S.byUser(all),viewerRows=viewerDid?M.get(viewerDid)||[]:[];
  const showCmp=!u.isMe,cmp=showCmp&&viewerDid?S.compare(viewerRows,u.ratings):null;
@@ -327,6 +386,7 @@ async function show(){
   const sh=q('#share');sh&&(sh.onclick=()=>window.STASKYS_SHARE&&window.STASKYS_SHARE.open(u,ctx));
   const ab=q('#addbio');ab&&(ab.onclick=()=>{openCustomize(u,rerenderPass);setTimeout(()=>{const b=q('#bio');b&&b.focus()},260)});
   const dc=q('#decos');dc&&(dc.onclick=()=>openDecos(u,rerenderPass));
+  const pm=q('#plmore');pm&&(pm.onclick=()=>openLikers(u));
   const lk=q('#plike');lk&&(lk.onclick=async()=>{if(!A.DEMO&&!A.user){A.login();return}const on=!u.liked;lk.disabled=true;const err=await S.toggleLike(u.did,on);lk.disabled=false;
    if(err){const m=String(err.message||'');alert(/passport_likes|schema|relation/.test(m)?'I like si attivano appena il database è aggiornato (update 4).':/Troppi/.test(m)?m:/login/.test(m)?'Accedi con Discord per mettere like.':'Non sono riuscito a salvare il like. Riprova.');return}
    u.liked=on;u.likes=Math.max(0,u.likes+(on?1:-1));rerenderPass();const b=q('#plike');b&&b.classList.add('pop')})};
@@ -341,6 +401,7 @@ async function show(){
  const cl=q('#cmplogin');cl&&(cl.onclick=()=>A.login());
  bindSearch(all,viewerDid);
  if(u.isMe)fillAwards(u);
+ fillComments(u);
  document.title=u.nick+' · Staskys';
  A.color(u.avatar).then(col=>{ctx.avColor=col;if(!u.theme.accent){const p=q('.pass',root);p&&p.style.setProperty('--c',col)}})}
 show();document.addEventListener('staskys-auth',()=>{if(!A.DEMO){S.reset();show()}});

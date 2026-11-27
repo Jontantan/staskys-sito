@@ -30,7 +30,8 @@ function load(sb){return P||(P=Promise.all([
   sb?Promise.resolve(sb.from('site_profiles').select('*').limit(5000)).then(r=>r.error?[]:r.data||[],()=>[]):[]
  ]).then(([mj,sp])=>{const out={},at=Date.parse(mj&&mj.updated)||0;
   Object.entries((mj&&mj.members)||{}).forEach(([id,x])=>{if(!x||!ID.test(id))return;
-   out[id]={nick:clean(x.nick),avatar:okUrl(x.avatar),avatar2:okUrl(x.global_avatar),banner:okUrl(x.banner),username:x.username||'',joined:x.joined||'',in_server:x.in_server!==false,at,src:'bot'}});
+   out[id]={nick:clean(x.nick),avatar:okUrl(x.avatar),avatar2:okUrl(x.global_avatar),banner:okUrl(x.banner),username:x.username||'',joined:x.joined||'',in_server:x.in_server!==false,at,src:'bot',
+    /* patch 4.2: ruolo dello staff nel server (dal bot) */role:typeof x.role==='string'?x.role.slice(0,30):'',role_color:/^#[0-9a-f]{6}$/i.test(x.role_color||'')?x.role_color:''}});
   sp.forEach(r=>{const id=String(r.discord_id||''),p=fromDc(id,r.dc);if(!p)return;const m=out[id];
    if(!m){out[id]=p;return}
    if(p.at>m.at){out[id]={...m,...p,nick:p.nick||m.nick,username:m.username||'',joined:m.joined,alt:m.avatar}}else m.alt=p.avatar});
@@ -60,5 +61,27 @@ async function syncSelf(sb){if(!sb)return null;
  if(p.avatar)await Promise.resolve(sb.from('media_ratings').update({avatar_url:p.avatar,username:p.nick||meta.full_name||''}).eq('user_id',s.user.id)).catch(()=>{});
  reset();return{did,dc,p}}
 
-window.STASKYS_SP={GUILD:G,SCOPES:'identify email guilds.members.read',clean,defAv,fromDc,dcFromMember,load,reset,avatars,remember,cached,syncSelf};
+/* PATCH 4.2 — accesso che non si perde per un intoppo di rete.
+   Se la sessione salvata c'è ma Supabase non risponde (offline, PC appena uscito dallo standby…), NON si mostra la pagina
+   "Accedi": si mostra "Connessione assente, riprovo…" e si riprova da soli quando torna la rete o quando si torna sulla scheda. */
+const AUTH_KEY='sb-otxtpwojvuyxksrsfpdl-auth-token';
+function savedSession(){try{return!!localStorage.getItem(AUTH_KEY)}catch(e){return false}}
+let offEl=null;
+function offline(on){if(!on){offEl&&offEl.remove();offEl=null;return}if(offEl||!document.body)return;
+ offEl=document.createElement('div');offEl.className='netwait';offEl.setAttribute('role','status');
+ offEl.innerHTML='<span class="netwait-dot" aria-hidden="true"></span><span><b>Connessione assente, riprovo…</b><br><small>Il tuo accesso è salvato: appena torna la rete rientri da solo.</small></span>';
+ document.body.appendChild(offEl)}
+function session(sb){if(!sb)return Promise.resolve(null);
+ return new Promise(done=>{let timer=0,busy=false,end=false;
+  const finish=s=>{if(end)return;end=true;clearTimeout(timer);removeEventListener('online',kick);document.removeEventListener('visibilitychange',kick);offline(false);done(s)};
+  const attempt=()=>{if(busy||end)return;busy=true;
+   /* se Supabase sta ancora riprovando il rinnovo del token dopo 2,5 s, lo diciamo invece di lasciare "Caricamento…" */
+   const slow=setTimeout(()=>{if(busy&&!end&&savedSession())offline(true)},2500);
+   Promise.resolve(sb.auth.getSession()).then(r=>r&&r.data&&r.data.session||null,()=>null).then(s=>{busy=false;clearTimeout(slow);
+    if(s||!savedSession())return finish(s);
+    offline(true);clearTimeout(timer);timer=setTimeout(attempt,15000)})};
+  const kick=()=>{if(document.visibilityState!=='hidden')attempt()};
+  addEventListener('online',kick);document.addEventListener('visibilitychange',kick);attempt()})}
+
+window.STASKYS_SP={GUILD:G,SCOPES:'identify email guilds.members.read',clean,defAv,fromDc,dcFromMember,load,reset,avatars,remember,cached,syncSelf,session,savedSession};
 })();

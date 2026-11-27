@@ -41,7 +41,7 @@ function make(A){
   ph.innerHTML=`<b class="big">${s.score}</b> <span class="tidle">punti</span><span class="res">${Math.round(s.wpm)} WPM · ${Math.round(s.acc*100)}% di precisione · ${done} frasi</span>`;
   const g=q('#go');g.textContent='Rigioca';g.hidden=false;
   if(s.score>(+localStorage.typing_best||0)){localStorage.typing_best=s.score;q('#rec').textContent=s.score}
-  msg(`Fine! ${s.score} punti.`);if(s.score>0&&s.score<=250)A.save('typing',s.score);else if(s.score>250)msg('Troppo veloce per essere vero: punteggio non salvato.')}
+  msg(`Fine! ${s.score} punti.`);if(s.score>0&&s.score<=250)A.save('typing',s.score,{chars:good});else if(s.score>250)msg('Troppo veloce per essere vero: punteggio non salvato.')}
  q('#go').onclick=e=>{e.currentTarget.blur();start()};
  const kd=e=>{if(A.cur==='typing'&&st!=='run'&&e.key==='Enter'&&!q('#go').hidden&&document.activeElement!==inp){e.preventDefault();start()}};addEventListener('keydown',kd);
  return()=>{cancelAnimationFrame(raf);removeEventListener('keydown',kd);st='idle'}}

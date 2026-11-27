@@ -12,7 +12,7 @@ const A={sb,READY,E,LOCAL,user:null,
  SEARCH_URL:LOCAL?'/api/catalog-search':(CFG.SUPABASE_URL||'')+'/functions/v1/super-endpoint',
  profile(u){const m=(u||{}).user_metadata||{};return{name:(m.custom_claims&&m.custom_claims.global_name)||m.full_name||m.name||m.user_name||'Utente',avatar:m.avatar_url||m.picture||'',discord:String(m.provider_id||m.sub||'')}},
  login(){if(!sb)return;sb.auth.signInWithOAuth({provider:'discord',options:{redirectTo:location.origin+location.pathname+location.search,scopes:SP?SP.SCOPES:undefined}})},
- logout(){sb&&sb.auth.signOut().then(()=>location.reload())},
+ logout(){sb&&sb.auth.signOut({scope:'local'}).then(()=>location.reload())}, /* patch 4.2: esci solo da questo dispositivo */
  ready:null,
  /* membri del server (members.json, aggiornato ogni 10 min dal bot) */
  members:null,
@@ -75,7 +75,8 @@ const A={sb,READY,E,LOCAL,user:null,
  clean:n=>String(n||'').replace(/[\p{L}\d_]*(?:froc|ricchion|nigg|fag+ot|finocch|ritardat|mongoloid|puttan|zoccol)[\p{L}\d_]*|\bnegr[oiae]\b|\btroi[ae]\b/giu,'***').trim()
 };
 /* subito dopo il login con Discord: salva il tuo profilo del server (avatar, nickname, banner) per tutti; max 4 secondi */
-A.ready=sb?sb.auth.getSession().then(async({data})=>{A.user=data.session?.user||null;
+/* patch 4.2: se la rete non risponde ma l'accesso è salvato, aspetta e riprova (niente pagina "Accedi" per sbaglio) */
+A.ready=sb?(SP&&SP.session?SP.session(sb):sb.auth.getSession().then(({data})=>data.session)).then(async session=>{const data={session};A.user=session?.user||null;
  if(A.user&&SP&&!A.DEMO&&data.session.provider_token)await Promise.race([SP.syncSelf(sb).catch(()=>null),new Promise(r=>setTimeout(r,4000))]);
  return A.user}).catch(()=>null):Promise.resolve(null);
 /* carica subito i profili del server se sei collegato (serve per la barra in alto, i voti e i punteggi che salvi) */

@@ -36,7 +36,7 @@ function make(A){
  function win(){st='won';const sec=Math.max(10,Math.ceil((performance.now()-t0)/1000));q('#tm').textContent=fmt(sec);
   [523,659,784,1047,1319].forEach((f,i)=>A.tone('triangle',f,.15,i*.09,.04));
   if(!localStorage.mines_best||sec<+localStorage.mines_best){localStorage.mines_best=sec;q('#rec').textContent=fmt(sec)}
-  msg(`Vittoria! Prato ripulito in ${fmt(sec)}.`);q('#go').hidden=false;A.save('mines',sec)}
+  msg(`Vittoria! Prato ripulito in ${fmt(sec)}.`);q('#go').hidden=false;A.save('mines',sec,{opens:opened,flags})}
  function draw(now){const fg=A.col('--fg'),ln=A.col('--line'),soft=A.col('--soft'),card=A.col('--card'),mu=A.col('--mut');c.save();c.clearRect(0,0,N*S,N*S);
   if(shake>0&&!still){c.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);shake*=.88;if(shake<.4)shake=0}
   c.font='700 13px Inter,sans-serif';c.textAlign='center';c.textBaseline='middle';

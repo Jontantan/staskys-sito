@@ -15,15 +15,6 @@ const PAGES=[['index','Home'],['giochi','Giochi'],['catalogo','Catalogo'],['clas
 const MAIN_PAGES=7; /* le prime 7 nella barra, le altre in "Altro" */
 const PAGE=document.body.dataset.page||'index';
 document.documentElement.dataset.theme='dark'; /* nuovo stile: sempre scuro */
-/* PATCH 2.3.1 — un solo "esci e rientra" per tutti, una volta per browser.
-   Chi ha fatto l'accesso PRIMA della patch 2.3 non ha dato a Discord il permesso di leggere il profilo del server:
-   chiudiamo quel vecchio accesso (solo in questo browser) così al prossimo "Accedi con Discord" il profilo del server
-   si salva da solo. Voti, punti, passaporto e Top 10 restano: sono legati all'ID Discord, non all'accesso. */
-(()=>{const K='sb-otxtpwojvuyxksrsfpdl-auth-token',V='staskys_sess_v',CUR='231',CUTOFF=Date.parse('2026-11-26T20:15:00Z');
- try{if(localStorage[V]===CUR)return;localStorage[V]=CUR;
-  const t=JSON.parse(localStorage[K]||'null'),u=t&&(t.user||(t.currentSession&&t.currentSession.user));
-  if(u&&!(Date.parse(u.last_sign_in_at)>CUTOFF)){localStorage.removeItem(K);localStorage.removeItem(K+'-user');localStorage.removeItem('staskys_sp_done');localStorage.staskys_relogin='1'}
- }catch(e){}})();
 /* chi è collegato (letto dalla sessione Supabase salvata, senza caricare librerie) */
 const ME=(()=>{try{const t=JSON.parse(localStorage['sb-otxtpwojvuyxksrsfpdl-auth-token']||'null');const u=t&&(t.user||(t.currentSession&&t.currentSession.user));if(!u)return null;const m=u.user_metadata||{};let c=null;try{c=JSON.parse(localStorage.staskys_me_sp||'null');if(!c||c.did!==String(m.provider_id||m.sub||''))c=null}catch(e){}/* patch 2.3: prima il profilo del server Staskys */return{name:(c&&c.nick)||(m.custom_claims&&m.custom_claims.global_name)||m.full_name||m.name||'Tu',avatar:(c&&c.avatar)||m.avatar_url||m.picture||''}}catch(e){return null}})();
 
@@ -149,10 +140,5 @@ const INIT={
 try{if(INIT[PAGE])INIT[PAGE]()}catch(e){console.error(e)}
 accordion();observe();magnetic();onScroll();
 
-/* ---------- patch 2.3.1: avviso "rientra con Discord" (solo a chi è stato fatto uscire, finché non rientra o chiude) ---------- */
-(function relogin(){try{if(localStorage.staskys_relogin!=='1')return;if(ME){localStorage.removeItem('staskys_relogin');return}}catch(e){return}
- const el=document.createElement('div');el.className='relog';el.setAttribute('role','status');
- el.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 5.6rem);z-index:80;width:min(92vw,520px);display:flex;gap:.8rem;align-items:center;padding:.85rem 1rem;border-radius:18px;background:#111114;border:1px solid rgba(255,255,255,.14);box-shadow:0 18px 50px rgba(0,0,0,.55);color:#fff;font-size:.9rem;line-height:1.35';
- el.innerHTML='<span style="font-size:1.4rem" aria-hidden="true">🔄</span><span style="flex:1"><b>Abbiamo aggiornato il sito!</b><br><span style="color:#b9b9c2">Rientra con Discord per avere il tuo profilo del server. Voti e punti restano tutti.</span></span><a href="profilo.html" class="btn sm" style="white-space:nowrap" onclick="if(window.STASKYS&&STASKYS.sb){event.preventDefault();STASKYS.login()}">Accedi</a><button type="button" aria-label="Chiudi" style="background:none;border:0;color:#9a9aa5;font-size:1.3rem;cursor:pointer;padding:0 .2rem">×</button>';
- el.querySelector('button').onclick=()=>{try{localStorage.removeItem('staskys_relogin')}catch(e){}el.remove()};
- document.body.appendChild(el)})();
+/* patch 4.2: tolti il vecchio "esci e rientra" della patch 2.3.1 e il suo avviso */
+try{localStorage.removeItem('staskys_relogin')}catch(e){}

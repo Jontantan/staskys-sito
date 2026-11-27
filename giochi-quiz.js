@@ -432,7 +432,7 @@ function make(A){
  function end(){st='done';SFX.end();z.innerHTML=`<div class="qbox"><p class="big">${score}</p><p class="muted">${right}/${Q.length} risposte giuste</p></div>`;
   const g=q('#go');g.textContent='Rigioca';g.hidden=false;
   if(score>(+localStorage.quiz_best||0)){localStorage.quiz_best=score;q('#rec').textContent=score;msg(`Nuovo record! ${score} punti.`)}else msg(`Fine! ${score} punti.`);
-  if(score>0)A.save('quiz',score)}
+  if(score>0)A.save('quiz',score,{right})}
  const kd=e=>{if(A.cur!=='quiz'||st!=='run')return;if(/^[1-4]$/.test(e.key)&&!lock){e.preventDefault();answer(+e.key-1)}else if(e.key==='Enter'&&lock){e.preventDefault();next()}};
  addEventListener('keydown',kd);
  q('#go').onclick=e=>{e.currentTarget.blur();start()};

@@ -138,7 +138,7 @@ async function loadRanking(kind){
 /* ---------- minigiochi: record, posizioni, streak e PUNTI ---------- */
 /* PUNTI (provvisorio): 10 per ogni minigioco giocato, +50/+30/+20 per 1°/2°/3° posto, +5 se sei in top 10, +5 per ogni giorno di streak */
 const ASC=new Set(['reaction','mines','wordle']); /* giochi dove vince il punteggio più basso */
-const GAME_NAMES={snake:'Snake',reaction:'Riflessi',clicker:'Clicker veloce',flappy:'Flappy',tetris:'Tetris',dino:'Dino runner',quiz:'Quiz anime',wordle:'Wordle',2048:'2048',breakout:'Breakout',stack:'Stack',suika:'Suika',mines:'Prato fiorito',typing:'Battitura'};
+const GAME_NAMES={snake:'Snake',reaction:'Riflessi',clicker:'Clicker veloce',flappy:'Flappy',tetris:'Tetris',dino:'Dino runner',quiz:'Quiz anime',wordle:'Wordle',2048:'2048',breakout:'Breakout',stack:'Stack',suika:'Suika',mines:'Prato fiorito',typing:'Battitura',hol:'Higher or Lower'};
 /* UPDATE 4: Wordle e Clicker veloce non danno più punti né primi posti/podi (si possono ancora giocare, con la loro classifica) */
 const NO_POINTS=new Set(['wordle','clicker']);
 const counts=r=>!NO_POINTS.has(r.game);
@@ -244,6 +244,38 @@ function searchMembers(list,all,viewer,term,max=8){const t=String(term||'').trim
  return list.filter(m=>m.did!==viewer&&m.name.toLowerCase().includes(t)).map(m=>{const c=viewer?compare(mine,M.get(m.did)||[]):{n:0,pct:null};return{...m,n:c.n,pct:c.pct,starts:m.name.toLowerCase().startsWith(t)}})
   .sort((a,b)=>b.starts-a.starts||(b.n?1:0)-(a.n?1:0)||(b.pct||0)-(a.pct||0)||a.name.localeCompare(b.name)).slice(0,max)}
 
-window.STASKYS_SOCIAL={MIN_VOTES,WEIGHT_M,loadAll,reset:()=>{cache=null;pcache=null;staffP=null;xcache=null;gcache=null},top10,saveTop10,compare,label,similar,byUser,ranking,loadRanking,DEMO_ME:'demo-demo',
- ASC,GAME_NAMES,points,loadGames,loadProfiles,saveProfile,members,searchMembers,catStats,cleanCovers,saveCovers,isStaff,COVER_OK,NO_POINTS,loadExtra,toggleLike,statsFor,saveMeta,styled};
+
+/* ---------- PATCH 4.2: ruoli speciali del sito, commenti sul profilo ---------- */
+/* ruoli del sito (tabella site_roles, modificabile da Supabase); se la tabella non c'è ancora vale questa riserva */
+const SITE_ROLES_DEF={'760448374196404236':{label:'Gestore sito',color:'#22d3ee',mod:true}};
+let rolesP=null,modP=null;
+function siteRoles(){if(A.DEMO)return Promise.resolve({'demo-demo':{label:'Gestore sito',color:'#22d3ee',mod:true}});
+ if(!A.sb)return Promise.resolve(SITE_ROLES_DEF);
+ return rolesP||(rolesP=Promise.resolve(A.sb.from('site_roles').select('discord_id,label,color,can_moderate')).then(r=>{if(r.error)return SITE_ROLES_DEF;const m={};
+  (r.data||[]).forEach(x=>{m[String(x.discord_id)]={label:String(x.label||'').slice(0,30),color:/^#[0-9a-f]{6}$/i.test(x.color||'')?x.color:'',mod:!!x.can_moderate}});return m},()=>SITE_ROLES_DEF))}
+function canModerate(){if(A.DEMO)return Promise.resolve(true);if(!A.sb||!A.user)return Promise.resolve(false);
+ return modP||(modP=Promise.resolve(A.sb.rpc('can_moderate')).then(r=>{if(!r.error)return r.data===true;return siteRoles().then(m=>!!(m[A.profile(A.user).discord]||{}).mod)},()=>false))}
+const DEMO_COMMENTS=[{id:-1,target_discord:'demo-demo',author_discord:'demo-aki',body:'Il passaporto più bello del server, la cornice neon spacca 🔥',created_at:new Date(Date.now()-36e5*3).toISOString()},
+ {id:-2,target_discord:'demo-demo',author_discord:'demo-kai',body:'Frieren al primo posto, rispetto. Ci sfidiamo a Snake?',created_at:new Date(Date.now()-864e5*2).toISOString()}];
+const demoC=()=>{let L=null;try{L=JSON.parse(localStorage.demo_comments||'null')}catch(e){}return Array.isArray(L)?L:DEMO_COMMENTS.slice()};
+async function loadComments(did){did=String(did);
+ if(A.DEMO)return{ok:true,list:demoC().filter(c=>c.target_discord===did)};
+ if(!A.sb)return{ok:false,list:[]};
+ const {data,error}=await A.sb.from('profile_comments').select('id,target_discord,author_discord,body,created_at').eq('target_discord',did).order('created_at',{ascending:false}).limit(100);
+ return{ok:!error,list:data||[]}}
+async function addComment(did,body){body=String(body||'').replace(/\s+/g,' ').trim().slice(0,300);if(!body)return{error:{message:'Scrivi qualcosa prima di pubblicare.'}};
+ if(A.DEMO){const L=demoC();const c={id:Date.now(),target_discord:String(did),author_discord:'demo-demo',body,created_at:new Date().toISOString()};L.unshift(c);localStorage.demo_comments=JSON.stringify(L);return{data:c}}
+ if(!A.sb||!A.user)return{error:{message:'login'}};
+ const r=await A.sb.from('profile_comments').insert({target_discord:String(did),body}).select('id,target_discord,author_discord,body,created_at').single();return{data:r.data,error:r.error}}
+async function deleteComment(id){
+ if(A.DEMO){localStorage.demo_comments=JSON.stringify(demoC().filter(c=>c.id!==id));return null}
+ if(!A.sb||!A.user)return{message:'login'};
+ const r=await A.sb.from('profile_comments').delete().eq('id',id).select('id');if(r.error)return r.error;return(r.data||[]).length?null:{message:'Non puoi cancellare questo commento.'}}
+async function setCommentsOff(off){const did=A.DEMO?'demo-demo':(A.user?A.profile(A.user).discord:'');
+ if(A.DEMO){const P=await loadProfiles(),cur=P.get(did)||{};const full={...cur,comments_off:!!off};localStorage.demo_profile=JSON.stringify(full);P.set(did,full);return null}
+ if(!A.sb||!A.user)return{message:'login'};
+ const {error}=await A.sb.from('site_profiles').upsert({comments_off:!!off},{onConflict:'user_id'});
+ if(!error&&pcache){const cur=pcache.get(did)||{};pcache.set(did,{...cur,comments_off:!!off})}return error}
+window.STASKYS_SOCIAL={MIN_VOTES,WEIGHT_M,loadAll,reset:()=>{cache=null;pcache=null;staffP=null;xcache=null;gcache=null;rolesP=null;modP=null},top10,saveTop10,compare,label,similar,byUser,ranking,loadRanking,DEMO_ME:'demo-demo',
+ ASC,GAME_NAMES,points,loadGames,loadProfiles,saveProfile,members,searchMembers,catStats,cleanCovers,saveCovers,isStaff,COVER_OK,NO_POINTS,loadExtra,toggleLike,statsFor,saveMeta,styled,siteRoles,canModerate,loadComments,addComment,deleteComment,setCommentsOff};
 })();

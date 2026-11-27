@@ -1,5 +1,6 @@
 /* Staskys — UPDATE 3: "Condividi" sul passaporto → immagine verticale del profilo (storia Instagram / Discord).
-   Corta = solo passaporto (1080×1350) · Completa = passaporto + Top 5 (1080×1920).
+   PATCH 4.2: scegli tu cosa mettere nell'immagine (numeri e Top 5 di anime, giochi, film, serie, manga, libri: tutto o solo alcune)
+   e copia il link diretto al profilo (staskys.it/u/nome).
    Scarica il PNG oppure, sul telefono, apre la condivisione (Web Share API). Tutto nel browser, niente server. */
 (function(){
 const A=window.STASKYS,S=window.STASKYS_SOCIAL,D=window.STASKYS_DECO,E=A.E,q=(s,r=document)=>r.querySelector(s),qa=(s,r=document)=>[...r.querySelectorAll(s)];
@@ -19,8 +20,17 @@ function crown(x,cx,cy,s){const g=x.createLinearGradient(cx,cy-s,cx,cy+s*.5);g.a
  x.save();x.shadowColor='rgba(251,191,36,.8)';x.shadowBlur=30;x.fillStyle=g;x.beginPath();x.moveTo(cx-s,cy+s*.45);x.lineTo(cx-s,cy-s*.35);x.lineTo(cx-s*.5,cy+s*.05);x.lineTo(cx,cy-s*.7);x.lineTo(cx+s*.5,cy+s*.05);x.lineTo(cx+s,cy-s*.35);x.lineTo(cx+s,cy+s*.45);x.closePath();x.fill();x.restore();
  x.fillStyle='#ef4444';x.beginPath();x.arc(cx,cy+s*.12,s*.13,0,7);x.fill();x.fillStyle='#38bdf8';[-.58,.58].forEach(o=>{x.beginPath();x.arc(cx+s*o,cy+s*.2,s*.09,0,7);x.fill()})}
 
-async function draw(u,ctx,full){
- const H=full?1920:1350,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
+const KEYS=()=>Object.keys(A.KINDS);
+/* link diretto al profilo: staskys.it/u/<nome utente Discord> (lo apre 404.html → profilo.html?u=…) */
+function profileUrl(u){if(u.demo)return location.origin+location.pathname.replace(/[^/]*$/,'')+'profilo.html?demo=1';
+ return 'https://staskys.it/u/'+encodeURIComponent(u.username||u.did)}
+function layout(u,opts){const bad=(u.equipped.badges||[]).length,n=opts.kinds.length,small=n>2;
+ const cw=small?150:180,ch=small?225:270,row=70+40+ch+50;
+ let y=540-30+170+92+78+(bad?66:0)+(u.bio?54:0);if(opts.stats)y+=60+328;
+ const need=y+n*row+170;return{H:Math.max(n?1920:1350,Math.ceil(need/10)*10),cw,ch}}
+async function draw(u,ctx,opts){
+ if(typeof opts==='boolean')opts={stats:true,kinds:opts?[ctx.kind]:[]};
+ const {H,cw,ch}=layout(u,opts),c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
  try{await document.fonts.ready}catch(e){}
  const acc=getComputedStyle(q('.pass')||document.body).getPropertyValue('--c').trim()||u.theme.accent||'#8b5cf6';
  /* sfondo */
@@ -48,47 +58,69 @@ async function draw(u,ctx,full){
  const bad=(u.equipped.badges||[]).map(id=>D.byId[id]).filter(Boolean);y+=78;
  if(bad.length){x.font='52px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';const bw0=84,bx=cx-(bad.length-1)*bw0/2;bad.forEach((b,i)=>{rr(x,bx+i*bw0-36,y-38,72,72,20);x.fillStyle='rgba(255,255,255,.08)';x.fill();x.fillStyle='#fff';x.fillText(b.icona,bx+i*bw0,y+2)});y+=66}
  x.font='500 32px Inter,system-ui,sans-serif';x.fillStyle='rgba(255,255,255,.62)';const since=u.joined?new Date(u.joined).toLocaleDateString('it-IT',{month:'long',year:'numeric'}):'';
- x.fillText(ell(x,[u.username?'@'+u.username:'',since?'nel server da '+since:''].filter(Boolean).join(' · ')||'Membro di Staskys',W-120),cx,y);
+ const roles=[u.siteRole&&u.siteRole.label,u.role].filter(Boolean).join(' · ');
+ x.fillText(ell(x,[roles,u.username?'@'+u.username:'',since?'nel server da '+since:''].filter(Boolean).join(' · ')||'Membro di Staskys',W-120),cx,y);
  if(u.bio){y+=54;x.font='italic 500 30px Inter,system-ui,sans-serif';x.fillStyle='rgba(255,255,255,.8)';x.fillText(ell(x,'“'+u.bio+'”',W-140),cx,y)}
  /* numeri */
- const rated=u.ratings.filter(A.hasR),avg=rated.length?rated.reduce((a,r)=>a+ +r.rating,0)/rated.length:null;
- const ST=[['Titoli votati',String(rated.length)],['Media voti',avg==null?'–':A.fmtR(Math.round(avg*10)/10)],['Punti',Number(u.stats.points||0).toLocaleString('it-IT')],['Classifica',u.stats.pos?'#'+u.stats.pos:'–']];
- y+=60;const bw=(W-96-36)/2,bh=150;
- ST.forEach(([l,v],i)=>{const X=48+(i%2)*(bw+36),Y=y+Math.floor(i/2)*(bh+28);rr(x,X,Y,bw,bh,28);x.fillStyle='rgba(255,255,255,.07)';x.fill();x.strokeStyle='rgba(255,255,255,.12)';x.lineWidth=2;x.stroke();
-  x.textAlign='left';x.fillStyle='rgba(255,255,255,.6)';x.font='600 28px Inter,system-ui,sans-serif';x.fillText(l.toUpperCase(),X+32,Y+46);x.fillStyle='#fff';x.font='900 64px Inter,system-ui,sans-serif';x.fillText(v,X+32,Y+108)});
- y+=bh*2+28;x.textAlign='center';
- /* Top 5 */
- if(full){const L=S.top10(u.ratings,ctx.kind).list.slice(0,5),K=A.KINDS[ctx.kind];y+=70;
+ if(opts.stats){const rated=u.ratings.filter(A.hasR),avg=rated.length?rated.reduce((a,r)=>a+ +r.rating,0)/rated.length:null;
+  const ST=[['Titoli votati',String(rated.length)],['Media voti',avg==null?'–':A.fmtR(Math.round(avg*10)/10)],['Punti',Number(u.stats.points||0).toLocaleString('it-IT')],['Classifica',u.stats.pos?'#'+u.stats.pos:'–']];
+  y+=60;const bw=(W-96-36)/2,bh=150;
+  ST.forEach(([l,v],i)=>{const X=48+(i%2)*(bw+36),Y=y+Math.floor(i/2)*(bh+28);rr(x,X,Y,bw,bh,28);x.fillStyle='rgba(255,255,255,.07)';x.fill();x.strokeStyle='rgba(255,255,255,.12)';x.lineWidth=2;x.stroke();
+   x.textAlign='left';x.fillStyle='rgba(255,255,255,.6)';x.font='600 28px Inter,system-ui,sans-serif';x.fillText(l.toUpperCase(),X+32,Y+46);x.fillStyle='#fff';x.font='900 64px Inter,system-ui,sans-serif';x.fillText(v,X+32,Y+108)});
+  y+=bh*2+28;x.textAlign='center'}
+ /* Top 5 delle sezioni scelte */
+ for(const kind of opts.kinds){const L=S.top10(u.ratings,kind).list.slice(0,5),K=A.KINDS[kind];y+=70;
   x.fillStyle='#fff';x.font='800 40px Inter,system-ui,sans-serif';x.fillText(`Top 5 ${K.t}`,cx,y);y+=40;
-  const cw=180,ch=270,gap=(W-96-cw*5)/4,cv=await Promise.all(L.map(r=>img(r.cover)));
+  const gap=(W-96-cw*5)/4,cv=await Promise.all(L.map(r=>img(r.cover)));
   for(let i=0;i<5;i++){const X=48+i*(cw+gap),r=L[i];rr(x,X,y,cw,ch,18);x.fillStyle='rgba(255,255,255,.06)';x.fill();
    if(r&&cv[i]){x.save();rr(x,X,y,cw,ch,18);x.clip();cover(x,cv[i],X,y,cw,ch);x.restore()}
    if(r){x.fillStyle=i===0?'#fbbf24':'rgba(0,0,0,.75)';x.beginPath();x.arc(X+30,y+30,24,0,7);x.fill();x.fillStyle=i===0?'#000':'#fff';x.font='900 26px Inter,system-ui,sans-serif';x.fillText(String(i+1),X+30,y+31);
     if(A.hasR(r)){rr(x,X+cw-74,y+ch-48,64,38,12);x.fillStyle='rgba(0,0,0,.78)';x.fill();x.fillStyle='#fff';x.font='800 24px Inter,system-ui,sans-serif';x.fillText(A.fmtR(r.rating),X+cw-42,y+ch-28)}
     x.fillStyle='rgba(255,255,255,.85)';x.font='600 22px Inter,system-ui,sans-serif';x.fillText(ell(x,r.title,cw),X+cw/2,y+ch+30)}}
-  if(!L.length){x.fillStyle='rgba(255,255,255,.5)';x.font='500 28px Inter,system-ui,sans-serif';x.fillText('Ancora nessun voto in questa categoria',cx,y+ch/2)}}
- /* piede */
- x.textAlign='center';x.fillStyle='rgba(255,255,255,.9)';x.font='900 44px Inter,system-ui,sans-serif';x.fillText('staskys.it',cx,H-70);
+  if(!L.length){x.fillStyle='rgba(255,255,255,.5)';x.font='500 28px Inter,system-ui,sans-serif';x.fillText('Ancora nessun voto in questa categoria',cx,y+ch/2)}
+  y+=ch+50}
+ /* piede: link diretto al profilo */
+ const link=u.demo?'staskys.it':'staskys.it/u/'+(u.username||u.did);
+ x.textAlign='center';x.fillStyle='rgba(255,255,255,.9)';fit(x,link,W-120,44,'900');x.fillText(link,cx,H-70);
  x.fillStyle='rgba(255,255,255,.45)';x.font='500 24px Inter,system-ui,sans-serif';x.fillText('Il mio passaporto sul server Staskys',cx,H-30);
  return new Promise(ok=>c.toBlob(b=>ok(b),'image/png'))}
 
-function open(u,ctx){let full=true,blob=null,url='';
+function open(u,ctx){let blob=null,url='',seq=0;
+ const avail=KEYS().filter(k=>u.ratings.some(r=>r.kind===k));
+ const sel={stats:true,kinds:new Set(avail.length?avail:[ctx.kind])};
  let sh=q('#shsheet');if(!sh){document.body.insertAdjacentHTML('beforeend','<div class="csheet sh-sheet" id="shsheet" hidden><div class="csheet-in" role="dialog" aria-modal="true" aria-label="Condividi il profilo"></div></div>');sh=q('#shsheet')}
  const box=q('.csheet-in',sh),close=()=>{sh.classList.remove('show');setTimeout(()=>{sh.hidden=true;url&&URL.revokeObjectURL(url)},200);removeEventListener('keydown',esc)},esc=e=>{if(e.key==='Escape')close()};
  addEventListener('keydown',esc);sh.onclick=e=>{if(e.target===sh)close()};
  const name=`staskys-${String(u.nick).toLowerCase().normalize('NFD').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'profilo'}.png`;
- const render=async()=>{box.innerHTML=`<button class="cx" aria-label="Chiudi">×</button><p class="label">Condividi</p><h3 class="cz-h">Il ${u.isMe?'tuo':''} passaporto in un'immagine</h3>
-  <div class="seg mini shseg"><button data-f="1" class="${full?'active':''}">Completa (con Top 5)</button><button data-f="0" class="${full?'':'active'}">Corta (solo passaporto)</button></div>
+ const link=profileUrl(u),all=()=>KEYS().filter(k=>sel.kinds.has(k));
+ const chips=()=>`<div class="shopts">
+   <button class="shchip${sel.stats?' on':''}" data-s="stats" aria-pressed="${sel.stats}">📊 Numeri</button>
+   ${(avail.length?avail:KEYS()).map(k=>`<button class="shchip${sel.kinds.has(k)?' on':''}" data-k="${k}" aria-pressed="${sel.kinds.has(k)}">${A.KINDS[k].icon} ${E(A.KINDS[k].t)}</button>`).join('')}</div>
+   <div class="shquick"><button data-q="all">Tutto</button><button data-q="none">Solo passaporto</button></div>`;
+ const shell=()=>{box.innerHTML=`<button class="cx" aria-label="Chiudi">×</button><p class="label">Condividi</p><h3 class="cz-h">Il ${u.isMe?'tuo ':''}passaporto</h3>
+  <p class="label" style="margin-top:.6rem">Link diretto al profilo</p>
+  <div class="shlink"><input id="shurl" readonly value="${E(link)}" aria-label="Link al profilo"><button class="btn sm" id="shcopy">Copia link</button></div>
+  <p class="label">Cosa mettere nell'immagine</p><div id="shch">${chips()}</div>
   <div class="shprev"><p class="muted small">Preparo l'immagine…</p></div>
   <div class="cs-act"><button class="btn" id="shgo" disabled>Condividi</button><button class="btn ghost" id="shdl" disabled>Scarica</button></div><p class="muted tiny">Formato verticale, perfetto per le storie di Instagram e per Discord.</p>`;
-  q('.cx',box).onclick=close;qa('.shseg button',box).forEach(b=>b.onclick=()=>{full=b.dataset.f==='1';render()});
-  try{blob=await draw(u,ctx,full)}catch(e){blob=null}
-  const pv=q('.shprev',box);if(!pv)return;if(!blob){pv.innerHTML='<p class="imperr">Non sono riuscito a creare l\'immagine. Riprova.</p>';return}
+  q('.cx',box).onclick=close;
+  const cp=q('#shcopy',box),inp=q('#shurl',box);cp.onclick=async()=>{let ok=false;try{await navigator.clipboard.writeText(link);ok=true}catch(e){inp.select();try{ok=document.execCommand('copy')}catch(e2){}}
+   cp.textContent=ok?'Copiato ✓':'Selezionato: copia tu';setTimeout(()=>{cp.textContent='Copia link'},1800)};
+  inp.onfocus=()=>inp.select();bindChips()};
+ const bindChips=()=>{const ch=q('#shch',box);
+  qa('[data-s]',ch).forEach(b=>b.onclick=()=>{sel.stats=!sel.stats;redraw()});
+  qa('[data-k]',ch).forEach(b=>b.onclick=()=>{const k=b.dataset.k;sel.kinds.has(k)?sel.kinds.delete(k):sel.kinds.add(k);redraw()});
+  qa('[data-q]',ch).forEach(b=>b.onclick=()=>{if(b.dataset.q==='all'){sel.stats=true;(avail.length?avail:KEYS()).forEach(k=>sel.kinds.add(k))}else{sel.stats=false;sel.kinds.clear()}redraw()})};
+ const redraw=()=>{q('#shch',box).innerHTML=chips();bindChips();render()};
+ const render=async()=>{const my=++seq;const pv=q('.shprev',box),go=q('#shgo',box),d=q('#shdl',box);go.disabled=d.disabled=true;pv.classList.add('busy');
+  try{blob=await draw(u,ctx,{stats:sel.stats,kinds:all()})}catch(e){blob=null}
+  if(my!==seq||!q('.shprev',box))return;pv.classList.remove('busy');
+  if(!blob){pv.innerHTML='<p class="imperr">Non sono riuscito a creare l\'immagine. Riprova.</p>';return}
   url&&URL.revokeObjectURL(url);url=URL.createObjectURL(blob);pv.innerHTML=`<img src="${url}" alt="Anteprima dell'immagine del profilo">`;
   const file=new File([blob],name,{type:'image/png'}),canShare=!!(navigator.canShare&&navigator.canShare({files:[file]}));
   const dl=()=>{const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove()};
-  const go=q('#shgo',box),d=q('#shdl',box);go.disabled=d.disabled=false;if(!canShare)go.hidden=true;
-  go.onclick=async()=>{try{await navigator.share({files:[file],title:'Il mio passaporto Staskys',text:'Guarda il mio profilo su staskys.it'})}catch(e){}};d.onclick=dl};
- render();sh.hidden=false;requestAnimationFrame(()=>sh.classList.add('show'))}
-window.STASKYS_SHARE={open,draw};
+  go.disabled=d.disabled=false;if(!canShare)go.hidden=true;
+  go.onclick=async()=>{try{await navigator.share({files:[file],title:'Il mio passaporto Staskys',text:'Guarda il mio profilo su Staskys: '+link})}catch(e){}};d.onclick=dl};
+ shell();render();sh.hidden=false;requestAnimationFrame(()=>sh.classList.add('show'))}
+window.STASKYS_SHARE={open,draw,profileUrl};
 })();
