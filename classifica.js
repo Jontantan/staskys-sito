@@ -39,7 +39,7 @@ async function points(box,my){
   :me?'':`<p class="muted small" style="text-align:center">Accedi e gioca per vedere la tua posizione.</p>`}
  <div class="podium ppod">${podium.map(u=>`<a class="pod p${u.pos}" href="${prof(u.did)}"><span class="pav"><img ${A.avAttr(u.did,u.avatar)} alt="" loading="lazy"><b class="pod-n">${u.pos}</b><i class="pod-glint"></i>${DECOR[u.pos]?DECOR[u.pos]():''}</span><b class="pod-t">${name(u)}</b><span class="pbad">${badges(u,profiles,M,C)}</span><span class="pod-a">${fmt(u.points)}<small> pt</small></span><small class="muted">${u.firsts} ${u.firsts===1?'primo posto':'primi posti'} · 🔥 ${u.streak}</small></a>`).join('')}</div>
  ${L.length>3?`<ol class="rk-list" start="4">${L.slice(3,100).map(u=>`<li><a class="rk-row${u.did===me?' me':''}" href="${prof(u.did)}"><span class="rk-n">${u.pos}</span><img class="rk-av" ${A.avAttr(u.did,u.avatar)} alt="" loading="lazy"><span class="rk-t"><b>${name(u)} ${badges(u,profiles,M,C)}</b><small>${u.rec.length} minigiochi · ${u.podiums} podi · 🔥 ${u.streak}</small></span><span class="rk-a">${fmt(u.points)}<small> pt</small></span></a></li>`).join('')}</ol>`:''}
- <p class="muted tiny" style="text-align:center;margin-top:1.4rem">Punti: 10 per ogni minigioco giocato, +50 / +30 / +20 per 1°, 2° e 3° posto, +5 se sei in top 10, +5 per ogni giorno di streak. Wordle e Clicker veloce non danno punti.</p>`}
+ <p class="muted tiny" style="text-align:center;margin-top:1.4rem">Punti: 10 per ogni minigioco giocato, +50 / +30 / +20 per 1°, 2° e 3° posto, +5 se sei in top 10, +5 per ogni giorno di streak. Wordle, Clicker veloce e Higher or Lower non danno punti.</p>`}
 
 /* ---------- badge (update 3, badge-config.js) ---------- */
 async function badgeTab(box,my){

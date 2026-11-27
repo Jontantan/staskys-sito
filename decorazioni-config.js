@@ -5,7 +5,7 @@
    Rarità, dalla più comune alla più rara: comune · rara · epica · leggendaria · mitico
    Tipi di requisito (req):
      minigiochi
-     {tipo:'punti', valore:N}            almeno N punti nella classifica generale (Wordle e Clicker non contano)
+     {tipo:'punti', valore:N}            almeno N punti nella classifica generale (Wordle, Clicker e Higher or Lower non contano)
      {tipo:'posizione', valore:N}        tra i primi N della classifica generale (1 = primo)
      {tipo:'primo', valore:N}            primo posto in almeno N minigiochi
      {tipo:'podi', valore:N}             sul podio in almeno N minigiochi

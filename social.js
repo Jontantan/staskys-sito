@@ -139,8 +139,8 @@ async function loadRanking(kind){
 /* PUNTI (provvisorio): 10 per ogni minigioco giocato, +50/+30/+20 per 1°/2°/3° posto, +5 se sei in top 10, +5 per ogni giorno di streak */
 const ASC=new Set(['reaction','mines','wordle']); /* giochi dove vince il punteggio più basso */
 const GAME_NAMES={snake:'Snake',reaction:'Riflessi',clicker:'Clicker veloce',flappy:'Flappy',tetris:'Tetris',dino:'Dino runner',quiz:'Quiz anime',wordle:'Wordle',2048:'2048',breakout:'Breakout',stack:'Stack',suika:'Suika',mines:'Prato fiorito',typing:'Battitura',hol:'Higher or Lower'};
-/* UPDATE 4: Wordle e Clicker veloce non danno più punti né primi posti/podi (si possono ancora giocare, con la loro classifica) */
-const NO_POINTS=new Set(['wordle','clicker']);
+/* UPDATE 4: Wordle e Clicker veloce (4.2: anche Higher or Lower) non danno più punti né primi posti/podi (si possono ancora giocare, con la loro classifica) */
+const NO_POINTS=new Set(['wordle','clicker','hol']);
 const counts=r=>!NO_POINTS.has(r.game);
 function points(rec,streak){return rec.filter(counts).reduce((s,r)=>s+10+(r.rank===1?50:r.rank===2?30:r.rank===3?20:r.rank<=10?5:0),0)+(streak||0)*5}
 function demoGames(){/* partite finte, solo per la DEMO */

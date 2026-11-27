@@ -211,5 +211,44 @@ revoke all on public.profile_comments from anon, authenticated;
 grant select on public.profile_comments to anon, authenticated;
 grant insert, delete on public.profile_comments to authenticated;
 
+-- 4) HIGHER OR LOWER NON DÀ PUNTI ------------------------------------------
+--    Ha la sua classifica, ma non conta per i punti: niente streak giornaliera (che vale +5 punti al giorno)
+--    e niente statistiche dei badge se si gioca solo a Higher or Lower.
+create or replace view public.streaks with (security_invoker = true) as
+with d as (
+  select distinct user_id, (created_at at time zone 'Europe/Rome')::date as day
+  from public.scores where game <> 'hol'
+), g as (
+  select user_id, day, day - (row_number() over (partition by user_id order by day))::int as grp
+  from d
+), s as (
+  select user_id, count(*)::int as streak, max(day) as last_day
+  from g group by user_id, grp
+)
+select s.user_id, s.streak, s.last_day, p.username, p.avatar_url
+from s
+left join lateral (
+  select username, avatar_url from public.scores x
+  where x.user_id = s.user_id order by x.created_at desc limit 1
+) p on true
+where s.last_day >= (now() at time zone 'Europe/Rome')::date - 1;
+grant select on public.streaks to anon, authenticated;
+
+create or replace view public.player_stats with (security_invoker = true) as
+with d as (
+  select distinct user_id, (created_at at time zone 'Europe/Rome')::date as day from public.scores where game <> 'hol'
+), g as (
+  select user_id, day - (row_number() over (partition by user_id order by day))::int as grp from d
+), b as (
+  select user_id, max(n)::int as best_streak from (select user_id, count(*) as n from g group by user_id, grp) s group by user_id
+), n as (
+  select user_id, max(discord_id) as discord_id,
+         bool_or(extract(hour from created_at at time zone 'Europe/Rome') between 2 and 4) as night
+  from public.scores where game <> 'hol' group by user_id
+)
+select n.user_id, n.discord_id, coalesce(b.best_streak, 0) as best_streak, n.night
+from n left join b using (user_id);
+grant select on public.player_stats to anon, authenticated;
+
 commit;
 -- Fatto! Deve comparire "Success. No rows returned".

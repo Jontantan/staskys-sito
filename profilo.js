@@ -139,8 +139,8 @@ function pageHTML(u,ctx){
   ${similarHTML(ctx.similar,u)}
   ${searchHTML()}
   <div class="card side-card"><h3>Minigiochi</h3><p class="muted small">Record personali e posizione in classifica</p>
-   ${u.rec.length?`<ol class="recs">${u.rec.map(r=>`<li><span class="rk${r.rank<=3?' top':''}">${r.rank===1?'👑':'#'+r.rank}</span><span class="rg">${E(S.GAME_NAMES[r.game]||r.game)}</span><b>${fmt(r.score)}</b></li>`).join('')}</ol>`:`<p class="muted small">${u.isMe?'Non hai ancora giocato. <a href="giochi.html">Vai ai giochi</a>':'Non ha ancora giocato.'}</p>`}
-   <p class="muted tiny">Punti: 10 per gioco, bonus podio e top 10, +5 per giorno di streak. Wordle e Clicker veloce non danno punti.</p></div>
+   ${u.rec.length?`<ol class="recs">${[...u.rec.filter(r=>!S.NO_POINTS.has(r.game)),...u.rec.filter(r=>S.NO_POINTS.has(r.game))].map(r=>`<li>${S.NO_POINTS.has(r.game)?'<span class="rk">·</span>':`<span class="rk${r.rank<=3?' top':''}">${r.rank===1?'👑':'#'+r.rank}</span>`}<span class="rg">${E(S.GAME_NAMES[r.game]||r.game)}</span><b>${fmt(r.score)}</b></li>`).join('')}</ol>`:`<p class="muted small">${u.isMe?'Non hai ancora giocato. <a href="giochi.html">Vai ai giochi</a>':'Non ha ancora giocato.'}</p>`}
+   <p class="muted tiny">Punti: 10 per gioco, bonus podio e top 10, +5 per giorno di streak. Wordle, Clicker veloce e Higher or Lower non danno punti.</p></div>
   <a class="card side-card side-link" href="classifica.html?${A.DEMO?'demo=1&':''}tab=punti"><h3>Classifica punti →</h3><p class="muted small">Chi ha più punti nei minigiochi, con podio e badge.</p></a>
   <a class="card side-card side-link" href="classifica.html${dq}"><h3>Classifica titoli →</h3><p class="muted small">I titoli più votati dalla community, in media.</p></a>
  </aside>
