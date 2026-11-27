@@ -1,14 +1,16 @@
 {
- "updated": "2026-11-27T12:01:44.519119+00:00",
+ "updated": "2026-11-27T17:58:21.564238+00:00",
  "members": {
   "1101442673769992204": {
    "in_server": true,
    "nick": "cle miniele | #***",
    "username": "18febbraio",
-   "avatar": "https://cdn.discordapp.com/guilds/1244253666295283713/users/1101442673769992204/avatars/be29333d93c59cc9f7416cefb7506c55.png?size=256",
+   "avatar": "https://cdn.discordapp.com/guilds/1244253666295283713/users/1101442673769992204/avatars/a_9b4e2b829a0cdc24ac27a3b9c4ed1da1.gif?size=256",
    "global_avatar": "https://cdn.discordapp.com/avatars/1101442673769992204/611ed96f80b6467323436a096b5ab2ed.png?size=256",
-   "banner": "https://cdn.discordapp.com/guilds/1244253666295283713/users/1101442673769992204/banners/5ceda616a96932de6b22dbe494abadd3.png?size=600",
-   "joined": "2024-08-04"
+   "banner": "https://cdn.discordapp.com/guilds/1244253666295283713/users/1101442673769992204/banners/0733ead32e9481de87343c054c8848a1.png?size=600",
+   "joined": "2024-08-04",
+   "role": "Founder",
+   "role_color": ""
   },
   "1138945672821874788": {
    "in_server": true,
@@ -17,7 +19,9 @@
    "avatar": "https://cdn.discordapp.com/avatars/1138945672821874788/68249cbddad6f3e18e985d6b44c0af00.png?size=256",
    "global_avatar": "https://cdn.discordapp.com/avatars/1138945672821874788/68249cbddad6f3e18e985d6b44c0af00.png?size=256",
    "banner": "",
-   "joined": "2026-03-19"
+   "joined": "2026-03-19",
+   "role": "Co-owner",
+   "role_color": ""
   },
   "1288884213067546701": {
    "in_server": true,
@@ -50,8 +54,8 @@
    "in_server": true,
    "nick": "okrim",
    "username": "okrim54",
-   "avatar": "https://cdn.discordapp.com/avatars/1535375840374947882/0cc2985edc70fb7c04bc8ab0a966fbe9.png?size=256",
-   "global_avatar": "https://cdn.discordapp.com/avatars/1535375840374947882/0cc2985edc70fb7c04bc8ab0a966fbe9.png?size=256",
+   "avatar": "https://cdn.discordapp.com/avatars/1535375840374947882/c16eb5711337ea65ecc299bd2b4cafd3.png?size=256",
+   "global_avatar": "https://cdn.discordapp.com/avatars/1535375840374947882/c16eb5711337ea65ecc299bd2b4cafd3.png?size=256",
    "banner": "",
    "joined": "2026-10-23"
   },
@@ -71,32 +75,38 @@
    "avatar": "https://cdn.discordapp.com/avatars/434697819668873222/9f056eb7f8585ab2386af14defb38a7a.png?size=256",
    "global_avatar": "https://cdn.discordapp.com/avatars/434697819668873222/9f056eb7f8585ab2386af14defb38a7a.png?size=256",
    "banner": "",
-   "joined": "2026-06-28"
+   "joined": "2026-06-28",
+   "role": "Helper",
+   "role_color": ""
   },
   "569904228684791818": {
    "in_server": true,
    "nick": "cle chadi| WGF nubi's bf",
    "username": "chadisecsi",
-   "avatar": "https://cdn.discordapp.com/guilds/1244253666295283713/users/569904228684791818/avatars/d26bbd702f4ec27745a9508b17bc3a24.png?size=256",
+   "avatar": "https://cdn.discordapp.com/avatars/569904228684791818/4a3167f431dc64628b0ca5c60610f13b.png?size=256",
    "global_avatar": "https://cdn.discordapp.com/avatars/569904228684791818/4a3167f431dc64628b0ca5c60610f13b.png?size=256",
    "banner": "",
-   "joined": "2025-05-01"
+   "joined": "2025-05-01",
+   "role": "Manager",
+   "role_color": ""
   },
   "605799325716578317": {
    "in_server": true,
    "nick": "cle luky PATATA",
    "username": "thelukyyy",
-   "avatar": "https://cdn.discordapp.com/guilds/1244253666295283713/users/605799325716578317/avatars/d8a7379951ff466cf3f4a12dcdd71a1f.png?size=256",
+   "avatar": "https://cdn.discordapp.com/guilds/1244253666295283713/users/605799325716578317/avatars/a_8aa719ecfffa7ee8f9abc0d73ed57709.gif?size=256",
    "global_avatar": "https://cdn.discordapp.com/avatars/605799325716578317/ade6691b953acced97bd91a5b7fd958a.png?size=256",
-   "banner": "https://cdn.discordapp.com/guilds/1244253666295283713/users/605799325716578317/banners/a2d4e313725a7e87ae132bea043fc558.png?size=600",
-   "joined": "2024-09-07"
+   "banner": "https://cdn.discordapp.com/guilds/1244253666295283713/users/605799325716578317/banners/c78e742799b66348c647226706224d85.png?size=600",
+   "joined": "2024-09-07",
+   "role": "Supervisor",
+   "role_color": ""
   },
   "716969988367450122": {
    "in_server": true,
-   "nick": "carro",
+   "nick": "XDany264gior",
    "username": "dany264gior",
-   "avatar": "https://cdn.discordapp.com/avatars/716969988367450122/c3adaa06d5c5c9e0ab3ff26204c1e6a9.png?size=256",
-   "global_avatar": "https://cdn.discordapp.com/avatars/716969988367450122/c3adaa06d5c5c9e0ab3ff26204c1e6a9.png?size=256",
+   "avatar": "https://cdn.discordapp.com/avatars/716969988367450122/275f1b6809188d74eb3289c4f451cad1.png?size=256",
+   "global_avatar": "https://cdn.discordapp.com/avatars/716969988367450122/275f1b6809188d74eb3289c4f451cad1.png?size=256",
    "banner": "",
    "joined": "2024-08-19"
   },
@@ -107,7 +117,9 @@
    "avatar": "https://cdn.discordapp.com/guilds/1244253666295283713/users/760448374196404236/avatars/0b7e3ac4249f48d0997994132c8229fd.png?size=256",
    "global_avatar": "https://cdn.discordapp.com/avatars/760448374196404236/460ec36e42bed4316db0a83ff8596590.png?size=256",
    "banner": "https://cdn.discordapp.com/guilds/1244253666295283713/users/760448374196404236/banners/894b54f4bbb139e54b816ef195bf885d.png?size=600",
-   "joined": "2025-02-27"
+   "joined": "2025-02-27",
+   "role": "Supervisor",
+   "role_color": ""
   },
   "820381161188229160": {
    "in_server": true,
@@ -116,7 +128,9 @@
    "avatar": "https://cdn.discordapp.com/avatars/820381161188229160/c1b12adbeddfcfb8502b2d4d93b8dd27.png?size=256",
    "global_avatar": "https://cdn.discordapp.com/avatars/820381161188229160/c1b12adbeddfcfb8502b2d4d93b8dd27.png?size=256",
    "banner": "",
-   "joined": "2025-07-16"
+   "joined": "2025-07-16",
+   "role": "Helper",
+   "role_color": ""
   },
   "873157498629132319": {
    "in_server": true,
@@ -125,16 +139,20 @@
    "avatar": "https://cdn.discordapp.com/avatars/873157498629132319/649bf0e09477510d6281deb39bd4bf3c.png?size=256",
    "global_avatar": "https://cdn.discordapp.com/avatars/873157498629132319/649bf0e09477510d6281deb39bd4bf3c.png?size=256",
    "banner": "",
-   "joined": "2024-06-12"
+   "joined": "2024-06-12",
+   "role": "Co-owner",
+   "role_color": ""
   },
   "909544773730304081": {
    "in_server": true,
    "nick": "al3xy",
    "username": "al3xytway",
-   "avatar": "https://cdn.discordapp.com/avatars/909544773730304081/a3b16568a1ac66dedfd509e0ec0341a3.png?size=256",
-   "global_avatar": "https://cdn.discordapp.com/avatars/909544773730304081/a3b16568a1ac66dedfd509e0ec0341a3.png?size=256",
+   "avatar": "https://cdn.discordapp.com/avatars/909544773730304081/420f8042f8a5eab4a5a2c61b7774f963.png?size=256",
+   "global_avatar": "https://cdn.discordapp.com/avatars/909544773730304081/420f8042f8a5eab4a5a2c61b7774f963.png?size=256",
    "banner": "",
-   "joined": "2026-04-03"
+   "joined": "2026-04-03",
+   "role": "Admin",
+   "role_color": ""
   },
   "928776903857426533": {
    "in_server": true,

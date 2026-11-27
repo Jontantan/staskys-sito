@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-27T12:01:42.113052+00:00",
+ "updated": "2026-11-27T17:58:17.948591+00:00",
  "groups": {
   "staff": [
    {
@@ -104,13 +104,13 @@
    {
     "name": "Server Booster",
     "color": "#850154",
-    "members": 10,
+    "members": 8,
     "how": "Boosta il server una volta."
    },
    {
     "name": "Member",
     "color": null,
-    "members": 1951,
+    "members": 1950,
     "how": "Si ottiene completando la verifica."
    }
   ],
