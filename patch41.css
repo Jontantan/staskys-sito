@@ -1,0 +1,23 @@
+/* ---------- PATCH 4.1: editor di ritaglio copertine ---------- */
+.cvc-fix{display:flex;justify-content:center;width:100%;margin-top:.55rem;font-size:.78rem;padding:.45rem .5rem}
+.cvcrop{display:flex;flex-direction:column}
+.cvc-stage{position:relative;height:min(52vh,440px);min-height:260px;margin:.9rem 0 .4rem;border-radius:20px;overflow:hidden;background:#050506;border:1px solid var(--line2);touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab;outline:none}
+.cvc-stage.drag{cursor:grabbing}
+.cvc-stage:focus-visible{box-shadow:0 0 0 2px #fff}
+.cvc-img{position:absolute;left:50%;top:50%;max-width:none;transform-origin:center;pointer-events:none;will-change:transform;-webkit-user-drag:none}
+.cvc-frame{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);border-radius:14px;box-shadow:0 0 0 9999px rgba(0,0,0,.62);outline:2px solid rgba(255,255,255,.95);pointer-events:none}
+.cvc-frame i{position:absolute;inset:0;pointer-events:none}
+.cvc-frame i:first-child{border-left:1px solid rgba(255,255,255,.22);border-right:1px solid rgba(255,255,255,.22);left:33.33%;right:33.33%}
+.cvc-frame i:last-child{border-top:1px solid rgba(255,255,255,.22);border-bottom:1px solid rgba(255,255,255,.22);top:33.33%;bottom:33.33%}
+.cvc-stage:not(.drag) .cvc-frame i{opacity:0;transition:opacity .25s}
+.cvc-stage.drag .cvc-frame i{opacity:1}
+.cvc-zoom{display:flex;align-items:center;gap:.7rem;margin:.5rem .2rem .2rem;color:var(--mut);font-weight:700}
+.cvc-zoom input{flex:1;accent-color:#fff;height:28px;cursor:pointer}
+.cvc-note{margin:.3rem 0 0}
+.cvc-btns{display:flex;align-items:center;gap:.5rem;margin-top:.9rem}
+.cvc-btns span{flex:1}
+.cvc-btns button:disabled{opacity:.5;cursor:default}
+.cvc-ok{background:#fff;color:#000;border-color:#fff}
+.cvc-busy{margin-top:.6rem}
+@media(max-width:600px){.cvc-stage{height:min(56vh,420px)}.cvc-btns{flex-wrap:wrap}.cvc-btns span{display:none}.cvc-btns button{flex:1 1 30%}}
+@media(prefers-reduced-motion:reduce){.cvc-frame i{transition:none!important}}
