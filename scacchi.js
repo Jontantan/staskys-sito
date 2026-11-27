@@ -84,6 +84,8 @@ async function joinLobby(){if(lobbyChan||!A.sb)return;try{lobbyChan=A.sb.channel
 function pingInvite(to,id){try{lobbyChan&&lobbyChan.send({type:'broadcast',event:'invite',payload:{to,from:myDid,id}})}catch(e){}}
 /* PATCH 5.1: partite in corso da guardare */
 let lastLive='',pickOpp=null;
+window.STASKYS_CHESS_BUSY=()=>view==='game'&&!!G&&G.mode==='live'&&['active','voting','coin','tiebreak'].includes(G.status)&&isPlayer();
+document.addEventListener('staskys-chess-refresh',()=>{if(view==='lobby'&&me)loadMine()});
 async function renderLive(quiet){const b=q('#clive');if(!b||!A.sb)return;
  const {data,error}=await A.sb.from('chess_games').select('id,mode,ranked,white_did,black_did,fen,moves,tc_base,tc_inc,started_at,updated_at').eq('status','active').order('updated_at',{ascending:false}).limit(30);
  if(error){if(!quiet)b.innerHTML='<h3>👀 Partite in corso</h3><p class="muted small">Non riesco a caricarle.</p>';return}
@@ -229,9 +231,15 @@ const xySq=(x,y)=>{if(flip){x=7-x;y=7-y}return FILES[x]+(8-y)};
 function posAt(n){const c=new Chess(G.start_fen);for(let i=0;i<n&&i<HIST.length;i++)c.move(HIST[i].san);return c}
 /* PATCH 5.1: pre-mosse (solo dal vivo, quando tocca all'altro) */
 const preOn=c=>!pvMode&&G.mode==='live'&&G.status==='active'&&ply===HIST.length&&!!myColor()&&myColor()!==c.turn();
-function preLegal(sq){const mc=myColor(),f=G.fen.split(' ');f[1]=mc;f[3]='-';let L=[];
- try{const c=new Chess(f.join(' '));L=c.moves({square:sq,verbose:true}).map(m=>({from:m.from,to:m.to,promotion:m.promotion}));
-  const p=c.get(sq);if(p&&p.type==='p'){const dir=mc==='w'?1:-1,r=+sq[1]+dir,fi=FILES.indexOf(sq[0]);[fi-1,fi+1].forEach(x=>{if(x<0||x>7||r<1||r>8)return;const t=FILES[x]+r,o=c.get(t);if(!o&&!L.some(m=>m.to===t))L.push({from:sq,to:t,promotion:(r===8||r===1)?'q':undefined})})}}catch(e){}
+function preLegal(sq){const mc=myColor(),c=posAt(HIST.length),p=c.get(sq);if(!p||p.color!==mc)return[];
+ /* PATCH 5.1.3: come chess.com la pre-mossa può andare su qualsiasi casella che il pezzo raggiungerebbe se la strada fosse libera,
+    anche dove ora c'è un pezzo (tuo o dell'altro). Quando tocca a te si controlla se è davvero valida, altrimenti si annulla. */
+ const x0=FILES.indexOf(sq[0]),y0=+sq[1]-1,L=[],add=(x,y)=>{if(x<0||x>7||y<0||y>7)return;const t=FILES[x]+(y+1);if(t!==sq&&!L.some(m=>m.to===t))L.push({from:sq,to:t,promotion:p.type==='p'&&(y===7||y===0)?'q':undefined})};
+ const ray=(dx,dy)=>{for(let k=1;k<8;k++)add(x0+dx*k,y0+dy*k)};
+ if(p.type==='n')[[1,2],[2,1],[-1,2],[-2,1],[1,-2],[2,-1],[-1,-2],[-2,-1]].forEach(([a,b])=>add(x0+a,y0+b));
+ else if(p.type==='k'){for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++)if(a||b)add(x0+a,y0+b);const home=mc==='w'?0:7;if(x0===4&&y0===home){add(6,home);add(2,home)}}
+ else if(p.type==='p'){const d=mc==='w'?1:-1,start=mc==='w'?1:6;add(x0,y0+d);if(y0===start)add(x0,y0+2*d);add(x0-1,y0+d);add(x0+1,y0+d)}
+ else{const dirs=p.type==='r'?[[1,0],[-1,0],[0,1],[0,-1]]:p.type==='b'?[[1,1],[1,-1],[-1,1],[-1,-1]]:[[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];dirs.forEach(([a,b])=>ray(a,b))}
  return L}
 let animDone='';
 function playAnim(b,m){if(fast||!m)return;const k=m.from+m.to+'@'+ply;if(animDone===k)return;animDone=k;
@@ -240,7 +248,8 @@ function playAnim(b,m){if(fast||!m)return;const k=m.from+m.to+'@'+ply;if(animDon
  mv(m.from,m.to);
  if(m.flags&&(m.flags.includes('k')||m.flags.includes('q'))){const r=m.from[1];m.flags.includes('k')?mv('h'+r,'f'+r):mv('a'+r,'d'+r)}
  if(m.captured){const sqEl=q(`[data-sq="${m.to}"]`,b);if(sqEl){const fx=document.createElement('i');fx.className='cburst';fx.innerHTML='<b></b><b></b><b></b><b></b><b></b><b></b>';sqEl.appendChild(fx);setTimeout(()=>fx.remove(),520)}}}
-function drawBoard(){const b=q('#cb');if(!b)return;const c=pvMode?pvMode.c:posAt(ply),last=pvMode?pvMode.last:HIST[ply-1],inCheck=c.inCheck(),turn=c.turn();
+let drawLater=false;
+function drawBoard(){const b=q('#cb');if(!b)return;if(drag&&drag.moved){drawLater=true;return}drawLater=false;const c=pvMode?pvMode.c:posAt(ply),last=pvMode?pvMode.last:HIST[ply-1],inCheck=c.inCheck(),turn=c.turn();
  const live=!pvMode&&ply===HIST.length&&G.status==='active'&&myColor()===turn&&now()>=Date.parse(G.turn_since);
  const pm=preOn(c);if(!pm&&!live&&pre&&G.status!=='active')pre=null;
  const legal=sel&&live?c.moves({square:sel,verbose:true}):sel&&pm?preLegal(sel):[];
@@ -270,13 +279,15 @@ function boardEvents(){const b=q('#cb'),w=q('.cbwrap');w.addEventListener('conte
    else{sel=null;drawBoard()}return}
   if(!live)return;
   if(sel&&sel!==sq&&tryMove(sel,sq))return;
-  if(p&&p.color===mc){sel=sq;drawBoard();const el=q(`[data-sq="${sq}"] svg`,b);if(el){drag={sq,el,x0:e.clientX,y0:e.clientY,moved:false};el.setPointerCapture&&b.setPointerCapture(e.pointerId)}}
+  if(p&&p.color===mc){sel=sq;drawBoard();const el=q(`[data-sq="${sq}"] svg`,b);if(el){drag={sq,el,x0:e.clientX,y0:e.clientY,moved:false};b.setPointerCapture&&b.setPointerCapture(e.pointerId)}}
   else{sel=null;drawBoard()}});
- b.addEventListener('pointermove',e=>{if(!drag)return;const dx=e.clientX-drag.x0,dy=e.clientY-drag.y0;if(Math.abs(dx)+Math.abs(dy)>4)drag.moved=true;
-  const el=q(`[data-sq="${drag.sq}"] svg`,b);if(el){el.style.transform=`translate(${dx}px,${dy}px) scale(1.12)`;el.style.zIndex=9}});
+ /* PATCH 5.1.3: trascinamento fluido: niente transizioni, translate3d e un solo aggiornamento per fotogramma */
+ b.addEventListener('pointermove',e=>{if(!drag)return;const evs=e.getCoalescedEvents?e.getCoalescedEvents():[];const last=evs.length?evs[evs.length-1]:e;
+  drag.dx=last.clientX-drag.x0;drag.dy=last.clientY-drag.y0;if(!drag.moved&&Math.abs(drag.dx)+Math.abs(drag.dy)>3){drag.moved=true;const el=drag.el;if(el&&el.isConnected){el.style.transition='none';el.style.willChange='transform';el.style.zIndex=9;el.parentNode.style.zIndex=5;b.classList.add('dragging')}}
+  if(drag.moved&&!drag.raf)drag.raf=requestAnimationFrame(()=>{if(!drag)return;drag.raf=0;const el=drag.el;if(el&&el.isConnected)el.style.transform=`translate3d(${drag.dx}px,${drag.dy}px,0) scale(1.12)`})},{passive:true});
  b.addEventListener('pointerup',e=>{if(e.button===2&&rdown){const sq=sqFromEvent(e);if(sq){if(sq===rdown){marks.has(sq)?marks.delete(sq):marks.add(sq);q(`[data-sq="${sq}"]`,b).classList.toggle('mark')}
    else{const i=arrows.findIndex(a=>a[0]===rdown&&a[1]===sq);i>=0?arrows.splice(i,1):arrows.push([rdown,sq]);drawArrows()}}rdown=null;return}
-  if(!drag)return;const d=drag;drag=null;const sq=sqFromEvent(e);
+  if(!drag)return;const d=drag;drag=null;if(d.raf)cancelAnimationFrame(d.raf);b.classList.remove('dragging');if(d.el&&d.el.parentNode)d.el.parentNode.style.zIndex='';const sq=sqFromEvent(e);if(drawLater)drawBoard();
   if(d.pre){if(d.moved&&sq&&sq!==d.sq){const t=preLegal(d.sq).find(m=>m.to===sq);if(t)pre={from:d.sq,to:sq,promo:t.promotion?'q':''};sel=null}drawBoard();return}
   if(d.moved&&sq&&sq!==d.sq){dragDrop=true;const ok=tryMove(d.sq,sq);dragDrop=false;if(!ok)drawBoard()}else{const el=q(`[data-sq="${d.sq}"] svg`,b);if(el)el.style.transform=''}})}
 function tryMove(from,to){const c=posAt(ply);const L=c.moves({square:from,verbose:true}).filter(m=>m.to===to);if(!L.length)return false;

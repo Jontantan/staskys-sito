@@ -142,3 +142,6 @@ accordion();observe();magnetic();onScroll();
 
 /* patch 4.2: tolti il vecchio "esci e rientra" della patch 2.3.1 e il suo avviso */
 try{localStorage.removeItem('staskys_relogin')}catch(e){}
+
+/* patch 5.1.3: pop-up "ti hanno sfidato a scacchi" su tutte le pagine (si carica dopo, non rallenta la pagina) */
+try{const s=document.createElement('script');s.src='scacchi-invito.js?v=1';s.defer=true;document.head.appendChild(s)}catch(e){}
