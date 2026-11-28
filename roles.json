@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-27T21:05:00.561112+00:00",
+ "updated": "2026-11-28T03:13:45.051317+00:00",
  "groups": {
   "staff": [
    {
@@ -438,7 +438,7 @@
   {
    "level": 10,
    "name": "Livello 10",
-   "members": 274
+   "members": 275
   },
   {
    "level": 15,
@@ -488,7 +488,7 @@
   {
    "level": 100,
    "name": "Livello 100",
-   "members": 7
+   "members": 8
   },
   {
    "level": 150,
