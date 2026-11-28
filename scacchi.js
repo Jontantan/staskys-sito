@@ -132,7 +132,7 @@ async function renderArchive(mine){const b=q('#carch');if(!b)return;
  qa('#cam button',b).forEach(x=>x.onclick=()=>renderArchive(x.dataset.v==='1'));qa('[data-open]',b).forEach(x=>x.onclick=e=>{e.preventDefault();openGame(x.dataset.open)})}
 
 /* ================= PARTITA ================= */
-let pre=null,anim=null,fast=localStorage.chess_fast==='1',chatRoom='p',lastRole='',ping=0;
+let pre=null,anim=null,fast=localStorage.chess_fast==='1',boardDark=localStorage.chess_board==='dark',chatRoom='p',lastRole='',ping=0;
 let ch=null,ply=0,flip=false,sel=null,marks=new Set(),arrows=[],rdown=null,drag=null,lastSig='',chat=[],chatMuted=localStorage.chess_chat_muted==='1',combo={w:0,b:0},lowWarned=false,startPlayed='',analysis=null,pvMode=null;
 const myColor=()=>!G||!me?null:G.white===me.id?'w':G.black===me.id?'b':null;
 const isPlayer=()=>!!(G&&me&&(G.challenger===me.id||G.opponent===me.id));
@@ -162,7 +162,7 @@ function buildGame(){const pl=isPlayer();
    <div class="cbar top" id="pbTop"></div>
    <div class="cbwrap"><div class="cevalbar" id="ceval" hidden><i></i><b></b></div><div class="cboard" id="cb"></div><svg class="carrows" id="carr" viewBox="0 0 8 8" preserveAspectRatio="none"></svg><div class="cover" id="cover" hidden></div></div>
    <div class="cbar bot" id="pbBot"></div>
-   <div class="cnav"><button data-nav="first" title="Inizio">⏮</button><button data-nav="prev" title="Indietro">◀</button><button data-nav="next" title="Avanti">▶</button><button data-nav="last" title="Ultima mossa">⏭</button><button data-nav="flip" title="Gira la scacchiera">⇅</button><button data-nav="full" id="cfull" title="Schermo intero (F)">⛶</button></div>
+   <div class="cnav"><button data-nav="first" title="Inizio">⏮</button><button data-nav="prev" title="Indietro">◀</button><button data-nav="next" title="Avanti">▶</button><button data-nav="last" title="Ultima mossa">⏭</button><button data-nav="flip" title="Gira la scacchiera">⇅</button><button data-nav="full" id="cfull" title="Schermo intero (F)">⛶</button><button type="button" id="ctema" title="Tema scuro della scacchiera" aria-pressed="false"><span class="ctema-ico" aria-hidden="true"></span></button></div>
   </div>
   <aside class="cside">
    <div class="card cpanel"><div class="cstatus" id="cstat"></div><div class="cmoves" id="cmv"></div><div class="cverd" id="cverd" hidden></div><div class="cacts" id="cact"></div></div>
@@ -175,7 +175,7 @@ function buildGame(){const pl=isPlayer();
     <button class="chip" id="clofi">🎧 Lofi</button><button class="chip${fast?' on':''}" id="cfast" title="Toglie animazioni, effetti, sfocature, lofi e combo">⚡ Modalità veloce</button><a class="chip" href="scacchi.html" id="cback">← Lobby</a></div>
   </aside></div>`;
  q('#cback').onclick=e=>{e.preventDefault();exitFull();history.replaceState(null,'','scacchi.html');lobby()};
- qa('.cnav button').forEach(b=>b.onclick=()=>nav(b.dataset.nav));
+ qa('.cnav [data-nav]').forEach(b=>b.onclick=()=>nav(b.dataset.nav));applyBoardTheme();q('#ctema').onclick=toggleBoardTheme;
  const sndL=()=>{const v=SND.muted?0:SND.vol;q('#csnd').textContent=SND.muted?'🔇':v<.34?'🔈':v<.67?'🔉':'🔊';paintRange(q('#cvol'),SND.muted?0:SND.vol)};sndL();
  q('#csnd').onclick=()=>{SND.muted=!SND.muted;sndL();SND.unlock()};q('#cvol').oninput=e=>{SND.vol=e.target.value;if(SND.muted&&+e.target.value>0)SND.muted=false;sndL();SND.unlock()};
  q('#cvol').onchange=()=>SND.move();
@@ -190,6 +190,10 @@ function buildGame(){const pl=isPlayer();
  if(!buildGame.k){buildGame.k=1;addEventListener('keydown',navKey)}}
 /* PATCH 5.1: barre del volume colorate */
 function paintRange(el,v){if(el)el.style.setProperty('--v',Math.round((+v)*100)+'%')}
+/* PATCH 5.1.5: tema scuro della scacchiera, si può cambiare anche in partita e resta salvato */
+function applyBoardTheme(){document.body.classList.toggle('cbtema-dark',boardDark);const b=q('#ctema');if(b){b.classList.toggle('on',boardDark);b.title=boardDark?'Tema chiaro della scacchiera':'Tema scuro della scacchiera';b.setAttribute('aria-pressed',boardDark?'true':'false');b.setAttribute('aria-label',b.title)}}
+function toggleBoardTheme(){boardDark=!boardDark;localStorage.chess_board=boardDark?'dark':'light';applyBoardTheme();toast(boardDark?'Tema scuro':'Tema chiaro')}
+applyBoardTheme();
 /* PATCH 5.1: schermo intero (tasto ⛶ o F, Esc per uscire) */
 function toggleFull(){const g=q('#cgame');if(!g)return;if(document.fullscreenElement||g.classList.contains('cfs-fb')){exitFull();return}
  if(g.requestFullscreen)g.requestFullscreen().catch(()=>{g.classList.add('cfs','cfs-fb')});else g.classList.add('cfs','cfs-fb')}

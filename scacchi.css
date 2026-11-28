@@ -226,3 +226,21 @@ body.cfast .nav{backdrop-filter:none!important;-webkit-backdrop-filter:none!impo
 #cpromo button.x:hover{color:#fff;background:rgba(255,95,162,.3)}
 @keyframes cpin{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:none}}
 body.cfast #cpromo .cpcol{animation:none}
+/* patch 5.1.5: tema scuro della scacchiera (colori del sito), interruttore sotto la scacchiera */
+.cnav{flex-wrap:wrap}
+#ctema{display:inline-flex;align-items:center;justify-content:center;min-width:2.4rem}
+#ctema.on{background:rgba(200,108,245,.22);border-color:var(--stk2)}
+.ctema-ico{display:inline-block;width:1.15em;height:1.15em;border-radius:3px;box-shadow:0 0 0 1px rgba(255,255,255,.16) inset;background-image:linear-gradient(to right,var(--sq-l) 50%,var(--sq-d) 50%),linear-gradient(to right,var(--sq-d) 50%,var(--sq-l) 50%);background-size:100% 50%;background-position:0 0,0 100%;background-repeat:no-repeat}
+body.cbtema-dark{--sq-l:#554c70;--sq-d:#16111f}
+body.cbtema-dark .cboard{box-shadow:0 20px 50px -16px rgba(0,0,0,.9),0 0 0 1px rgba(200,108,245,.28)}
+body.cbtema-dark .csq.last.l{background:#8d7340}body.cbtema-dark .csq.last.d{background:#6a5324}
+body.cbtema-dark .csq.sel.l{background:#b8933e}body.cbtema-dark .csq.sel.d{background:#8a6a28}
+body.cbtema-dark .csq.mark.l{background:#8a3f4c}body.cbtema-dark .csq.mark.d{background:#5c2832}
+body.cbtema-dark .csq.chk{background:radial-gradient(circle,#ff4d4d 0 35%,rgba(255,59,59,.6) 60%,transparent 75%),#3a1520!important}
+body.cbtema-dark .csq.mvdot::after{background:rgba(255,255,255,.38)}
+body.cbtema-dark .csq.mvcap::after{background:radial-gradient(circle,transparent 0 57%,rgba(255,255,255,.4) 58% 71%,transparent 72%)}
+body.cbtema-dark .cboard.premode .csq.mvdot::after{background:rgba(95,211,234,.55)}
+body.cbtema-dark .csq.pre.l{background:#3d5f7a!important}body.cbtema-dark .csq.pre.d{background:#2a4860!important}
+body.cbtema-dark .csq.l .cf,body.cbtema-dark .csq.l .cr{color:#d4c8ee}body.cbtema-dark .csq.d .cf,body.cbtema-dark .csq.d .cr{color:#8d82a8}
+body.cbtema-dark .csq svg.pc{filter:drop-shadow(0 0 1.1px rgba(255,255,255,.4)) drop-shadow(0 2px 2px rgba(0,0,0,.55))}
+body.cfast.cbtema-dark .csq svg.pc{filter:none}
