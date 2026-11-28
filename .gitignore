@@ -10,3 +10,7 @@ preview*.png
 *.zip
 .DS_Store
 Thumbs.db
+
+# SQL del database: privato, non nel repo pubblico (copie in /workspace/private-sql sul box)
+_supabase/sql/
+*.sql

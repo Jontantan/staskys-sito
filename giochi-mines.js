@@ -1,5 +1,8 @@
 /* Staskys — Prato fiorito 20x20: il primo clic non è mai una mina, rivelazione a cascata, bandierine con tasto destro / pressione lunga.
-   In classifica vanno solo le vittorie: vince il tempo più basso. */
+   In classifica vanno solo le vittorie: vince il tempo più basso.
+   ANTI-CHEAT (FIX-03): il campo lo crea e lo tiene il SERVER (mines_start / mines_reveal). Il browser non sa dove sono le mine:
+   a ogni clic chiede al server cosa c'è sotto. Vittoria, tempo e salvataggio li decide il server.
+   Senza database (anteprima/demo) si gioca in locale e non si salva niente. */
 (function(){
 const N=20,M=60,S=20;
 const fmt=s=>{s=Math.round(s);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
@@ -17,26 +20,47 @@ function make(A){
  <canvas id="cv" width="${N*S}" height="${N*S}" aria-label="Prato fiorito"></canvas>
  <button class="btn sm" id="go" hidden>Rigioca</button><p class="gmsg">Clic per scoprire, tasto destro o pressione lunga per la bandierina 🌸.</p>`;
  A.muteBtn(q('#mute'));const cv=q('#cv'),c=cv.getContext('2d'),still=A.RM(),fb=q('#fl');
- let mine,cnt,open,flag,anim,st,t0,raf=0,opened,flags,flagMode=false,boom=-1,shake=0;
+ let mine,cnt,open,flag,anim,st,t0,raf=0,opened,flags,flagMode=false,boom=-1,shake=0,gid=null,gen0=0,chain=Promise.resolve(),busy=0;
+ const online=()=>!!(A.sb&&A.user);
  fb.onclick=()=>{flagMode=!flagMode;fb.textContent=flagMode?'🌸':'⛏️';fb.title=flagMode?'Tocco = bandierina':'Tocco = scopri';fb.blur()};
- function reset(){mine=null;open=new Uint8Array(N*N);flag=new Uint8Array(N*N);anim=new Float64Array(N*N);st='ready';opened=0;flags=0;boom=-1;q('#tm').textContent='0:00';q('#mn').textContent=M;q('#go').hidden=true}
- function reveal(i){if(st==='over'||st==='won'||flag[i])return;
-  if(!mine){A.audio();({mine,cnt}=gen(i));st='run';t0=performance.now()}
+ function reset(){gen0++;gid=null;chain=Promise.resolve();busy=0;cv.style.cursor='';mine=null;cnt=new Int8Array(N*N).fill(-1);open=new Uint8Array(N*N);flag=new Uint8Array(N*N);anim=new Float64Array(N*N);st='ready';opened=0;flags=0;boom=-1;q('#tm').textContent='0:00';q('#mn').textContent=M;q('#go').hidden=true}
+ /* celle scoperte: [indice, numero, distanza per l'animazione] */
+ function apply(L){const now=performance.now();let maxd=0;
+  L.forEach(([k,c,d])=>{if(open[k])return;if(flag[k]){flag[k]=0;flags--}open[k]=1;cnt[k]=c;opened++;anim[k]=now+(still?0:d*28);maxd=Math.max(maxd,d)});
+  if(L.length)for(let d=0;d<=Math.min(maxd,14);d++)A.tone('sine',440*Math.pow(2,d/14),.08,still?0:d*.028,L.length>1?.022:.03);
+  q('#mn').textContent=M-flags}
+ function fail(e){if(st!=='run'&&st!=='starting')return;st='over';msg((e&&e.message)||'Connessione persa: clicca Rigioca.');q('#go').hidden=false}
+ /* richieste al server una alla volta, nell'ordine dei clic */
+ function ask(fn,args,then){const g=gen0;busy++;cv.style.cursor='progress';
+  chain=chain.then(async()=>{if(g!==gen0)return;const a=typeof args==='function'?args():args;if(!a||st==='over'||st==='won')return;let r;try{r=await A.sb.rpc(fn,a)}catch(e){r={error:e}}
+   if(g!==gen0)return;if(r.error)return fail(r.error);then(r.data||{})}).finally(()=>{if(g===gen0&&--busy<=0){busy=0;cv.style.cursor=''}})}
+ function result(d){if(Array.isArray(d.cells))apply(d.cells);
+  if(d.boom!=null){mine=new Uint8Array(N*N);(d.mines||[]).forEach(k=>mine[k]=1);return lose(d.boom)}
+  if(d.won)win(d)}
+ function send(cells){cells=cells.filter(k=>!open[k]&&!flag[k]);if(!cells.length||st!=='run')return;
+  ask('mines_reveal',()=>{const c=cells.filter(k=>!open[k]&&!flag[k]);return c.length?{p_id:gid,p_cells:c}:null},result)}
+ function reveal(i){if(st==='over'||st==='won'||st==='starting'||flag[i])return;
+  if(st==='ready'){A.audio();t0=performance.now();
+   if(!online()){({mine,cnt}=gen(i));st='run';return localReveal(i)}
+   st='starting';return ask('mines_start',{p_cell:i},d=>{gid=d.id;st='run';result(d)})}
+  if(!online())return open[i]?localChord(i):localReveal(i);
   if(open[i]){chord(i);return}
-  if(mine[i])return lose(i);
-  const L=flood(i,mine,cnt,open),now=performance.now();let maxd=0;
-  L.forEach(([k,d])=>{if(flag[k]){flag[k]=0;flags--}open[k]=1;opened++;anim[k]=now+(still?0:d*28);maxd=Math.max(maxd,d)});
-  for(let d=0;d<=Math.min(maxd,14);d++)A.tone('sine',440*Math.pow(2,d/14),.08,still?0:d*.028,L.length>1?.022:.03);
-  q('#mn').textContent=M-flags;if(opened===N*N-M)win()}
- function chord(i){const n=nb(i);if(n.filter(j=>flag[j]).length!==cnt[i])return;for(const j of n)if(!open[j]&&!flag[j]){reveal(j);if(st!=='run')return}}
+  send([i])}
+ function chord(i){if(cnt[i]<1)return;const n=nb(i);if(n.filter(j=>flag[j]).length!==cnt[i])return;send(n.filter(j=>!open[j]&&!flag[j]))}
+ /* solo anteprima senza database: tutto in locale, niente salvataggio */
+ function localReveal(i){if(st!=='run'||flag[i]||open[i])return;if(mine[i]){return lose(i)}
+  apply(flood(i,mine,cnt,open).map(([k,d])=>[k,cnt[k],d]));if(opened===N*N-M)win({secs:Math.max(10,Math.ceil((performance.now()-t0)/1000)),local:true})}
+ function localChord(i){const n=nb(i);if(n.filter(j=>flag[j]).length!==cnt[i])return;for(const j of n)if(!open[j]&&!flag[j]){localReveal(j);if(st!=='run')return}}
  function toggle(i){if(st==='over'||st==='won'||open[i])return;flag[i]^=1;flags+=flag[i]?1:-1;anim[i]=performance.now();q('#mn').textContent=M-flags;A.tone('triangle',flag[i]?990:660,.05,0,.03)}
  function lose(i){st='over';boom=i;shake=12;A.noise(.5,0,.08,500,80);A.tone('sine',200,.5,0,.05,60);const now=performance.now();let k=0;
   for(let j=0;j<N*N;j++)if(mine[j]){anim[j]=now+(still?0:(k++)*12)}
   msg('Boom! Riprova, i fiori ti aspettano. 🌼');q('#go').hidden=false}
- function win(){st='won';const sec=Math.max(10,Math.ceil((performance.now()-t0)/1000));q('#tm').textContent=fmt(sec);
+ function win(d){st='won';const sec=d.secs;q('#tm').textContent=fmt(sec);
   [523,659,784,1047,1319].forEach((f,i)=>A.tone('triangle',f,.15,i*.09,.04));
-  if(!localStorage.mines_best||sec<+localStorage.mines_best){localStorage.mines_best=sec;q('#rec').textContent=fmt(sec)}
-  msg(`Vittoria! Prato ripulito in ${fmt(sec)}.`);q('#go').hidden=false;A.save('mines',sec,{opens:opened,flags})}
+  if(d.saved&&(!localStorage.mines_best||sec<+localStorage.mines_best)){localStorage.mines_best=sec;q('#rec').textContent=fmt(sec)}
+  msg(`Vittoria! Prato ripulito in ${fmt(sec)}.`);q('#go').hidden=false;
+  if(d.local)return;
+  A.save('mines',sec,{__server:d.saved?{ok:true}:{error:d.error||'Punteggio non salvato.'}})}
  function draw(now){const fg=A.col('--fg'),ln=A.col('--line'),soft=A.col('--soft'),card=A.col('--card'),mu=A.col('--mut');c.save();c.clearRect(0,0,N*S,N*S);
   if(shake>0&&!still){c.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);shake*=.88;if(shake<.4)shake=0}
   c.font='700 13px Inter,sans-serif';c.textAlign='center';c.textBaseline='middle';
@@ -45,7 +69,7 @@ function make(A){
    if(open[i]&&now>=anim[i]||showMine){c.fillStyle=card;c.fillRect(x,y,S,S);c.strokeStyle=ln;c.strokeRect(x+.5,y+.5,S-1,S-1);
     const sc=still?1:.6+.4*p;
     if(showMine){c.fillStyle=i===boom?'#e5413b':fg;c.beginPath();c.arc(x+S/2,y+S/2,5*sc,0,7);c.fill()}
-    else if(cnt[i]){c.globalAlpha=p;c.fillStyle=NUMC[cnt[i]];c.fillText(cnt[i],x+S/2,y+S/2+1);c.globalAlpha=1}}
+    else if(cnt[i]>0){c.globalAlpha=p;c.fillStyle=NUMC[cnt[i]];c.fillText(cnt[i],x+S/2,y+S/2+1);c.globalAlpha=1}}
    else{const g=(i%N+(i/N|0))%2;c.fillStyle=g?'#8fd18f':'#7cc47c';c.fillRect(x,y,S,S);
     if(open[i]){c.globalAlpha=1-p;c.fillStyle='#fff';c.fillRect(x,y,S,S);c.globalAlpha=1}
     if(flag[i]){const b=still?1:Math.min(1,.4+p);c.font=`${Math.round(13*b)}px sans-serif`;c.fillText('🌸',x+S/2,y+S/2+1);c.font='700 13px Inter,sans-serif'}}}
@@ -63,5 +87,5 @@ function make(A){
  q('#go').onclick=e=>{e.currentTarget.blur();reset();msg('Clic per scoprire, tasto destro o pressione lunga per la bandierina 🌸.')};
  reset();raf=requestAnimationFrame(draw);
  return()=>{cancelAnimationFrame(raf);clearTimeout(lp);st='idle'}}
-(window.GIOCHI_EXTRA=window.GIOCHI_EXTRA||{}).mines={t:'Prato fiorito',d:'20×20, 60 mine. Il primo clic è sempre sicuro. Tasto destro o pressione lunga (o il pulsante ⛏️/🌸) per le bandierine. In classifica solo le vittorie: vince il più veloce.',unit:'',asc:true,fmt,lbScore:fmt,lbDesc:'vittoria più veloce',make};
+(window.GIOCHI_EXTRA=window.GIOCHI_EXTRA||{}).mines={t:'Prato fiorito',d:'20×20, 60 mine. Il primo clic è sempre sicuro. Tasto destro o pressione lunga (o il pulsante ⛏️/🌸) per le bandierine. In classifica solo le vittorie: vince il più veloce.',unit:'',asc:true,fmt,lbScore:fmt,lbDesc:'vittoria più veloce',server:true,make};
 })();

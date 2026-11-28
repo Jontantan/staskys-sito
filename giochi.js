@@ -57,6 +57,7 @@ function begin(game){if(!READY||!user||NO_RPC||!GAMES[game])return;const s=SES[g
 const touchGame=e=>{if(!e.isTrusted||!user)return;const t=e.target;
  if(e.type==='keydown'){if(e.ctrlKey||e.metaKey||e.altKey)return;if(t&&t.closest&&/INPUT|TEXTAREA|SELECT/.test(t.tagName)&&!stage.contains(t))return;if(!q('#gstage'))return}
  else if(!(t&&stage.contains(t)))return;
+ if(GAMES[cur]&&GAMES[cur].server)return; /* FIX-03: Prato fiorito lo apre e lo salva il server da solo */
  begin(cur)};
 addEventListener('pointerdown',touchGame,true);addEventListener('keydown',touchGame,true);
 async function submit(game,score,extra){
@@ -74,7 +75,8 @@ async function save(game,score,extra){
  const prev=BEST[game],rec=!g.noRecord&&(prev==null||(g.asc?score<prev:score>prev));
  if(rec){BEST[game]=score;const r=q('#rec');if(r&&!g.ownRec&&game===cur){r.textContent=g.fmt?g.fmt(score):score.toLocaleString('it-IT');API.pop(r)}if(prev!=null||score>0)celebrate(game,score,prev==null)}
  const keep=q('.gmsg',stage)?.textContent||'';msg(keep?keep+' · Salvataggio…':'Salvataggio…');
- const error=await submit(game,score,extra);
+ /* FIX-03: giochi salvati dal server (Prato fiorito): qui solo record, festa e classifica */
+ const sv=extra&&extra.__server,error=sv?(sv.error?{message:sv.error,show:1}:null):await submit(game,score,extra);
  if(error&&rec)BEST[game]=prev;
  if(!error&&g.onSaved)try{g.onSaved(score)}catch(e){}
  if(!error)loadStreak();
